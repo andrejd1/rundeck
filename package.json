@@ -1,0 +1,23 @@
+{
+  "name": "rundeck",
+  "version": "0.1.0",
+  "description": "RunDeck: dense one-screen running dashboard as a Zepp OS Workout Extension",
+  "main": "app.js",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --import ./sim/register.js --test tests/*.test.js",
+    "preview": "node --import ./sim/register.js sim/run.js",
+    "screenshots": "npm run preview && node sim/screenshots.mjs",
+    "format": "biome format --write .",
+    "format:check": "biome format ."
+  },
+  "author": "andrejd1",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.4",
+    "@zeppos/device-types": "^4.0.0",
+    "@zeppos/zml": "^0.0.25",
+    "playwright-core": "^1.61.1"
+  }
+}
