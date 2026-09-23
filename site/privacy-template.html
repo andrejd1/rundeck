@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RunDeck Privacy</title>
+<meta name="description" content="What data RunDeck uses, where it stays, and what leaves your devices.">
+<link rel="icon" type="image/png" href="{{icon}}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root {
+  --ground: #eef2f6; --panel: #ffffff; --line: #d4dbe3; --ink: #0b1118; --muted: #5a6574;
+  --z1: #3b82f6; --z2: #14b8a6; --z3: #22c55e; --z4: #f59e0b; --z5: #ef4444;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark; --ground: #0a0d12; --panel: #121821; --line: #1f2833; --ink: #e9eef4; --muted: #8a96a6;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark; --ground: #0a0d12; --panel: #121821; --line: #1f2833; --ink: #e9eef4; --muted: #8a96a6;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 400 17px/1.6 var(--body); padding-inline: 20px; }
+.wrap { max-width: 720px; margin: 0 auto; padding-block: 24px 64px; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--z1); outline-offset: 3px; border-radius: 4px; }
+.top { display: flex; align-items: center; gap: 12px; padding-block: 0 28px; }
+.top a { display: flex; align-items: center; gap: 12px; font-family: var(--display); font-weight: 700; font-size: 26px; text-decoration: none; }
+.top img { width: 36px; height: 36px; border-radius: 50%; background: #0a0d12; }
+.zones { display: flex; gap: 4px; height: 8px; width: 120px; margin-bottom: 20px; }
+.zones span { flex: 1; border-radius: 4px; }
+.zones span:nth-child(1) { background: var(--z1); } .zones span:nth-child(2) { background: var(--z2); }
+.zones span:nth-child(3) { background: var(--z3); } .zones span:nth-child(4) { background: var(--z4); }
+.zones span:nth-child(5) { background: var(--z5); }
+h1, h2 { font-family: var(--display); font-weight: 700; line-height: 1.05; text-transform: uppercase; text-wrap: balance; }
+h1 { font-size: clamp(38px, 6vw, 56px); margin: 0 0 6px; }
+h2 { font-size: 28px; margin: 40px 0 10px; }
+h1 + p { font-family: var(--mono); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 24px; }
+h1 + p + p { font-size: 19px; }
+p, li { max-width: 68ch; }
+p { margin: 0 0 14px; }
+ul { padding-left: 22px; margin: 0 0 14px; display: grid; gap: 6px; }
+strong { font-weight: 600; }
+code { font-family: var(--mono); font-size: 0.85em; background: var(--panel); border: 1px solid var(--line); padding: 1px 5px; border-radius: 5px; }
+footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><a href="./"><img src="{{icon}}" alt="">RunDeck</a></header>
+  <div class="zones" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+  <main>
+{{content}}
+  </main>
+  <footer><a href="./">Back to RunDeck</a></footer>
+</div>
+</body>
+</html>

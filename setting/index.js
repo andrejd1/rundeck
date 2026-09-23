@@ -25,7 +25,7 @@ import {
   ROWS,
   rowSlots,
 } from "../shared/fields.js"
-import { BUY_URL } from "../shared/license.js"
+import { BUY_URL, PRIVACY_URL } from "../shared/license.js"
 
 const C = {
   page: "#f2f3f5",
@@ -423,6 +423,9 @@ AppSettingsPage({
           "Power zones for the zone bar are built from this.",
         ),
       ]),
+      block([Link({ source: PRIVACY_URL }, "Privacy statement")], {
+        margin: "4px 0 0 4px",
+      }),
       block([], { height: "24px" }),
     ])
   },

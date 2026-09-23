@@ -2,6 +2,9 @@
 
 ## 0.2.0 — customizable screen
 
+- Full privacy statement (PRIVACY.md), published at
+  https://andrejd1.github.io/rundeck/privacy.html and linked from the settings page and the site.
+
 - 16 native-only fields drawn by the watch itself (SPORT_DATA): descent, lap
   ascent/descent, max altitude, vertical speed, max speed, stride length, steps, % max HR,
   % HR reserve, aerobic/anaerobic TE, training load, temperature, sunset.

@@ -6,7 +6,7 @@ name: Landing page
 on:
   push:
     branches: [main]
-    paths: ["site/**", "docs/screenshots/**", "shared/fields.js", "shared/license.js"]
+    paths: ["site/**", "PRIVACY.md", "docs/screenshots/**", "shared/fields.js", "shared/license.js"]
   workflow_dispatch:
 
 permissions:
@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: 20
       - run: node site/build.mjs
-      - run: mkdir -p _site && cp site/index.html _site/
+      - run: mkdir -p _site && cp site/index.html site/privacy.html _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
