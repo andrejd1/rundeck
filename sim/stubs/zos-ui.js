@@ -35,6 +35,16 @@ export const text_style = {
   ELLIPSIS: "ellipsis",
 }
 
+// SPORT_DATA type constants: the stub uses the names themselves, so tests
+// and the preview can read which native value a widget shows.
+export const sport_data = new Proxy({}, { get: (_, name) => name })
+export const edit_widget_group_type = { SPORTS: "SPORTS" }
+
+export function deleteWidget(w) {
+  const i = __widgets.indexOf(w)
+  if (i >= 0) __widgets.splice(i, 1)
+}
+
 export function createWidget(type, props = {}) {
   const w = {
     type,

@@ -43,10 +43,12 @@ export function parsePace(str, paceUnit = "min_per_km") {
 
 /**
  * Target text -> {metric, min, max}. Pace: "4:40-4:50" (either order) or a
- * single "4:45" (±5 s). Power: "250-270" or "260" (±3%).
+ * single "4:45" (±5 s). Power: "250-270" or "260" (±3%). Heart rate:
+ * "150-160" or "155" (±5 bpm).
  */
 export function parseTarget(metric, str, paceUnit = "min_per_km") {
-  if (!str || (metric !== "pace" && metric !== "power")) return null
+  if (!str || (metric !== "pace" && metric !== "power" && metric !== "hr"))
+    return null
   const parts = String(str)
     .split(/\s*[-–]\s*/)
     .filter(Boolean)
@@ -63,12 +65,37 @@ export function parseTarget(metric, str, paceUnit = "min_per_km") {
   }
   const vals = parts.map(Number)
   if (vals.some((v) => !Number.isFinite(v) || v <= 0)) return null
-  if (vals.length === 1) vals.splice(0, 1, vals[0] * 0.97, vals[0] * 1.03)
+  if (vals.length === 1)
+    vals.splice(
+      0,
+      1,
+      ...(metric === "hr"
+        ? [vals[0] - 5, vals[0] + 5]
+        : [vals[0] * 0.97, vals[0] * 1.03]),
+    )
   return {
     metric,
     min: Math.round(Math.min(...vals)),
     max: Math.round(Math.max(...vals)),
   }
+}
+
+// The target is entered as From / To, stored per metric
+// (target_<metric>_low / _high) so switching between pace, power and heart
+// rate keeps each range. Either end alone is a single value widened by the
+// metric's tolerance. Older builds stored one "a-b" string in target_range,
+// still honored while the metric's From / To are both empty.
+export const targetKeys = (metric) => [
+  `target_${metric}_low`,
+  `target_${metric}_high`,
+]
+
+function targetText(s, metric) {
+  const [lowKey, highKey] = targetKeys(metric)
+  const low = s(lowKey, "")
+  const high = s(highKey, "")
+  if (low && high) return `${low}-${high}`
+  return low || high || s("target_range", "")
 }
 
 /** Settings layout: the JSON the settings page and the watch write. */
@@ -94,6 +121,7 @@ export function buildConfig(get) {
       : "min_per_km"
   const method = s("hr_zone_method", "device")
   const autoLap = s("auto_lap", "1")
+  const targetMetric = s("target_metric", "pace")
   return {
     v: CONFIG_VERSION,
     pace_unit: paceUnit,
@@ -109,11 +137,7 @@ export function buildConfig(get) {
           }),
     pace_zones: paceZones(parsePace(s("threshold_pace", ""), paceUnit)),
     power_zones: powerZones(numOrNull(s("ftp", ""))),
-    target: parseTarget(
-      s("target_metric", "pace"),
-      s("target_range", ""),
-      paceUnit,
-    ),
+    target: parseTarget(targetMetric, targetText(s, targetMetric), paceUnit),
     auto_lap_m:
       autoLap === "0"
         ? 0

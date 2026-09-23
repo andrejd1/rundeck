@@ -29,6 +29,12 @@ const CONFIG_KEYS = [
   "threshold_pace",
   "ftp",
   "target_range",
+  "target_pace_low",
+  "target_pace_high",
+  "target_power_low",
+  "target_power_high",
+  "target_hr_low",
+  "target_hr_high",
   "auto_lap",
 ]
 

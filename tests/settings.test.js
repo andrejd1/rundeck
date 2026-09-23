@@ -82,7 +82,8 @@ test("saved values are visible: chips, inputs and 'Saved:' lines", () => {
   const { tree } = render({
     pace_unit: "min_per_mile",
     target_metric: "power",
-    target_range: "250-270",
+    target_power_low: "250",
+    target_power_high: "270",
     hr_zone_method: "max",
     max_hr: "185",
     threshold_pace: "7:10",
@@ -96,12 +97,14 @@ test("saved values are visible: chips, inputs and 'Saved:' lines", () => {
   const inputs = Object.fromEntries(
     all(tree, "TextInput").map((n) => [n.props.settingsKey, n.props.value]),
   )
-  assert.equal(inputs.target_range, "250-270")
+  assert.equal(inputs.target_power_low, "250")
+  assert.equal(inputs.target_power_high, "270")
   assert.equal(inputs.max_hr, "185")
   assert.equal(inputs.threshold_pace, "7:10")
   assert.equal(inputs.ftp, "290")
   const t = texts(tree).join("|")
-  assert.match(t, /Saved: 250-270/)
+  assert.match(t, /Saved: 250 W/)
+  assert.match(t, /Saved: 270 W/)
   assert.match(t, /Saved: 185 bpm/)
   assert.match(t, /Saved: 7:10 \/mi/)
   assert.match(t, /Saved: 290 W/)
@@ -169,4 +172,30 @@ test("top row has its own column chips and names its single spot", () => {
   )
   const ones = all(tree, "Button").filter((b) => b.props.label === "1 column")
   assert.ok(ones.length >= 1)
+})
+
+test("target: heart rate option and separate From / To fields per metric", () => {
+  let { tree, store } = render({
+    target_metric: "hr",
+    target_hr_low: "150",
+    target_hr_high: "160",
+    target_pace_low: "4:40",
+  })
+  assert.ok(selectedChips(tree).includes("Heart rate"))
+  const inputs = Object.fromEntries(
+    all(tree, "TextInput").map((n) => [n.props.settingsKey, n.props.value]),
+  )
+  assert.equal(inputs.target_hr_low, "150")
+  assert.equal(inputs.target_hr_high, "160")
+  assert.equal(inputs.target_pace_low, undefined) // other metric not shown
+  const t = texts(tree).join("|")
+  assert.match(t, /From \(bpm\)/)
+  assert.match(t, /Saved: 160 bpm/)
+
+  button(tree, "Pace").props.onClick()
+  ;({ tree, store } = render(Object.fromEntries(store)))
+  const paceInputs = Object.fromEntries(
+    all(tree, "TextInput").map((n) => [n.props.settingsKey, n.props.value]),
+  )
+  assert.equal(paceInputs.target_pace_low, "4:40") // pace range kept
 })

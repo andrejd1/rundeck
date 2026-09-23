@@ -36,7 +36,17 @@ test("targets: ranges in either order, single values widened", () => {
     max: 268,
   })
   assert.equal(parseTarget("power", "abc"), null)
-  assert.equal(parseTarget("hr", "150"), null)
+  assert.deepEqual(parseTarget("hr", "150"), {
+    metric: "hr",
+    min: 145,
+    max: 155,
+  })
+  assert.deepEqual(parseTarget("hr", "160-150"), {
+    metric: "hr",
+    min: 150,
+    max: 160,
+  })
+  assert.equal(parseTarget("cadence", "180"), null)
 })
 
 test("defaults with empty settings", () => {
@@ -100,4 +110,28 @@ test("layout comes from layout_json, junk falls back to defaults", () => {
 test("watch rejects configs of another version", () => {
   assert.deepEqual(normalizeConfig({ v: 1, primary: "power" }), DEFAULT_CONFIG)
   assert.equal(normalizeConfig({ v: 2, auto_lap_m: 0 }).auto_lap_m, 0)
+})
+
+test("target From / To fields per metric, one-sided value, legacy field", () => {
+  const t = (o) => buildConfig(settings(o)).target
+  assert.deepEqual(
+    t({ target_metric: "hr", target_hr_low: "150", target_hr_high: "160" }),
+    { metric: "hr", min: 150, max: 160 },
+  )
+  assert.deepEqual(t({ target_metric: "power", target_power_low: "260" }), {
+    metric: "power",
+    min: 252,
+    max: 268,
+  })
+  // each metric keeps its own range
+  const both = {
+    target_pace_low: "4:40",
+    target_pace_high: "4:50",
+    target_hr_low: "150",
+    target_hr_high: "160",
+  }
+  assert.equal(t({ ...both, target_metric: "pace" }).metric, "pace")
+  assert.equal(t({ ...both, target_metric: "hr" }).max, 160)
+  // old builds stored one "a-b" string; still read when From/To are empty
+  assert.equal(t({ target_range: "4:40-4:50" }).metric, "pace")
 })

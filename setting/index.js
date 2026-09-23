@@ -13,7 +13,7 @@
 // "ui_open_slot" only remembers which field picker is expanded (re-render
 // happens on settingsStorage changes).
 
-import { readLayout } from "../shared/config.js"
+import { readLayout, targetKeys } from "../shared/config.js"
 import {
   BAR_NAMES,
   BAR_OPTIONS,
@@ -177,6 +177,29 @@ AppSettingsPage({
       help ? hint(help) : block([], { height: "6px" }),
     ]
 
+    // From / To for the target of one metric, each shown with its saved value
+    const RANGE = {
+      pace: { unit: () => perUnit, from: "4:40", to: "4:50", tol: "±5 s" },
+      power: { unit: () => "W", from: "250", to: "270", tol: "±3%" },
+      hr: { unit: () => "bpm", from: "150", to: "160", tol: "±5 bpm" },
+    }
+    const rangeInputs = (metric) => {
+      const r = RANGE[metric] || RANGE.pace
+      const [lowKey, highKey] = targetKeys(metric)
+      const unit = r.unit()
+      const withUnit = (v) => `${v} ${unit}`
+      return [
+        ...input(`From (${unit})`, lowKey, r.from, withUnit),
+        ...input(
+          `To (${unit})`,
+          highKey,
+          r.to,
+          withUnit,
+          `The live value turns green inside the range, blue below, red above. Fill in one field only for a single value (${r.tol}). Leave both empty for no target.`,
+        ),
+      ]
+    }
+
     // ------------------------------------------------------------- values
 
     const perUnit =
@@ -334,18 +357,11 @@ AppSettingsPage({
           [
             { name: "Pace", value: "pace" },
             { name: "Power", value: "power" },
+            { name: "Heart rate", value: "hr" },
           ],
           "pace",
         ),
-        ...input(
-          targetMetric === "power"
-            ? "Power range (W)"
-            : `Pace range (${perUnit})`,
-          "target_range",
-          targetMetric === "power" ? "250-270" : "4:40-4:50",
-          null,
-          "The live value turns green inside the range, blue below, red above. Leave empty for no target.",
-        ),
+        ...rangeInputs(targetMetric),
       ]),
 
       card("Heart rate zones", [

@@ -30,13 +30,13 @@ const valueAt = (w, id) => w.textAt(SLOT_GEOMETRY[id].value)
 
 const cfg = (obj = {}) => buildConfig((k) => obj[k])
 
-test("trial: first run shows a notice and counts after 5 minutes", async () => {
+test("trial: runs are counted silently after 5 minutes", async () => {
   const w = await bootWidget({ config: cfg() })
   w.run(3)
   assert.equal(w.page.state.mode, "pending") // offline: waiting for the phone
   w.run(8)
-  assert.equal(w.textAt(NOTICE), "Trial run 1 of 5")
   assert.equal(w.page.state.mode, "trial")
+  assert.equal(w.textAt(NOTICE), null) // no trial text on the run screen
   w.run(300)
   assert.equal(loadObject(TRIAL_KEY).used, 1)
   const reports = (globalThis.__sim.sideCalls || []).filter(
@@ -386,4 +386,66 @@ test("single non-HR top value is centered, no graph", async () => {
     bars.map((b) => b.props),
     [],
   )
+})
+
+test("native-only fields are drawn by SPORT_DATA widgets in their slot", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({
+        slots: { r4l: "descent", r4r: "aerobic_te" },
+        updated_at: 2,
+      }),
+    }),
+  })
+  w.run(3)
+  const natives = () =>
+    w
+      .widgets()
+      .filter((x) => x.type === "SPORT_DATA" && x.props.visible !== false)
+  assert.deepEqual(
+    natives()
+      .map((n) => n.props.default_type)
+      .sort(),
+    ["ALTITUDE_TOTAL_DOWN", "OTHER_AEROBIC_TE"],
+  )
+  const box = SLOT_GEOMETRY.r4l.value
+  const d = natives().find(
+    (n) => n.props.default_type === "ALTITUDE_TOTAL_DOWN",
+  )
+  assert.equal(d.props.x, box.x)
+  assert.equal(d.props.y, box.y)
+  assert.equal(labelAt(w, "r4l"), "Descent")
+  assert.equal(w.textAt(box), null) // our own value text stays hidden
+  // the lap notice covers row 4: native values hide with it
+  w.pressLap()
+  assert.equal(natives().length, 0)
+})
+
+test("heart rate target colors HR and marks the bar", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      target_metric: "hr",
+      target_hr_low: "140",
+      target_hr_high: "150",
+    }),
+    sim: { hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] } },
+  })
+  w.run(3, { hr: 160 })
+  const header = w
+    .widgets()
+    .find(
+      (x) =>
+        x.type === "TEXT" &&
+        x.props.visible !== false &&
+        x.props.x === RG.header[1].header.value.x &&
+        x.props.y === RG.header[1].header.value.y,
+    )
+  assert.equal(header.props.text, "160")
+  assert.equal(header.props.color, 0xef4444) // above the range
+  const band = w
+    .widgets()
+    .find((x) => x.type === "FILL_RECT" && x.props.h === 5)
+  assert.equal(band.props.visible, true)
 })

@@ -101,6 +101,13 @@ function renderWidget(w) {
         `<text x="${cx}" y="${cy}" text-anchor="middle" font-size="${size}" fill="${hex(p.color != null ? p.color : 0xffffff)}" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">${esc(p.text)}</text>`
       )
     }
+    // native value drawn by the watch: the preview shows __sim-style sample
+    // values per type (or a dash), centered in the box like the watch does
+    case "SPORT_DATA": {
+      const sample = (globalThis.__nativeSamples || {})[p.default_type] || "--"
+      const size = p.text_size || 30
+      return `<text x="${p.x + p.w / 2}" y="${p.y + p.h / 2 + size * 0.35}" text-anchor="middle" font-size="${size}" fill="${hex(p.text_color)}" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">${esc(sample)}</text>`
+    }
     case "IMG": {
       const data = imgData(p.src)
       if (!data) return ""

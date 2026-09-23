@@ -197,7 +197,42 @@ const layoutJson = (slots, bar = "hr", extra = {}) =>
   snap(w, "Top row as 2 columns (HR with zone), rows 1 and 4 with 3 columns")
 }
 
-// 7. trial used up: basic screen
+// 7. native-only fields (drawn by the watch) and a heart rate target
+{
+  // what the watch would draw for each native type in this frame
+  globalThis.__nativeSamples = {
+    ALTITUDE_TOTAL_DOWN: "112",
+    OTHER_AEROBIC_TE: "3.4",
+    STRIDE: "1.12",
+    OTHER_TRAIN_LOAD: "86",
+  }
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      target_metric: "hr",
+      target_hr_low: "140",
+      target_hr_high: "150",
+      layout_json: layoutJson(
+        {
+          r1l: "lap_hr",
+          r1r: "avg_hr",
+          r4l: "descent",
+          r4c: "stride",
+          r4r: "aerobic_te",
+          r5l: "ascent",
+          r5r: "train_load",
+        },
+        "auto",
+        { cols: { header: 1, r1: 2, r2: 3, r3: 3, r4: 3, r5: 2 } },
+      ),
+    }),
+    sim: { hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] } },
+  })
+  w.run(1800, { speed: 3.3, grade: 1.5, hr: 147 })
+  snap(w, "Native fields (descent, stride, TE, load) and HR target 140-150")
+}
+
+// 8. trial used up: basic screen
 {
   const w = await bootWidget({
     config: cfg({}),
@@ -207,7 +242,7 @@ const layoutJson = (slots, bar = "hr", extra = {}) =>
   snap(w, "Trial over - basic screen")
 }
 
-// 8-9. on-watch layout editor
+// 9-10. on-watch layout editor
 {
   const e = await bootEditor({})
   snap(e, "Watch editor - slot list")

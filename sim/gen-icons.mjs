@@ -52,6 +52,25 @@ const ICONS = {
   altitude:
     fill(C.dist, "M1.5 21 9.5 6.5l4.5 8 2.5-3.5 6 10z") +
     stroke(C.dist, "M9.5 2.5v2", 2),
+  descent:
+    fill(C.dist, "M1.5 21 9 9l4 6 3-4.5L22.5 21z") +
+    stroke(C.dist, "M18 2.5V8M15.5 5.5 18 8l2.5-2.5", 2),
+  vspeed: stroke(
+    C.dist,
+    "M8 20V4M4.5 7.5 8 4l3.5 3.5M16 4v16M12.5 16.5 16 20l3.5-3.5",
+  ),
+  load: [5, 10, 15, 20]
+    .map(
+      (x, i) =>
+        `<rect x="${x - 2}" y="${16 - i * 4}" width="4" height="${5 + i * 4}" rx="1" fill="${C.body}"/>`,
+    )
+    .join(""),
+  thermo:
+    stroke(C.time, "M10 14.5V4.5a2 2 0 1 1 4 0v10") +
+    `<circle cx="12" cy="17.5" r="3.6" fill="${C.time}"/>`,
+  sun:
+    `<circle cx="12" cy="15" r="4.5" fill="${C.time}"/>` +
+    stroke(C.time, "M2 20h20M12 5v3M5 8l2 2M19 8l-2 2", 2),
   feet: `<ellipse cx="8" cy="8.5" rx="3.2" ry="5" fill="${C.body}" transform="rotate(-12 8 8.5)"/><ellipse cx="16" cy="14.5" rx="3.2" ry="5" fill="${C.body}" transform="rotate(12 16 14.5)"/>`,
   flame: fill(
     C.body,

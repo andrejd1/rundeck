@@ -41,10 +41,18 @@ The screen is a top row plus five rows and the zone bar. Each row has a **column
 (top row: 1–2, rows 1 and 4: 2–3, the big-number rows 2 and 3: 1–3, bottom row: 1–2; the
 limits keep text readable on the round screen). HR as the single top value gets the
 6-minute graph and a zone suffix; in a two-column top row the zone moves into its label
-("HR Z3", zone-colored). Any of 25 fields can go in any spot — HR, HR zone,
+("HR Z3", zone-colored). Any of 41 fields can go in any spot — HR, HR zone,
 avg/lap/max HR, pace, avg/lap/last-lap pace, speed, power, avg/lap power, workout time, lap
 time, clock, distance, lap distance, lap count, grade, ascent, altitude, cadence, avg
 cadence, calories, or empty. Text shrinks to fit its spot.
+
+**Native-only fields** — descent, lap ascent/descent, max altitude, vertical speed, max
+speed, stride length (current/avg), steps, % max HR, % HR reserve, aerobic/anaerobic
+training effect, training load, temperature, sunset — are values the watch computes but
+does not hand to extensions. RunDeck places a `SPORT_DATA` widget (the watch draws the
+value itself, in its own units) over the slot and adds its own label. GAP, vertical
+oscillation and ground contact time are not exposed by Zepp OS at all, so they can't be
+shown.
 
 **Field names** can be full text, short text ("LapHR") or **icons** with a qualifier
 ("♥ Avg"); icons live in `assets/common.r/icons/{20,26}` (`node sim/gen-icons.mjs`).
@@ -59,8 +67,10 @@ directions (watch edits reach the phone on the next sync, `LAYOUT_UPDATE`). Only
 channels the layout shows are polled (calories, average cadence and power are skipped when
 nothing displays them).
 
-Other settings: pace unit, auto-lap (1 km|mi or off), a pace **or** power target (every
-slot showing the live pace/power turns green/blue/red), HR zones, threshold pace and FTP.
+Other settings: pace unit, auto-lap (1 km|mi or off), a **pace, power or heart rate
+target** entered as From / To (one end alone = a single value ± tolerance; each metric
+keeps its own range; every slot showing that live value turns green/blue/red), HR zones,
+threshold pace and FTP.
 
 **Zone bar:** *Auto* (default) follows the target — power zones from FTP / critical power
 for a power target, pace zones from LT pace for a pace target, HR zones otherwise — and

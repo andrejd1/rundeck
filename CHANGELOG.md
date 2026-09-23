@@ -2,7 +2,13 @@
 
 ## 0.2.0 — customizable screen
 
-- 13 slots, 25 fields: pick what goes where, in the phone settings or on the watch (open
+- 16 native-only fields drawn by the watch itself (SPORT_DATA): descent, lap
+  ascent/descent, max altitude, vertical speed, max speed, stride length, steps, % max HR,
+  % HR reserve, aerobic/anaerobic TE, training load, temperature, sunset.
+- Heart rate target; targets entered as From / To, kept per metric.
+- No trial text on the run screen (trial status stays in the phone settings).
+
+- Configurable slots, 41 fields: pick what goes where, in the phone settings or on the watch (open
   RunDeck from the app list). The newer layout wins in both directions.
 - Zone bar: HR, pace, power or off, per layout.
 - HR zones default to the watch's own zones (Zepp OS 4.2+), else 220 - age, else 190.

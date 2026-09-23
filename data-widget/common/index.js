@@ -25,7 +25,15 @@ import {
 import { BasePage } from "@zeppos/zml/base-page"
 import { getDeviceInfo } from "@zos/device"
 import { KEY_EVENT_CLICK, KEY_SHORTCUT, offKey, onKey } from "@zos/interaction"
-import { align, createWidget, prop, widget } from "@zos/ui"
+import {
+  align,
+  createWidget,
+  deleteWidget,
+  edit_widget_group_type,
+  prop,
+  sport_data,
+  widget,
+} from "@zos/ui"
 import { appGlobals } from "../../shared/app-globals.js"
 import { barValue, resolveBar } from "../../shared/bar.js"
 import { normalizeConfig } from "../../shared/config.js"
@@ -51,7 +59,7 @@ import { lapTimeStr, paceStr } from "../../shared/format.js"
 import { MSG } from "../../shared/messages.js"
 import { HR_GRAPH_BARS, RunStats } from "../../shared/stats.js"
 import { TargetTracker } from "../../shared/target.js"
-import { runsLeft, TRIAL_RUNS, TrialSession } from "../../shared/trial.js"
+import { TRIAL_RUNS, TrialSession } from "../../shared/trial.js"
 import {
   ZONE_COLORS,
   ZONE_COUNT,
@@ -63,7 +71,6 @@ import { LiveMetrics } from "./metrics.js"
 
 const TICK_MS = 1000
 const GRAPH_EVERY_TICKS = 5 // HR graph redraw cadence (bars move every 10 s)
-const TRIAL_NOTICE_SEC = 15
 const LAP_NOTICE_SEC = 6
 const LAP_DEBOUNCE_SEC = 2
 const CONFIG_RETRY_SEC = 60
@@ -96,6 +103,7 @@ DataWidget(
       configReceived: false,
       initAt: null,
       reportedUsed: null, // trial count last reported to the phone
+      native: {}, // slotId -> {type, w}: SPORT_DATA widgets for native fields
     },
 
     nowSec() {
@@ -278,6 +286,8 @@ DataWidget(
       if (geo.header && layout.slots.header !== "hr")
         geo.header = HEADER_CENTERED
       this.state.geo = geo
+      // native value widgets are placed per slot: rebuild them where needed
+      for (const id of Object.keys(this.state.native)) this.dropNative(id)
       // sizes/positions changed: forget what was drawn for the slots
       for (const k of Object.keys(this.state.cache))
         if (/^(r\d[lcr]|header[lr]?)[lvi]:/.test(k)) delete this.state.cache[k]
@@ -350,27 +360,12 @@ DataWidget(
       })
       if (autoLap) this.onLap(autoLap)
 
-      const wasMode = this.state.mode
-      const usedBefore = trial.trial.used
+      // Trial runs are counted silently: the run screen stays clean, and the
+      // trial status lives in the phone settings.
       const now = this.nowSec()
       const settled =
         this.state.configReceived || now - this.state.initAt >= PHONE_GRACE_SEC
       this.state.mode = trial.tick(now, settled ? s.elapsed : null)
-      if (wasMode === "pending" && this.state.mode === "trial") {
-        const n = trial.counted ? trial.trial.used : trial.trial.used + 1
-        this.showNotice(
-          `Trial run ${Math.min(n, TRIAL_RUNS)} of ${TRIAL_RUNS}`,
-          COLORS.notice,
-          TRIAL_NOTICE_SEC,
-        )
-      }
-      if (trial.trial.used > usedBefore && runsLeft(trial.trial) === 0) {
-        this.showNotice(
-          "Last trial run - unlock in Zepp app",
-          COLORS.noticeWarn,
-          TRIAL_NOTICE_SEC,
-        )
-      }
       this.persistTrial()
 
       if (
@@ -507,6 +502,59 @@ DataWidget(
       if (color != null) this.setProp(key, w, "color", color)
     },
 
+    // One SPORT_DATA widget per slot showing a native-only field, created on
+    // demand at the slot's value box (the value is read and drawn by the
+    // watch itself; RunDeck never sees it). `type` null hides it.
+    showNative(id, type, box) {
+      const cur = this.state.native[id]
+      if (!type) {
+        if (cur) this.setProp(`${id}n`, cur.w, "visible", false)
+        return
+      }
+      if (cur && cur.type === type) {
+        this.setProp(`${id}n`, cur.w, "visible", true)
+        return
+      }
+      if (cur) this.dropNative(id)
+      let w = null
+      try {
+        w = createWidget(widget.SPORT_DATA, {
+          edit_id: 101 + SLOT_IDS.indexOf(id),
+          category: edit_widget_group_type.SPORTS,
+          default_type: sport_data[type],
+          x: box.x,
+          y: box.y,
+          w: box.w,
+          h: box.h,
+          text_x: 0,
+          text_y: 0,
+          text_w: box.w,
+          text_h: box.h,
+          text_size: box.text_size,
+          text_color: COLORS.value,
+          rect_visible: false,
+          sub_text_visible: false,
+        })
+      } catch (e) {
+        w = null // type not supported on this firmware: the slot stays blank
+      }
+      if (!w) return
+      this.state.native[id] = { type, w }
+      delete this.state.cache[`${id}n:visible`]
+    },
+
+    dropNative(id) {
+      const cur = this.state.native[id]
+      if (!cur) return
+      try {
+        deleteWidget(cur.w)
+      } catch (e) {
+        /* already gone */
+      }
+      delete this.state.native[id]
+      delete this.state.cache[`${id}n:visible`]
+    },
+
     // Field name as text, short text, or icon + qualifier ("Avg", "Lap").
     renderLabel(id, slot, box, f, style, colorOverride) {
       const iconMode = style === "icons" && !!box && !!f.icon
@@ -572,9 +620,7 @@ DataWidget(
 
       // target: colors every slot that shows the target's live metric
       const t = cfg.target
-      const status = this.state.tracker.update(
-        t ? (t.metric === "power" ? s.power : s.speed) : null,
-      )
+      const status = this.state.tracker.update(t ? barValue(t.metric, s) : null)
       const targetField = t ? t.metric : null
 
       const n = this.state.notice
@@ -598,14 +644,16 @@ DataWidget(
           (!locked || lockedKeep.indexOf(id) >= 0) &&
           !(noticeOn && row === NOTICE_ROW) &&
           !(locked && row === NOTICE_SUB_ROW)
-        this.setProp(`${id}v`, slot.value, "visible", visible)
+        const fieldId = layout.slots[id]
+        let f = FIELDS[fieldId] || FIELDS.none
+        // native-only fields: the watch draws the value (SPORT_DATA widget)
+        this.showNative(id, visible && f.native ? f.native : null, g.value)
+        this.setProp(`${id}v`, slot.value, "visible", visible && !f.native)
         if (!visible) {
           this.setProp(`${id}l`, slot.label, "visible", false)
           this.setProp(`${id}i`, slot.icon, "visible", false)
           continue
         }
-        const fieldId = layout.slots[id]
-        let f = FIELDS[fieldId] || FIELDS.none
         let labelColor = null
         // HR in a two-column top row: no room for the graph or the zone
         // suffix, so the zone rides in the label, in the zone's color
