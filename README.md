@@ -137,9 +137,17 @@ npm run preview       # renders sim/out/preview.html
 npm run screenshots   # regenerates docs/ui-preview.png and docs/screenshots/
 ```
 
-Device: install the Zeus CLI (`npm i -g @zeppos/zeus-cli`) (`appId` 1128268), then
+Device: install the Zeus CLI (`npm i -g @zeppos/zeus-cli`) (`appId` 1128268), run
+`npm install` in this folder first (zeus bundles `@zeppos/zml` from `node_modules`; without it
+the build warns "could not be resolved – treating it as an external dependency" and every
+page opens black on the watch), then
 `zeus preview` and scan the QR code in the Zepp app (developer mode). Requires Zepp OS 3.6+
 (workout-extension watches: T-Rex 3, Balance 2, Active 2, Cheetah family, ...).
+
+Logs from the watch: enable developer mode in the Zepp app (Profile → Settings → About, tap
+the Zepp logo repeatedly), switch on **Bridge**, then run `zeus bridge` → `connect` →
+`install`; `console.log` output streams to that terminal. `zeus dev` (simulator) shows the
+console as well.
 
 ## Needs on-device verification
 
