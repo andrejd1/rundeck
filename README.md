@@ -148,10 +148,16 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 
 ```
 npm install
-npm test              # 95 tests: logic + the real widget/side service against stubs
+npm test              # 100 tests: logic + the real widget/side service against stubs
 npm run preview       # renders sim/out/preview.html
 npm run screenshots   # regenerates docs/ui-preview.png and docs/screenshots/
 ```
+
+**`.js` vs `.mjs`:** `zeus build` compiles *every* `.js` file in the project to ES2015,
+imported or not (its ignore list is fixed: dot-folders, `dist/`, `node_modules/`). So `.js`
+is only for code that runs on the watch or phone (`app.js`, `app-side/`, `setting/`, `page/`,
+`data-widget/`, `shared/`); tests, the simulator and the site build are `.mjs`.
+`tests/zeus-build.test.mjs` fails if a stray `.js` file appears.
 
 Device: install the Zeus CLI (`npm i -g @zeppos/zeus-cli`) (`appId` 1128268), run
 `npm install` in this folder first (zeus bundles `@zeppos/zml` from `node_modules`; without it

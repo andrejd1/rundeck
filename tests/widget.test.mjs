@@ -10,7 +10,7 @@ import {
 import { buildConfig } from "../shared/config.js"
 import { LAYOUT_KEY, loadObject, TRIAL_KEY } from "../shared/device-store.js"
 import { MSG } from "../shared/messages.js"
-import { bootEditor, bootWidget } from "../sim/world.js"
+import { bootEditor, bootWidget } from "../sim/world.mjs"
 
 // geometry of the default column counts
 const SLOT_GEOMETRY = {

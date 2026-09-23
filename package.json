@@ -6,8 +6,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "node --import ./sim/register.js --test tests/*.test.js",
-    "preview": "node --import ./sim/register.js sim/run.js",
+    "test": "node --import ./sim/register.mjs --test tests/*.test.mjs",
+    "preview": "node --import ./sim/register.mjs sim/run.mjs",
     "screenshots": "npm run preview && node sim/screenshots.mjs",
     "format": "biome format --write .",
     "format:check": "biome format ."

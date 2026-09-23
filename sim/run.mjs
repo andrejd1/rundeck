@@ -7,8 +7,8 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { buildConfig } from "../shared/config.js"
-import { framesToHtml } from "./render.js"
-import { bootEditor, bootWidget } from "./world.js"
+import { framesToHtml } from "./render.mjs"
+import { bootEditor, bootWidget } from "./world.mjs"
 
 const outDir = join(dirname(fileURLToPath(import.meta.url)), "out")
 mkdirSync(outDir, { recursive: true })
