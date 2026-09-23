@@ -2,7 +2,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import {
-  GLYPH_WIDTH,
   HEADER_SUFFIX,
   NOTICE,
   NOTICE_SUB,
@@ -536,34 +535,19 @@ const valueSizes = (w) => {
   return out
 }
 
-test("top HR icon is centered over the digits", async () => {
+test("top HR icon is centered on the screen", async () => {
   const w = await bootWidget({
     licensed: true,
     config: cfg({
       layout_json: JSON.stringify({ labels: "icons", updated_at: 2 }),
     }),
   })
-  const box = RG.header[1].header.value
   for (const hr of [95, 152]) {
     w.run(2, { hr })
-    const v = w
-      .widgets()
-      .find(
-        (x) =>
-          x.type === "TEXT" &&
-          x.props.visible !== false &&
-          x.props.x === box.x &&
-          x.props.y === box.y,
-      )
-    assert.equal(v.props.text, String(hr))
-    const digitsW = Math.ceil(
-      v.props.text.length * v.props.text_size * GLYPH_WIDTH,
-    )
     const icon = w
       .widgets()
       .find((x) => x.type === "IMG" && /\/heart\.png$/.test(x.props.src || ""))
-    const iconCenter = icon.props.x + icon.props.w / 2
-    assert.ok(Math.abs(iconCenter - (box.x + digitsW / 2)) <= 1, `HR ${hr}`)
+    assert.equal(icon.props.x + icon.props.w / 2, 240, `HR ${hr}`)
   }
 })
 

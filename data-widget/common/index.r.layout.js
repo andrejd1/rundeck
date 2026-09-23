@@ -87,6 +87,8 @@ export const ROW_GEOMETRY = {
       // HR: graph on the left, label above the value, zone suffix after it
       header: {
         label: label(214, 30, 120, COLORS.value, align.LEFT, 20),
+        // icon-mode label: centered on the screen, not over the value
+        iconLabel: label(0, 30, 480, COLORS.value, align.CENTER_H, 20),
         value: value(212, 50, 124, 56, align.LEFT),
       },
     },
