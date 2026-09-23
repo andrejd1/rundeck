@@ -187,3 +187,9 @@ Polar checkout link. `.github/workflows/pages.yml` deploys it to GitHub Pages on
 - Battery: 5 IPC reads/s plus the widget updates, versus Intervals Guide's budget.
 - The settings page `Link` and the side-service `fetch` POST with a JSON body against Polar.
 - Whether the zone bar marker reads well in sunlight at 8 px.
+
+## License
+
+RunDeck is paid, **source-available** software — not open source. The code is public so
+it can be read and reviewed; building, installing or distributing your own copy, or
+bypassing the trial or license check, is not permitted. See [LICENSE](LICENSE).

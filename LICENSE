@@ -1,0 +1,40 @@
+RunDeck Source-Available License
+
+Copyright (c) 2026 Thien Long Ngo (andrejd1). All rights reserved.
+
+RunDeck is paid software. Its source code is published so that anyone can
+read and review how it works. Publishing the source does not make it open
+source: except for the permissions below, no right to use, copy, modify,
+build, install, publish or distribute this software, in whole or in part,
+is granted.
+
+1. Reading and contributing. You may view this repository and fork it on
+   GitHub to read the code or to propose changes back to it through a pull
+   request. By submitting a contribution you grant the copyright holder a
+   perpetual, worldwide, irrevocable, royalty-free license to use, modify
+   and distribute it as part of RunDeck.
+
+2. Using RunDeck. You may use RunDeck as distributed by the copyright
+   holder (the Zepp App store or builds the copyright holder provides),
+   subject to its trial and license-key terms.
+
+Anything else requires prior written permission from the copyright holder,
+including in particular:
+
+- building or installing your own copy of RunDeck, or a modified version;
+- removing, disabling or working around the trial or the license-key check;
+- redistributing the code, the app or a derivative of either, or publishing
+  them in any app store;
+- any commercial use.
+
+The RunDeck name and icon are not licensed for any use.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+For permissions, contact the copyright holder through
+https://github.com/andrejd1.
