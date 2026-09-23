@@ -454,7 +454,7 @@ test("units: small unit after values, none on the big center numbers", async () 
   const w = await bootWidget({ licensed: true, config: cfg({}) })
   w.run(300, { speed: 3.4, hr: 150 })
   assert.equal(w.unitAt(SLOT_GEOMETRY.r5l.value), "km") // distance
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r1l.value), "bpm") // lap HR
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r1l.value), null) // HR: no "bpm"
   assert.equal(w.unitAt(SLOT_GEOMETRY.r2r.value), "/km") // avg pace
   assert.equal(w.unitAt(SLOT_GEOMETRY.r2c.value), null) // big pace: none
   assert.equal(w.unitAt(SLOT_GEOMETRY.r3c.value), null) // big time: none

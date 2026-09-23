@@ -48,24 +48,24 @@
     
     
     <text x="166" y="52.3" text-anchor="middle" font-size="18" fill="#f59e0b" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">HR Z4</text>
-    <text x="108" y="94.7" text-anchor="start" font-size="42" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
-    <text x="191" y="92.2" text-anchor="start" font-size="18" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">bpm</text>
+    <text x="166" y="94.7" text-anchor="middle" font-size="42" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
+    
     
     <text x="314" y="52.3" text-anchor="middle" font-size="18" fill="#22c55e" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Time</text>
     <text x="314" y="94.7" text-anchor="middle" font-size="42" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">23:20</text>
     
     
     <text x="104" y="125.6" text-anchor="middle" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap HR</text>
-    <text x="65" y="152.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
-    <text x="114" y="150.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">bpm</text>
+    <text x="104" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
+    
     
     <text x="240" y="125.6" text-anchor="middle" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Max HR</text>
-    <text x="201" y="152.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
-    <text x="250" y="150.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">bpm</text>
+    <text x="240" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
+    
     
     <text x="376" y="125.6" text-anchor="middle" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Avg HR</text>
-    <text x="337" y="152.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
-    <text x="386" y="150.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">bpm</text>
+    <text x="376" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
+    
     
     <text x="81" y="186" text-anchor="middle" font-size="20" fill="#60a5fa" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap Pace</text>
     <text x="22" y="223.9" text-anchor="start" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'53</text>

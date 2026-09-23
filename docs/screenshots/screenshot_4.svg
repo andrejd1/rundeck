@@ -56,16 +56,16 @@
     
     
     <text x="101" y="125.6" text-anchor="start" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap</text>
-    <text x="65" y="152.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">136</text>
-    <text x="114" y="150.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">bpm</text>
+    <text x="104" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">136</text>
+    
     <image x="77" y="110" width="20" height="20" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABTUlEQVR4nLSUP0vDQBTA37sciIN/0hYEN8GPoCC4hKaCKH4GqYuDjn4KV6GrOHcWBHs0gyCCIP4ZnMTVRY1OYpLnu2KitE1zTdMfXN695OWXcO84CQUjoWDGK3yr1eoctglgieMTjwsMgkPb8571c99xFkPLOgDEVU4XEOAaiI5tpU5iB8aT12p1H4U46v4iEX1aRLuREJOcNnhM9KnZKynVSIQfjlMJpXzhqYA8EAWEWCm1Wn5HEFjWSm5Z57dQCqJliCV8mYcRiQDm/oREDzA694lwqly+4nW4gZxwUy65KXeJEJvNEKKorhcXhudLhuFOnCSNsNvtW275Bku/wRSuRaKtac977BFqZpU6Z+mmkVTLuFa/8/92z1YxkqbI+gozpQNkqcJUaYZMg5DBu+uu8WFx+ls8UGYk1Piuu67jjFJnWbVGwmEo/ID9AQAA//8Y4uu4AAAABklEQVQDAK9Rjgv8xkr3AAAAAElFTkSuQmCC"/>
     <text x="237" y="125.6" text-anchor="start" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Max</text>
-    <text x="201" y="152.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">150</text>
-    <text x="250" y="150.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">bpm</text>
+    <text x="240" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">150</text>
+    
     <image x="213" y="110" width="20" height="20" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABTUlEQVR4nLSUP0vDQBTA37sciIN/0hYEN8GPoCC4hKaCKH4GqYuDjn4KV6GrOHcWBHs0gyCCIP4ZnMTVRY1OYpLnu2KitE1zTdMfXN695OWXcO84CQUjoWDGK3yr1eoctglgieMTjwsMgkPb8571c99xFkPLOgDEVU4XEOAaiI5tpU5iB8aT12p1H4U46v4iEX1aRLuREJOcNnhM9KnZKynVSIQfjlMJpXzhqYA8EAWEWCm1Wn5HEFjWSm5Z57dQCqJliCV8mYcRiQDm/oREDzA694lwqly+4nW4gZxwUy65KXeJEJvNEKKorhcXhudLhuFOnCSNsNvtW275Bku/wRSuRaKtac977BFqZpU6Z+mmkVTLuFa/8/92z1YxkqbI+gozpQNkqcJUaYZMg5DBu+uu8WFx+ls8UGYk1Piuu67jjFJnWbVGwmEo/ID9AQAA//8Y4uu4AAAABklEQVQDAK9Rjgv8xkr3AAAAAElFTkSuQmCC"/>
     <text x="373" y="125.6" text-anchor="start" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Avg</text>
-    <text x="337" y="152.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">141</text>
-    <text x="386" y="150.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">bpm</text>
+    <text x="376" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">141</text>
+    
     <image x="349" y="110" width="20" height="20" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABTUlEQVR4nLSUP0vDQBTA37sciIN/0hYEN8GPoCC4hKaCKH4GqYuDjn4KV6GrOHcWBHs0gyCCIP4ZnMTVRY1OYpLnu2KitE1zTdMfXN695OWXcO84CQUjoWDGK3yr1eoctglgieMTjwsMgkPb8571c99xFkPLOgDEVU4XEOAaiI5tpU5iB8aT12p1H4U46v4iEX1aRLuREJOcNnhM9KnZKynVSIQfjlMJpXzhqYA8EAWEWCm1Wn5HEFjWSm5Z57dQCqJliCV8mYcRiQDm/oREDzA694lwqly+4nW4gZxwUy65KXeJEJvNEKKorhcXhudLhuFOnCSNsNvtW275Bku/wRSuRaKtac977BFqZpU6Z+mmkVTLuFa/8/92z1YxkqbI+gozpQNkqcJUaYZMg5DBu+uu8WFx+ls8UGYk1Piuu67jjFJnWbVGwmEo/ID9AQAA//8Y4uu4AAAABklEQVQDAK9Rjgv8xkr3AAAAAElFTkSuQmCC"/>
     <text x="77" y="186" text-anchor="start" font-size="20" fill="#60a5fa" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap</text>
     <text x="22" y="223.9" text-anchor="start" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'40</text>

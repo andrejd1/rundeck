@@ -112,7 +112,6 @@ export const FIELDS = {
     value: () => "",
   },
   hr: {
-    unit: "bpm",
     short: "HR",
     icon: "heart",
     qual: "",
@@ -132,7 +131,6 @@ export const FIELDS = {
     },
   },
   avg_hr: {
-    unit: "bpm",
     short: "AvgHR",
     icon: "heart",
     qual: "Avg",
@@ -141,7 +139,6 @@ export const FIELDS = {
     value: (c) => intStr(c.stats.avgHr.value),
   },
   lap_hr: {
-    unit: "bpm",
     short: "LapHR",
     icon: "heart",
     qual: "Lap",
@@ -150,7 +147,6 @@ export const FIELDS = {
     value: (c) => intStr(c.stats.lapHr()),
   },
   max_hr: {
-    unit: "bpm",
     short: "MaxHR",
     icon: "heart",
     qual: "Max",
