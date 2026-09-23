@@ -11,8 +11,7 @@
   calories, HR zone.
 - Column count per row (top: 1-2, rows 1/4: 2-3, rows 2/3: 1-3, bottom: 1-2); a
   two-column top row shows HR with its zone in the label; row 4 matches row 1's height
-  and sizes; top labels kept clear of the gear icon and field names as
-  text, short text or icons; both editable on the phone and the watch.
+  and sizes; field names as text, short text or icons; both editable on the phone and the watch.
 - Row 2 left label/value aligned with the right one.
 - Phone settings rebuilt: chips instead of dropdowns (the Zepp app's Select showed no
   value), saved values printed above every input, one block per line, cards.

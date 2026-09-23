@@ -43,7 +43,7 @@
     <rect x="191" y="76" width="2" height="26" rx="0" fill="#22c55e"/>
     <rect x="194" y="76" width="2" height="26" rx="0" fill="#22c55e"/>
     <rect x="197" y="76" width="2" height="26" rx="0" fill="#22c55e"/>
-    <text x="330" y="58.3" text-anchor="start" font-size="18" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">HR</text>
+    <text x="214" y="50" text-anchor="start" font-size="20" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">HR</text>
     <text x="212" y="100.6" text-anchor="start" font-size="56" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">150</text>
     
     

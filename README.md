@@ -41,8 +41,7 @@ The screen is a top row plus five rows and the zone bar. Each row has a **column
 (top row: 1–2, rows 1 and 4: 2–3, the big-number rows 2 and 3: 1–3, bottom row: 1–2; the
 limits keep text readable on the round screen). HR as the single top value gets the
 6-minute graph and a zone suffix; in a two-column top row the zone moves into its label
-("HR Z3", zone-colored). Nothing is placed at the top center, which the system's
-workout-extension gear icon can cover, and any of 25 fields can go in any spot — HR, HR zone,
+("HR Z3", zone-colored). Any of 25 fields can go in any spot — HR, HR zone,
 avg/lap/max HR, pace, avg/lap/last-lap pace, speed, power, avg/lap power, workout time, lap
 time, clock, distance, lap distance, lap count, grade, ascent, altitude, cadence, avg
 cadence, calories, or empty. Text shrinks to fit its spot.

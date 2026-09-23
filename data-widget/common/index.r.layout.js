@@ -81,13 +81,11 @@ const stack = (x, y, w, labelSize, valueSize) => ({
 // Geometry per row and column count: { [cols]: { [slotId]: {label, value} } }.
 // `label: null` means the slot shows no label (big center values).
 export const ROW_GEOMETRY = {
-  // The top center (x ~220-260, y < 56) can be covered by the system's
-  // workout-extension gear icon, so no label sits there.
   header: {
     1: {
-      // HR: graph on the left, value, label above the zone suffix
+      // HR: graph on the left, label above the value, zone suffix after it
       header: {
-        label: label(330, 40, 90, COLORS.value, align.LEFT, 18),
+        label: label(214, 30, 120, COLORS.value, align.LEFT, 20),
         value: value(212, 50, 124, 56, align.LEFT),
       },
     },
@@ -172,10 +170,9 @@ export const ROW_GEOMETRY = {
   },
 }
 
-// Single top value that is not HR: no graph, so the value is centered and
-// its label sits to the right of the gear area.
+// Single top value that is not HR: no graph, so label and value are centered.
 export const HEADER_CENTERED = {
-  label: label(266, 30, 100, COLORS.value, align.LEFT, 18),
+  label: label(140, 28, 200, COLORS.value, align.CENTER_H, 20),
   value: value(130, 50, 220, 56),
 }
 
