@@ -572,7 +572,12 @@ DataWidget(
       if ((id === "r2c" || id === "r3c") && layout.cols[id.slice(0, 2)] === 3)
         return ""
       if (id === "header" && fieldId === "hr") return ""
-      return fieldUnit(fieldId, ctx)
+      const unit = fieldUnit(fieldId, ctx)
+      // a pace unit (/km, /mi) leaves no room for 5-6 pace digits in the
+      // narrow side columns of a 3-column row
+      if (unit[0] === "/" && id[0] === "r" && layout.cols[id.slice(0, 2)] === 3)
+        return ""
+      return unit
     },
 
     // Rendered text width in px: the watch's own layout engine when the

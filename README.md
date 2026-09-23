@@ -57,7 +57,8 @@ shown.
 **Units** (km/mi, m/ft, W and the pace suffix /km or /mi) are drawn small after the
 value, placed from the watch's own text measurement (`getTextLayout`, with a width
 estimate as fallback) so the pair never overlaps; value and unit shrink together to fit.
-The big center numbers of three-column rows and the single top HR (which shows its zone)
+The big center numbers of three-column rows, pace in the side columns of three-column
+rows (too narrow for the digits plus /km) and the single top HR (which shows its zone)
 stay unit-free; units can be hidden in the phone settings or on the watch.
 
 **Field names** can be full text, short text ("LapHR") or **icons** with a qualifier

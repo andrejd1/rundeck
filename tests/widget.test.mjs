@@ -455,7 +455,7 @@ test("units: small unit after values, none on the big center numbers", async () 
   w.run(300, { speed: 3.4, hr: 150 })
   assert.equal(w.unitAt(SLOT_GEOMETRY.r5l.value), "km") // distance
   assert.equal(w.unitAt(SLOT_GEOMETRY.r1l.value), null) // HR: no "bpm"
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r2r.value), "/km") // avg pace
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r2r.value), null) // pace in 3 columns
   assert.equal(w.unitAt(SLOT_GEOMETRY.r3r.value), null) // cadence: no "spm"
   assert.equal(w.unitAt(SLOT_GEOMETRY.r2c.value), null) // big pace: none
   assert.equal(w.unitAt(SLOT_GEOMETRY.r3c.value), null) // big time: none
@@ -477,6 +477,22 @@ test("units: small unit after values, none on the big center numbers", async () 
         x.type === "TEXT" && x.props.visible !== false && x.props.text === "km",
     )
   assert.ok(u.props.x >= v.props.x + v.props.w - 2)
+})
+
+test("pace unit only where the column is wide enough", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({
+        slots: { r5r: "avg_pace", r1l: "lap_pace" },
+        updated_at: 2,
+      }),
+    }),
+  })
+  w.run(300, { speed: 3.4, hr: 150 })
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r5r.value), "/km") // 2 columns
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r1l.value), "/km") // 2 columns
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r2r.value), null) // 3 columns
 })
 
 test("units follow miles and can be switched off", async () => {

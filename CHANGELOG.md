@@ -3,7 +3,7 @@
 ## 0.2.0 — customizable screen
 
 - Units after values (km/mi, /km or /mi, m/ft, W; none on heart rate, cadence, calories or speed), following the pace
-  unit; not on the big center numbers; can be hidden (phone and watch).
+  unit; not on the big center numbers or on pace in the side columns of three-column rows; can be hidden (phone and watch).
 
 - Full privacy statement (PRIVACY.md), published at
   https://andrejd1.github.io/rundeck/privacy.html and linked from the settings page and the site.
