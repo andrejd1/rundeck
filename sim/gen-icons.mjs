@@ -1,5 +1,5 @@
 // Field icons for the "Icons" label style: renders each glyph in its field
-// group's color to assets/common.r/icons/{20,26}/<name>.png (IMG widgets are
+// group's color to assets/common.r/icons/<size>/<name>.png (IMG widgets are
 // not scaled on the watch, so each size is its own file).
 //
 //   node sim/gen-icons.mjs
@@ -83,7 +83,7 @@ const browser = await chromium.launch({
     process.env.PLAYWRIGHT_CHROMIUM || "/opt/pw-browsers/chromium",
 })
 const page = await browser.newPage()
-for (const size of [20, 26]) {
+for (const size of [16, 18, 20, 23, 26]) {
   const dir = `assets/common.r/icons/${size}`
   mkdirSync(dir, { recursive: true })
   await page.setViewportSize({ width: size, height: size })
@@ -99,4 +99,4 @@ for (const size of [20, 26]) {
   }
 }
 await browser.close()
-console.log(`${Object.keys(ICONS).length} icons x 2 sizes`)
+console.log(`${Object.keys(ICONS).length} icons x 5 sizes`)

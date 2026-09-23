@@ -2,6 +2,10 @@
 
 ## 0.2.0 — customizable screen
 
+- Every round screen size: the HR graph, icons and bottom row scale correctly from 480 down to 360 px
+  (icons ship in five pixel sizes, graph bars are placed from the scaled width, the bottom row sits
+  clear of the bezel); tests render every layout style at 480, 466, 454, 416, 390 and 360 px.
+
 - Units after values (km/mi, /km or /mi, m/ft, W; none on heart rate, cadence, calories or speed), following the pace
   unit; never shrink the value (a unit that doesn't fit beside it is left off, and stays off for
   the run); not on the big center numbers; can be hidden (phone and watch).

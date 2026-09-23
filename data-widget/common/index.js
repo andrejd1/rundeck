@@ -36,6 +36,7 @@ import {
   sport_data,
   widget,
 } from "@zos/ui"
+import { px } from "@zos/utils"
 import { appGlobals } from "../../shared/app-globals.js"
 import { barValue, resolveBar } from "../../shared/bar.js"
 import { normalizeConfig } from "../../shared/config.js"
@@ -83,6 +84,21 @@ const PHONE_GRACE_SEC = 10
 // Rows the notice lines cover while they are up.
 const NOTICE_ROW = "r4"
 const NOTICE_SUB_ROW = "r1"
+
+// x and width of HR graph bar i: positions come from the scaled graph width,
+// so rounding doesn't add up across the bars on smaller screens
+function graphBarX(i) {
+  const at = (k) => HR_GRAPH.x + Math.round((k * HR_GRAPH.w) / HR_GRAPH_BARS)
+  return { x: at(i), w: Math.max(1, at(i + 1) - at(i) - 1) }
+}
+
+// shipped icon size nearest to a scaled size
+function iconFile(size) {
+  let best = ICON.sizes[0]
+  for (const s of ICON.sizes)
+    if (Math.abs(s - size) < Math.abs(best - size)) best = s
+  return best
+}
 
 // Text size that fits `text` in the box's width (never above its own size).
 function fittedSize(box, text) {
@@ -414,8 +430,8 @@ DataWidget(
       createWidget(widget.FILL_RECT, {
         x: 0,
         y: 0,
-        w: 480,
-        h: 480,
+        w: px(480),
+        h: px(480),
         color: COLORS.bg,
       })
       ui.dividers = DIVIDERS.map((d) => createWidget(widget.FILL_RECT, d))
@@ -424,9 +440,8 @@ DataWidget(
       for (let i = 0; i < HR_GRAPH_BARS; i++) {
         ui.graph.push(
           createWidget(widget.FILL_RECT, {
-            x: HR_GRAPH.x + i * HR_GRAPH.barW,
+            ...graphBarX(i),
             y: HR_GRAPH.y + HR_GRAPH.h - HR_GRAPH.minBarH,
-            w: HR_GRAPH.barW - 1,
             h: HR_GRAPH.minBarH,
             color: COLORS.graphEmpty,
           }),
@@ -445,9 +460,9 @@ DataWidget(
           icon: createWidget(widget.IMG, {
             x: 0,
             y: 0,
-            w: ICON.maxSize,
-            h: ICON.maxSize,
-            src: "icons/26/heart.png",
+            w: ICON.large,
+            h: ICON.large,
+            src: `icons/${iconFile(ICON.large)}/heart.png`,
           }),
         }
       }
@@ -680,7 +695,9 @@ DataWidget(
         )
         return
       }
-      const size = box.text_size <= 18 ? 20 : 26
+      const size = iconFile(
+        box.text_size <= ICON.smallUpTo ? ICON.small : ICON.large,
+      )
       const qual = f.qual || ""
       const qualW = qual
         ? Math.ceil(qual.length * box.text_size * GLYPH_WIDTH)
@@ -913,9 +930,8 @@ DataWidget(
         if (this.state.cache[key] === sig) continue
         this.state.cache[key] = sig
         ui.graph[i].setProperty(prop.MORE, {
-          x: HR_GRAPH.x + i * HR_GRAPH.barW,
+          ...graphBarX(i),
           y: HR_GRAPH.y + HR_GRAPH.h - h,
-          w: HR_GRAPH.barW - 1,
           h,
           color: hidden ? COLORS.bg : color,
         })

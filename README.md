@@ -64,7 +64,8 @@ rows and the single top HR (which shows its zone) stay unit-free; units can be h
 in the phone settings or on the watch.
 
 **Field names** can be full text, short text ("LapHR") or **icons** with a qualifier
-("♥ Avg"); icons live in `assets/common.r/icons/{20,26}` (`node sim/gen-icons.mjs`).
+("♥ Avg"); icons live in `assets/common.r/icons/<size>` in 16, 18, 20, 23 and 26 px, since the watch
+doesn't scale images; each screen uses the size nearest its scaled one (`node sim/gen-icons.mjs`).
 
 Two places to edit, one layout:
 
@@ -142,7 +143,7 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 | Path | What |
 |---|---|
 | `data-widget/common/index.js` | the screen: tick loop, rendering, lap key, trial/license gating |
-| `data-widget/common/index.r.layout.js` | 480px round layout (px()-scaled) |
+| `data-widget/common/index.r.layout.js` | round layout, designed at 480 px and px()-scaled to every round screen |
 | `data-widget/common/metrics.js` | native data reader with battery-aware polling |
 | `data-widget/common/hr-zones.js` | watch HR zones → age → default fallback chain |
 | `page/index.js` | on-watch layout editor (app list entry) |
@@ -157,7 +158,9 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 
 ```
 npm install
-npm test              # 103 tests: logic + the real widget/side service against stubs
+npm test              # logic + the real widget/side service against stubs, and
+                      # every round screen size (480-360 px): nothing off-screen or overlapping
+SIM_SCREEN=416 node --import ./sim/register.mjs sim/screen-check.mjs   # one size
 npm run preview       # renders sim/out/preview.html
 npm run screenshots   # regenerates docs/ui-preview.png and docs/screenshots/
 ```
