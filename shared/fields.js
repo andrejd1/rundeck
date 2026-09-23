@@ -89,7 +89,9 @@ const avgSpeed = (ctx) =>
   ctx.s.avg_speed != null ? ctx.s.avg_speed : ctx.stats.avgSpeed()
 const pad2 = (n) => (n < 10 ? `0${n}` : `${n}`)
 const imperial = (c) => c.unit === "min_per_mile"
-// units follow the pace-unit setting (km or mile world)
+// Units follow the pace-unit setting (km or mile world). Only short units
+// are shown (km/mi, m/ft, W) plus the pace suffix /km or /mi; longer ones
+// (bpm, spm, kcal, km/h) cost more digit size than they add.
 const PACE = (c) => (imperial(c) ? "/mi" : "/km")
 const DIST = (c) => (imperial(c) ? "mi" : "km")
 const ALT = (c) => (imperial(c) ? "ft" : "m")
@@ -194,7 +196,6 @@ export const FIELDS = {
     },
   },
   speed: {
-    unit: (c) => (c.unit === "min_per_mile" ? "mph" : "km/h"),
     short: "Spd",
     icon: "gauge",
     qual: "Spd",
@@ -314,7 +315,6 @@ export const FIELDS = {
     value: (c) => ascentStr(c.s.altitude, c.unit),
   },
   cadence: {
-    unit: "spm",
     short: "Cad",
     icon: "feet",
     qual: "",
@@ -323,7 +323,6 @@ export const FIELDS = {
     value: (c) => intStr(c.s.cadence),
   },
   avg_cadence: {
-    unit: "spm",
     short: "AvgC",
     icon: "feet",
     qual: "Avg",
@@ -333,7 +332,6 @@ export const FIELDS = {
     value: (c) => intStr(c.s.avg_cadence),
   },
   calories: {
-    unit: "kcal",
     short: "Cal",
     icon: "flame",
     qual: "",

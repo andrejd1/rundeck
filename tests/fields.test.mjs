@@ -7,6 +7,7 @@ import {
   FIELD_IDS,
   FIELD_NAMES,
   FIELDS,
+  fieldUnit,
   fieldValue,
   newerLayout,
   normalizeLayout,
@@ -81,4 +82,20 @@ test("only channels on screen are polled", () => {
   assert.deepEqual(channelsNeeded(normalizeLayout({ bar: "power" })), {
     power: true,
   })
+})
+
+test("units: short ones and the pace suffix only", () => {
+  const km = { unit: "min_per_km" }
+  const mi = { unit: "min_per_mile" }
+  const allowed = ["", "km", "mi", "m", "ft", "W", "/km", "/mi"]
+  for (const id of FIELD_IDS)
+    for (const c of [km, mi])
+      assert.ok(
+        allowed.includes(fieldUnit(id, c)),
+        `${id}: "${fieldUnit(id, c)}"`,
+      )
+  assert.equal(fieldUnit("pace", mi), "/mi")
+  assert.equal(fieldUnit("cadence", km), "")
+  assert.equal(fieldUnit("calories", km), "")
+  assert.equal(fieldUnit("speed", km), "")
 })

@@ -2,7 +2,7 @@
 
 ## 0.2.0 — customizable screen
 
-- Units after values (km/mi, /km, m/ft, W, spm, kcal, km/h; none on heart rate), following the pace
+- Units after values (km/mi, /km or /mi, m/ft, W; none on heart rate, cadence, calories or speed), following the pace
   unit; not on the big center numbers; can be hidden (phone and watch).
 
 - Full privacy statement (PRIVACY.md), published at

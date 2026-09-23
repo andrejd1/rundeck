@@ -456,6 +456,7 @@ test("units: small unit after values, none on the big center numbers", async () 
   assert.equal(w.unitAt(SLOT_GEOMETRY.r5l.value), "km") // distance
   assert.equal(w.unitAt(SLOT_GEOMETRY.r1l.value), null) // HR: no "bpm"
   assert.equal(w.unitAt(SLOT_GEOMETRY.r2r.value), "/km") // avg pace
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r3r.value), null) // cadence: no "spm"
   assert.equal(w.unitAt(SLOT_GEOMETRY.r2c.value), null) // big pace: none
   assert.equal(w.unitAt(SLOT_GEOMETRY.r3c.value), null) // big time: none
   assert.equal(w.unitAt(SLOT_GEOMETRY.r3l.value), null) // lap time has none

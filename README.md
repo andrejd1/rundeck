@@ -54,7 +54,7 @@ value itself, in its own units) over the slot and adds its own label. GAP, verti
 oscillation and ground contact time are not exposed by Zepp OS at all, so they can't be
 shown.
 
-**Units** (km/mi, /km, m/ft, W, spm, kcal, km/h/mph) are drawn small after the
+**Units** (km/mi, m/ft, W and the pace suffix /km or /mi) are drawn small after the
 value, placed from the watch's own text measurement (`getTextLayout`, with a width
 estimate as fallback) so the pair never overlaps; value and unit shrink together to fit.
 The big center numbers of three-column rows and the single top HR (which shows its zone)

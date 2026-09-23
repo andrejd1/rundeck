@@ -288,7 +288,7 @@ AppSettingsPage({
         (v) => saveLayout({ ...layout, units: v }),
       ),
       hint(
-        "Small km, W, m after the numbers. Heart rate and the big center numbers stay unit-free.",
+        "Small km, m, W and /km after the numbers. Heart rate, cadence, calories, speed and the big center numbers stay unit-free.",
       ),
       label("Zone bar (middle)"),
       chips(

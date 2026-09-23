@@ -88,8 +88,8 @@
     
     
     <text x="399" y="304" text-anchor="middle" font-size="20" fill="#2dd4bf" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Cadence</text>
-    <text x="350" y="339.9" text-anchor="start" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
-    <text x="418" y="337.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">spm</text>
+    <text x="399" y="339.9" text-anchor="middle" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
+    
     
     
     

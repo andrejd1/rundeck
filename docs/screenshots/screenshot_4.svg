@@ -88,8 +88,8 @@
     
     
     
-    <text x="350" y="339.9" text-anchor="start" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
-    <text x="418" y="337.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">spm</text>
+    <text x="399" y="339.9" text-anchor="middle" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
+    
     <image x="386" y="284" width="26" height="26" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAByElEQVR4nNyWzSttURjGn3edwz263brdurrpTnzlY589IsWErSSZoRjKPyCKIVMT/wNDQjEQk3MM5Ksk52yO8pHCiAFJ4mxeryPKsbbYbWfgqd3a63nf9f5aa+212kFkSEFkSBkDqfeCJTuLv8xYtBRfCSq3o23Zyds9yUiE7chk0e7sD/gNMhORCgUeA1HuY59ALaGbnBH4DYJDPVL8VYyAjnA80gI/QUyo0qdTF/wEITUBnctN/4+WcuAbiHGq5chy/j6/zoMHac8REValqdbFVED9lWb/uW8mFqrZ4W4ZsxE3MAyyHO04nYkAjcNNWTh+fjXsBYvvOCKQdukOmTavgKPBD4PiZXXL0kyn+8wcixVbKZCcs3+E+wnZzNBLAlGFscW9HwY96vInOhm89gpE6H+pCe6TPfujKdiIz4AO861z2zirkVm0StkBBLhyK1w//0RkUpxaLo2oQOvCg+QOzMt2kifaIPN63KyvTLc93d4BJ5nrFmPQkc5/9/Z2LabUlVuMFM34BkqU1+7KEr2FMV9chZJT8AuUqkkYTffuFHUcFDZcwE/QbRYNMjAvR+Benk0obt42rDm3fE9fnRd9v5+T7wd6AAAA//+/Ri3dAAAABklEQVQDAJv3iKROSR0sAAAAAElFTkSuQmCC"/>
     <text x="113" y="376.6" text-anchor="start" font-size="16" fill="#f59e0b" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap</text>
     <text x="74" y="403.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">0.33</text>

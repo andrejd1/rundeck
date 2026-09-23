@@ -93,7 +93,7 @@
     
     <text x="148" y="392.3" text-anchor="end" font-size="18" fill="#2dd4bf" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Calories</text>
     <text x="154" y="396.9" text-anchor="start" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">8</text>
-    <text x="180" y="394.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">kcal</text>
+    
     
     
     
@@ -104,8 +104,8 @@
     
     
     <text x="184" y="431.3" text-anchor="middle" font-size="18" fill="#2dd4bf" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Cadence</text>
-    <text x="141" y="461.8" text-anchor="start" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">105</text>
-    <text x="198" y="459.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">spm</text>
+    <text x="184" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">105</text>
+    
     
     
     
