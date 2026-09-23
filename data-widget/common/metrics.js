@@ -4,7 +4,8 @@
 //
 // Battery: every getSportData call is an IPC into the native workout service.
 // Channels on screen at full rate poll at 1 Hz; slow-moving ones (averages,
-// altitude, ascent) poll every few ticks; power only when something shows it.
+// altitude, ascent) poll every few ticks; power, calories and average cadence
+// only when the layout shows them (`channels`).
 
 import { getSportData } from "@zos/app-access"
 import { HeartRate } from "@zos/sensor"
@@ -20,9 +21,9 @@ function firstNumber(obj, keys) {
 }
 
 export class LiveMetrics {
-  constructor({ paceUnit = "min_per_km", wantPower = false } = {}) {
+  constructor({ paceUnit = "min_per_km", channels = {} } = {}) {
     this.paceUnit = paceUnit
-    this.wantPower = wantPower
+    this.channels = channels
     this.tick = 0
     this.hr = null
     this.heartRate = null
@@ -38,6 +39,8 @@ export class LiveMetrics {
       power: null,
       altitude: null,
       ascent: null, // native total ascent, m
+      calories: null,
+      avg_cadence: null,
     }
   }
 
@@ -117,9 +120,21 @@ export class LiveMetrics {
         if (a != null) s.ascent = a
       })
     }
+    if (this.channels.calories && every(5)) {
+      this._query("calories", (d) => {
+        const v = firstNumber(d, ["calories"])
+        if (v != null) s.calories = v
+      })
+    }
+    if (this.channels.avg_cadence && every(5)) {
+      this._query("avg_cadence", (d) => {
+        const v = firstNumber(d, ["avg_cadence", "cadence"])
+        if (v != null) s.avg_cadence = v
+      })
+    }
     // Running power (e.g. Stryd paired to the native workout) is not in the
     // documented getSportData types; probe it only when something shows it.
-    if (this.wantPower) {
+    if (this.channels.power) {
       this._query("power", (d) => {
         const w = firstNumber(d, ["power", "device_power"])
         if (w != null) s.power = w

@@ -6,11 +6,12 @@
 // Platform-free: the HTTP call is injected (`http(url, jsonBody)` resolving to
 // {status, body}), so this runs under Node tests and in the side service.
 
-export const POLAR_ORG_ID = "00000000-0000-0000-0000-000000000000" // TODO: your Polar organization id
+export const POLAR_ORG_ID = "129d1276-7133-4b9f-959a-1a464c8edf67"
 export const POLAR_API = "https://api.polar.sh/v1/customer-portal/license-keys"
 export const POLAR_SANDBOX_API =
   "https://sandbox-api.polar.sh/v1/customer-portal/license-keys"
-export const BUY_URL = "https://buy.polar.sh/REPLACE_WITH_CHECKOUT_LINK" // TODO: checkout link
+export const BUY_URL =
+  "https://buy.polar.sh/polar_cl_H7Jc9kI2f1kridvcgvMAEXvoRCfqc4eWYb4IR1pEELc"
 
 // Re-check a granted license at most weekly; offline it simply stays granted.
 export const REVALIDATE_AFTER_MS = 7 * 24 * 3600 * 1000

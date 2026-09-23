@@ -10,3 +10,15 @@ export class HeartRate {
   onCurrentChange() {}
   offCurrentChange() {}
 }
+
+// Workout: getUserHrZoneSettings exists only when __sim.hrZoneSettings is
+// set, like firmware below Zepp OS 4.2 where the method is missing.
+export class Workout {
+  constructor() {
+    const z = sim().hrZoneSettings
+    if (z) this.getUserHrZoneSettings = () => z
+  }
+  getStatus() {
+    return {}
+  }
+}

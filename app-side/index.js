@@ -4,7 +4,8 @@
 // settings and license changes are pushed with CONFIG_PUSH.
 
 import { BaseSideService } from "@zeppos/zml/base-side"
-import { buildConfig } from "../shared/config.js"
+import { buildConfig, readLayout } from "../shared/config.js"
+import { normalizeLayout } from "../shared/fields.js"
 import {
   activateLicense,
   deactivateLicense,
@@ -19,8 +20,8 @@ import { TRIAL_RUNS } from "../shared/trial.js"
 // Settings that change what the watch renders: a change is pushed right away.
 const CONFIG_KEYS = [
   "pace_unit",
-  "primary_metric",
-  "bar_metric",
+  "layout_json",
+  "target_metric",
   "hr_zone_method",
   "max_hr",
   "lthr",
@@ -28,6 +29,12 @@ const CONFIG_KEYS = [
   "threshold_pace",
   "ftp",
   "target_range",
+  "target_pace_low",
+  "target_pace_high",
+  "target_power_low",
+  "target_power_high",
+  "target_hr_low",
+  "target_hr_high",
   "auto_lap",
 ]
 
@@ -115,6 +122,8 @@ AppSideService(
       if (!data || typeof data !== "object") return
       if (data.method === MSG.TRIAL_REPORT)
         this.mergeTrial(data.params && data.params.trial_used)
+      if (data.method === MSG.LAYOUT_UPDATE)
+        this.mergeLayout(data.params && data.params.layout)
     },
 
     async onSettingsChange({ key, newValue }) {
@@ -142,6 +151,15 @@ AppSideService(
         Date.now() - (lic.checked_at || 0) > REVALIDATE_AFTER_MS
       )
         this.revalidate(lic)
+    },
+
+    // Layout edited on the watch: keep it when it is newer than ours. Storing
+    // it fires onSettingsChange -> a push, which the watch ignores (same age).
+    mergeLayout(raw) {
+      if (!raw) return
+      const incoming = normalizeLayout(raw)
+      if (incoming.updated_at > readLayout(getItem).updated_at)
+        setItem("layout_json", JSON.stringify(incoming))
     },
 
     mergeTrial(used) {

@@ -47,6 +47,24 @@ export function parseCustomBounds(str) {
   return isValidBounds(nums) ? nums : null
 }
 
+/**
+ * Zones from the watch's own settings (Workout.getUserHrZoneSettings, Zepp
+ * OS 4.2+): {type, rest, range: [z1Low..z5Low, max]} — already our format.
+ */
+export function deviceHrZones(settings) {
+  const r = settings && settings.range
+  if (!Array.isArray(r)) return null
+  const b = r.map(Number)
+  return isValidBounds(b) ? b : null
+}
+
+/** Estimated max HR (220 - age) zones, used when the watch has no zone API. */
+export function ageHrZones(age) {
+  const a = Number(age)
+  if (!Number.isFinite(a) || a < 10 || a > 100) return null
+  return scale(220 - a, MAX_HR_FRACTIONS).map(Math.round)
+}
+
 export function hrZones({ method = "max", maxHr, lthr, custom } = {}) {
   if (method === "custom") {
     const b = parseCustomBounds(custom)

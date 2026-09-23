@@ -1,6 +1,6 @@
 {
   "name": "rundeck",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "RunDeck: dense one-screen running dashboard as a Zepp OS Workout Extension",
   "main": "app.js",
   "type": "module",
@@ -13,7 +13,7 @@
     "format:check": "biome format ."
   },
   "author": "andrejd1",
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
     "@biomejs/biome": "^2.5.4",
     "@zeppos/device-types": "^4.0.0",
