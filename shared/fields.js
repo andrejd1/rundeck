@@ -90,11 +90,13 @@ const avgSpeed = (ctx) =>
 const pad2 = (n) => (n < 10 ? `0${n}` : `${n}`)
 const imperial = (c) => c.unit === "min_per_mile"
 // Units follow the pace-unit setting (km or mile world). Only short units
-// are shown (km/mi, m/ft, W) plus the pace suffix /km or /mi; longer ones
-// (bpm, spm, kcal, km/h) cost more digit size than they add.
+// are shown (km/mi, W) plus the pace suffix /km or /mi; longer ones (bpm,
+// spm, kcal, km/h) cost more digit size than they add. Elevations get none:
+// descent, lap ascent/descent and max altitude are drawn by the watch
+// (native), which gives RunDeck no way to place a unit after them, so
+// ascent and altitude stay unit-free to match.
 const PACE = (c) => (imperial(c) ? "/mi" : "/km")
 const DIST = (c) => (imperial(c) ? "mi" : "km")
-const ALT = (c) => (imperial(c) ? "ft" : "m")
 
 /**
  * Field catalog. `label` fits every slot (<= 9 chars), `short` is the
@@ -297,7 +299,6 @@ export const FIELDS = {
     value: (c) => gradeStr(c.stats.grade),
   },
   ascent: {
-    unit: ALT,
     short: "Asc",
     icon: "ascent",
     qual: "",
@@ -306,7 +307,6 @@ export const FIELDS = {
     value: (c) => ascentStr(c.s.ascent, c.unit),
   },
   altitude: {
-    unit: ALT,
     short: "Alt",
     icon: "altitude",
     qual: "",

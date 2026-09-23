@@ -87,7 +87,7 @@ test("only channels on screen are polled", () => {
 test("units: short ones and the pace suffix only", () => {
   const km = { unit: "min_per_km" }
   const mi = { unit: "min_per_mile" }
-  const allowed = ["", "km", "mi", "m", "ft", "W", "/km", "/mi"]
+  const allowed = ["", "km", "mi", "W", "/km", "/mi"]
   for (const id of FIELD_IDS)
     for (const c of [km, mi])
       assert.ok(

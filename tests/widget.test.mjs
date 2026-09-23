@@ -522,7 +522,7 @@ const powerSport = () => ({
 })
 // value text -> size of every visible value (unit texts excluded)
 const valueSizes = (w) => {
-  const units = new Set(["km", "mi", "m", "ft", "W", "/km", "/mi"])
+  const units = new Set(["km", "mi", "W", "/km", "/mi"])
   const out = {}
   for (const x of w.widgets())
     if (
@@ -596,12 +596,12 @@ test("a unit is shown only when it fits beside the full-size value", async () =>
     const right = box.value.x + box.value.w - (box.value.unitPad || 0)
     assert.ok(u.props.x + u.props.w - 4 <= right, `${id}: ${unit} overflows`)
   }
-  assert.ok(shown >= 3)
+  assert.ok(shown >= 2)
   // 1 km: "1.08 km" fits in the bottom row; 12'30 /km doesn't
   assert.equal(w.unitAt(UNIT_GEOMETRY.r5l.value), "km")
   assert.equal(w.unitAt(UNIT_GEOMETRY.r5r.value), null)
   assert.equal(w.unitAt(UNIT_GEOMETRY.r2r.value), null) // narrow side column
-  assert.equal(w.unitAt(UNIT_GEOMETRY.r3r.value), "m") // "22 m"
+  assert.equal(w.unitAt(UNIT_GEOMETRY.r3r.value), null) // ascent: no "m"
 })
 
 test("a unit that stopped fitting stays off (no flicker)", async () => {
@@ -630,7 +630,7 @@ test("units follow miles and can be switched off", async () => {
   })
   w.run(60, { speed: 3.4 })
   assert.equal(w.unitAt(SLOT_GEOMETRY.r5l.value), "mi")
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r5r.value), "ft")
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r5r.value), null) // ascent: no "ft"
   const off = await bootWidget({
     licensed: true,
     config: cfg({
