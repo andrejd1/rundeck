@@ -10,7 +10,7 @@ native data and renders it.
 
 ![RunDeck screens](docs/ui-preview.png)
 
-Icon options (the shipped one is A): [docs/icons/options.png](docs/icons/options.png) — copy
+Icon options (the shipped one is D): [docs/icons/options.png](docs/icons/options.png) — copy
 any `docs/icons/*.png` over `assets/common.r/icon.png` to switch (`node docs/icons/gen.mjs`
 regenerates them).
 
