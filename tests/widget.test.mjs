@@ -455,7 +455,7 @@ test("units: small unit after values, none on the big center numbers", async () 
   w.run(300, { speed: 3.4, hr: 150 })
   assert.equal(w.unitAt(SLOT_GEOMETRY.r5l.value), "km") // distance
   assert.equal(w.unitAt(SLOT_GEOMETRY.r1l.value), null) // HR: no "bpm"
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r2r.value), null) // pace in 3 columns
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r2r.value), null) // no room in 3 columns
   assert.equal(w.unitAt(SLOT_GEOMETRY.r3r.value), null) // cadence: no "spm"
   assert.equal(w.unitAt(SLOT_GEOMETRY.r2c.value), null) // big pace: none
   assert.equal(w.unitAt(SLOT_GEOMETRY.r3c.value), null) // big time: none
@@ -479,20 +479,132 @@ test("units: small unit after values, none on the big center numbers", async () 
   assert.ok(u.props.x >= v.props.x + v.props.w - 2)
 })
 
-test("pace unit only where the column is wide enough", async () => {
-  const w = await bootWidget({
+// a layout full of fields with units, in every kind of box
+const UNIT_LAYOUT = {
+  slots: {
+    r1l: "lap_pace",
+    r1r: "avg_power",
+    r2l: "distance",
+    r2r: "avg_pace",
+    r3l: "lap_distance",
+    r3r: "ascent",
+    r4l: "lap_power",
+    r4r: "altitude",
+    r5l: "distance",
+    r5r: "avg_pace",
+  },
+  cols: { r1: 2, r2: 3, r3: 3, r4: 2, r5: 2 },
+}
+const UNIT_GEOMETRY = {
+  ...RG.r1[2],
+  ...RG.r2[3],
+  ...RG.r3[3],
+  ...RG.r4[2],
+  ...RG.r5[2],
+}
+const bootUnits = (units) =>
+  bootWidget({
     licensed: true,
     config: cfg({
-      layout_json: JSON.stringify({
-        slots: { r5r: "avg_pace", r1l: "lap_pace" },
-        updated_at: 2,
-      }),
+      layout_json: JSON.stringify({ ...UNIT_LAYOUT, units, updated_at: 2 }),
     }),
+    sim: { sport: { ...powerSport(), avg_pace: { avg_pace: "12'30''" } } },
   })
-  w.run(300, { speed: 3.4, hr: 150 })
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r5r.value), "/km") // 2 columns
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r1l.value), "/km") // 2 columns
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r2r.value), null) // 3 columns
+const powerSport = () => ({
+  pace: { pace: "5'38''" },
+  avg_pace: { avg_pace: "4'42''" },
+  distance: { distance: "0.00" },
+  duration: { duration: "0:00" },
+  cadence: { cadence: "178" },
+  altitude: { altitude: "210" },
+  total_up_altitude: { total_up_altitude: "0" },
+  power: { power: "312" },
+})
+// value text -> size of every visible value (unit texts excluded)
+const valueSizes = (w) => {
+  const units = new Set(["km", "mi", "m", "ft", "W", "/km", "/mi"])
+  const out = {}
+  for (const x of w.widgets())
+    if (
+      x.type === "TEXT" &&
+      x.props.visible !== false &&
+      !units.has(x.props.text) &&
+      x.props.text_size >= 24
+    )
+      out[`${x.props.y}|${x.props.text}`] = x.props.text_size
+  return out
+}
+
+test("units never shrink the value: same sizes with units on and off", async () => {
+  // widgets share one stub screen, so run the two sequentially
+  const sizesAt = async (units) => {
+    const w = await bootUnits(units)
+    const out = []
+    // ~1 km, then past 10 km where "10.44" needs the room
+    for (const secs of [300, 2600]) {
+      w.run(secs, { speed: 3.6, grade: 2, hr: 150 })
+      out.push(valueSizes(w))
+    }
+    return out
+  }
+  const on = await sizesAt("show")
+  const off = await sizesAt("hide")
+  // values move sideways to make room for a unit, never change size
+  const bySize = (o) =>
+    Object.entries(o)
+      .map(([k, v]) => `${k.split("|")[1]}@${v}`)
+      .sort()
+  assert.deepEqual(on.map(bySize), off.map(bySize))
+})
+
+test("a unit is shown only when it fits beside the full-size value", async () => {
+  const w = await bootUnits("show")
+  w.run(300, { speed: 3.6, grade: 2, hr: 150 })
+  let shown = 0
+  for (const [id, box] of Object.entries(UNIT_GEOMETRY)) {
+    const unit = w.unitAt(box.value)
+    if (!unit) continue
+    shown++
+    const u = w
+      .widgets()
+      .find(
+        (x) =>
+          x.type === "TEXT" &&
+          x.props.visible !== false &&
+          x.props.text === unit &&
+          x.props.x > box.value.x &&
+          x.props.x < box.value.x + box.value.w &&
+          x.props.y > box.value.y &&
+          x.props.y < box.value.y + box.value.h,
+      )
+    const right = box.value.x + box.value.w - (box.value.unitPad || 0)
+    assert.ok(u.props.x + u.props.w - 4 <= right, `${id}: ${unit} overflows`)
+  }
+  assert.ok(shown >= 3)
+  // 1 km: "1.08 km" fits in the bottom row; 12'30 /km doesn't
+  assert.equal(w.unitAt(UNIT_GEOMETRY.r5l.value), "km")
+  assert.equal(w.unitAt(UNIT_GEOMETRY.r5r.value), null)
+  assert.equal(w.unitAt(UNIT_GEOMETRY.r2r.value), null) // narrow side column
+  assert.equal(w.unitAt(UNIT_GEOMETRY.r3r.value), "m") // "22 m"
+})
+
+test("a unit that stopped fitting stays off (no flicker)", async () => {
+  const w = await bootUnits("show")
+  w.run(2700, { speed: 3.6 }) // 9.72 km
+  assert.equal(w.unitAt(UNIT_GEOMETRY.r5l.value), "km")
+  w.run(100, { speed: 3.6 }) // 10.08 km: "10.08 km" no longer fits
+  assert.equal(w.unitAt(UNIT_GEOMETRY.r5l.value), null)
+  assert.equal(w.textAt(UNIT_GEOMETRY.r5l.value), "10.08")
+  // back to a narrower value: the unit doesn't come back mid-run
+  globalThis.__sim.sport.distance = { distance: "9.99" }
+  w.page.onTick()
+  assert.equal(w.textAt(UNIT_GEOMETRY.r5l.value), "9.99")
+  assert.equal(w.unitAt(UNIT_GEOMETRY.r5l.value), null)
+  // a fresh layout decides again
+  const fresh = await bootUnits("show")
+  globalThis.__sim.sport.distance = { distance: "9.99" }
+  fresh.page.onTick()
+  assert.equal(fresh.unitAt(UNIT_GEOMETRY.r5l.value), "km")
 })
 
 test("units follow miles and can be switched off", async () => {

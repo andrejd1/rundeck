@@ -84,6 +84,13 @@ const PHONE_GRACE_SEC = 10
 const NOTICE_ROW = "r4"
 const NOTICE_SUB_ROW = "r1"
 
+// Text size that fits `text` in the box's width (never above its own size).
+function fittedSize(box, text) {
+  const len = String(text).length
+  if (!len) return box.text_size
+  return Math.min(box.text_size, Math.floor(box.w / (len * GLYPH_WIDTH)))
+}
+
 DataWidget(
   BasePage({
     state: {
@@ -108,6 +115,7 @@ DataWidget(
       reportedUsed: null, // trial count last reported to the phone
       native: {}, // slotId -> {type, w}: SPORT_DATA widgets for native fields
       measureCache: new Map(), // "size|text" -> px width
+      unitDropped: {}, // "slot|unit" -> true once the unit didn't fit
     },
 
     nowSec() {
@@ -295,6 +303,7 @@ DataWidget(
       // sizes/positions changed: forget what was drawn for the slots
       for (const k of Object.keys(this.state.cache))
         if (/^(r\d[lcr]|header[lr]?)[lviu]:/.test(k)) delete this.state.cache[k]
+      this.state.unitDropped = {}
       for (const id of SLOT_IDS) {
         const g = geo[id]
         const slot = ui.slots[id]
@@ -500,11 +509,7 @@ DataWidget(
 
     /** Text + color + a size shrunk to fit the widget's width. */
     setFitted(key, w, props, text, color) {
-      const len = String(text).length
-      const fit = len
-        ? Math.floor(props.w / (len * GLYPH_WIDTH))
-        : props.text_size
-      this.setProp(key, w, "text_size", Math.min(props.text_size, fit))
+      this.setProp(key, w, "text_size", fittedSize(props, text))
       this.setProp(key, w, "text", text)
       if (color != null) this.setProp(key, w, "color", color)
     },
@@ -572,12 +577,7 @@ DataWidget(
       if ((id === "r2c" || id === "r3c") && layout.cols[id.slice(0, 2)] === 3)
         return ""
       if (id === "header" && fieldId === "hr") return ""
-      const unit = fieldUnit(fieldId, ctx)
-      // a pace unit (/km, /mi) leaves no room for 5-6 pace digits in the
-      // narrow side columns of a 3-column row
-      if (unit[0] === "/" && id[0] === "r" && layout.cols[id.slice(0, 2)] === 3)
-        return ""
-      return unit
+      return fieldUnit(fieldId, ctx)
     },
 
     // Rendered text width in px: the watch's own layout engine when the
@@ -606,9 +606,26 @@ DataWidget(
     // Value with an optional small unit after it ("7.14 km"). The pair is
     // measured, shrunk together to fit the box, then placed by the box's
     // alignment; the unit sits on the value's baseline.
+    // Value + small unit. The unit never costs the value any size: the
+    // value keeps the size it would have alone, and the unit is shown only
+    // when it fits next to it. Once a unit doesn't fit (10.00 km, 10'05 /km)
+    // it stays off until the layout changes, so it doesn't flicker as the
+    // value's width changes.
     renderValue(id, slot, box, text, unit, color) {
       const key = `${id}v`
-      if (!unit) {
+      const size = fittedSize(box, text)
+      const unitSize = Math.max(UNIT.minSize, Math.round(size * UNIT.ratio))
+      const dropKey = `${id}|${unit}`
+      let vw = 0
+      let uw = 0
+      if (unit && !this.state.unitDropped[dropKey]) {
+        vw = this.measure(text, size)
+        uw = this.measure(unit, unitSize)
+        // the unit is always on the right; keep clear of a label/divider there
+        if (vw + UNIT.gap + uw > box.w - (box.unitPad || 0))
+          this.state.unitDropped[dropKey] = true
+      }
+      if (!unit || this.state.unitDropped[dropKey]) {
         this.setProp(`${id}u`, slot.unit, "visible", false)
         this.setProp(key, slot.value, "x", box.x)
         this.setProp(key, slot.value, "w", box.w)
@@ -616,24 +633,12 @@ DataWidget(
         this.setFitted(key, slot.value, box, text, color)
         return
       }
-      let size = box.text_size
-      let unitSize = Math.max(UNIT.minSize, Math.round(size * UNIT.ratio))
-      let vw = this.measure(text, size)
-      let uw = this.measure(unit, unitSize)
-      const total = () => vw + UNIT.gap + uw
-      // the unit is always on the right; keep clear of a label/divider there
       const room = box.w - (box.unitPad || 0)
-      if (total() > room) {
-        const k = room / total()
-        size = Math.max(UNIT.minSize, Math.floor(size * k))
-        unitSize = Math.max(UNIT.minSize, Math.round(size * UNIT.ratio))
-        vw = this.measure(text, size)
-        uw = this.measure(unit, unitSize)
-      }
+      const total = vw + UNIT.gap + uw
       let x0 = box.x
       if (box.align_h === align.CENTER_H)
-        x0 = box.x + Math.round((box.w - total()) / 2)
-      else if (box.align_h === align.RIGHT) x0 = box.x + room - total()
+        x0 = box.x + Math.round((box.w - total) / 2)
+      else if (box.align_h === align.RIGHT) x0 = box.x + room - total
       this.setProp(key, slot.value, "x", x0)
       this.setProp(key, slot.value, "w", vw + 2)
       this.setProp(key, slot.value, "align_h", align.LEFT)
