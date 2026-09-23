@@ -1,0 +1,178 @@
+// On-watch layout editor (open RunDeck from the watch's app list). Two modes
+// of the same page, switched with router.replace:
+//   list: one button per screen slot (+ zone bar, reset), showing its field
+//   pick: the field catalog for one slot; tapping a field saves and returns
+// Edits land in the watch's layout copy (LAYOUT_KEY) with a fresh updated_at,
+// so they beat the phone's copy until the phone changes the layout again,
+// and are sent to the phone right away when it is in range.
+
+import { BasePage } from "@zeppos/zml/base-page"
+import { SCROLL_MODE_FREE, setScrollMode } from "@zos/page"
+import { replace } from "@zos/router"
+import { createWidget, widget } from "@zos/ui"
+import { normalizeConfig } from "../shared/config.js"
+import {
+  CONFIG_KEY,
+  LAYOUT_KEY,
+  loadObject,
+  saveObject,
+} from "../shared/device-store.js"
+import {
+  BAR_NAMES,
+  BAR_OPTIONS,
+  defaultLayout,
+  FIELD_IDS,
+  FIELD_NAMES,
+  newerLayout,
+  SLOTS,
+} from "../shared/fields.js"
+import { MSG } from "../shared/messages.js"
+import { BUTTON, COLORS, ROW, TITLE } from "./index.r.layout.js"
+
+function parseParams(params) {
+  if (!params) return {}
+  if (typeof params === "object") return params
+  try {
+    return JSON.parse(params) || {}
+  } catch (e) {
+    return {}
+  }
+}
+
+Page(
+  BasePage({
+    state: { mode: "list", slot: null, layout: null, y: 0 },
+
+    onInit(params) {
+      const p = parseParams(params)
+      if (p.pick === "bar") this.state.mode = "bar"
+      else if (SLOTS.some((s) => s.id === p.pick)) {
+        this.state.mode = "pick"
+        this.state.slot = p.pick
+      }
+      const cfg = normalizeConfig(loadObject(CONFIG_KEY))
+      this.state.layout = newerLayout(cfg.layout, loadObject(LAYOUT_KEY))
+    },
+
+    build() {
+      try {
+        setScrollMode({ mode: SCROLL_MODE_FREE })
+      } catch (e) {
+        /* pages scroll by default on older firmware */
+      }
+      const { mode } = this.state
+      if (mode === "pick") this.buildPick()
+      else if (mode === "bar") this.buildBar()
+      else this.buildList()
+    },
+
+    // ---------------------------------------------------------------- views
+
+    buildList() {
+      const { layout } = this.state
+      this.title("RunDeck layout")
+      for (const slot of SLOTS) {
+        this.button(
+          `${slot.short}: ${FIELD_NAMES[layout.slots[slot.id]]}`,
+          () => this.go({ pick: slot.id }),
+        )
+      }
+      this.button(`Zone bar: ${BAR_NAMES[layout.bar]}`, () =>
+        this.go({ pick: "bar" }),
+      )
+      this.button(
+        "Reset to default",
+        () => {
+          this.save({ ...defaultLayout(), updated_at: Date.now() })
+          this.go({})
+        },
+        COLORS.danger,
+      )
+      this.pad()
+    },
+
+    buildPick() {
+      const { layout, slot } = this.state
+      const name = SLOTS.find((s) => s.id === slot).name
+      this.title(name)
+      this.button("< Back", () => this.go({}), COLORS.muted)
+      for (const id of FIELD_IDS) {
+        const current = layout.slots[slot] === id
+        this.button(
+          FIELD_NAMES[id],
+          () => {
+            this.save({
+              ...layout,
+              slots: { ...layout.slots, [slot]: id },
+              updated_at: Date.now(),
+            })
+            this.go({})
+          },
+          current ? COLORS.selected : COLORS.button,
+        )
+      }
+      this.pad()
+    },
+
+    buildBar() {
+      const { layout } = this.state
+      this.title("Zone bar")
+      this.button("< Back", () => this.go({}), COLORS.muted)
+      for (const id of BAR_OPTIONS) {
+        this.button(
+          BAR_NAMES[id],
+          () => {
+            this.save({ ...layout, bar: id, updated_at: Date.now() })
+            this.go({})
+          },
+          layout.bar === id ? COLORS.selected : COLORS.button,
+        )
+      }
+      this.pad()
+    },
+
+    // --------------------------------------------------------------- helpers
+
+    save(layout) {
+      this.state.layout = layout
+      saveObject(LAYOUT_KEY, layout)
+      try {
+        this.call({ method: MSG.LAYOUT_UPDATE, params: { layout } })
+      } catch (e) {
+        /* phone away: the run screen hands it over on its next sync */
+      }
+    },
+
+    go(params) {
+      replace({ url: "page/index", params: JSON.stringify(params) })
+    },
+
+    title(text) {
+      createWidget(widget.TEXT, { ...TITLE, text })
+      this.state.y = TITLE.y + TITLE.h + ROW.gap
+    },
+
+    button(text, onClick, color = COLORS.button) {
+      createWidget(widget.BUTTON, {
+        ...BUTTON,
+        y: this.state.y,
+        text,
+        normal_color: color,
+        press_color: COLORS.pressed,
+        click_func: onClick,
+      })
+      this.state.y += BUTTON.h + ROW.gap
+    },
+
+    // room to scroll the last button up to the middle of a round screen
+    pad() {
+      createWidget(widget.FILL_RECT, {
+        x: 0,
+        y: this.state.y,
+        w: 1,
+        h: ROW.bottomPad,
+        color: 0x000000,
+      })
+    },
+  }),
+)

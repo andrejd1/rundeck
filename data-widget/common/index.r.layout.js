@@ -12,10 +12,12 @@ export const COLORS = {
   bg: 0x000000,
   value: 0xffffff,
   divider: 0x3a3a3a,
-  hrLabel: 0xef4444,
-  paceLabel: 0x60a5fa,
-  timeLabel: 0x22c55e,
-  distLabel: 0xf59e0b,
+  // label colors per field group (shared/fields.js)
+  hr: 0xef4444,
+  pace: 0x60a5fa,
+  time: 0x22c55e,
+  dist: 0xf59e0b,
+  body: 0x2dd4bf,
   notice: 0xf2f2f2,
   noticeWarn: 0xf59e0b,
   // center value against the pace/power target
@@ -55,7 +57,10 @@ const line = (x, y, w, h) => ({
   color: COLORS.divider,
 })
 
-// --- HR header --------------------------------------------------------------
+// --- slots ------------------------------------------------------------------
+// Every slot is a {label, value} pair of TEXT props; any field can go in any
+// slot, so the widget shrinks text that would overflow its slot width.
+
 export const HR_GRAPH = {
   x: px(92),
   y: px(50),
@@ -63,37 +68,61 @@ export const HR_GRAPH = {
   barW: px(3), // pitch per bar; drawn 1 px narrower so the bars read apart
   minBarH: px(2),
 }
-export const HR_LABEL = label(214, 30, 60, COLORS.hrLabel, align.LEFT, 20)
-export const HR_VALUE = value(212, 50, 120, 56, align.LEFT)
-export const HR_ZONE = label(330, 64, 70, COLORS.value, align.LEFT, 28)
+// zone ("Z2") next to the header value when the header shows heart rate
+export const HEADER_SUFFIX = label(330, 64, 70, COLORS.value, align.LEFT, 28)
 
-// --- lap HR | avg HR ----------------------------------------------------------
-export const LAP_HR_LABEL = label(56, 121, 92, COLORS.hrLabel, align.RIGHT)
-export const LAP_HR_VALUE = value(154, 114, 74, 34, align.LEFT)
-export const AVG_HR_VALUE = value(252, 114, 74, 34, align.RIGHT)
-export const AVG_HR_LABEL = label(332, 121, 92, COLORS.hrLabel, align.LEFT)
+export const SLOT_GEOMETRY = {
+  header: {
+    label: label(214, 30, 120, COLORS.value, align.LEFT, 20),
+    value: value(212, 50, 124, 56, align.LEFT),
+  },
+  r1l: {
+    label: label(56, 121, 92, COLORS.value, align.RIGHT),
+    value: value(154, 114, 76, 34, align.LEFT),
+  },
+  r1r: {
+    label: label(332, 121, 92, COLORS.value, align.LEFT),
+    value: value(250, 114, 76, 34, align.RIGHT),
+  },
+  r2l: {
+    label: label(22, 180, 118, COLORS.value, align.CENTER_H, 20),
+    value: value(22, 204, 118, 38),
+  },
+  r2c: { label: null, value: value(140, 168, 200, 72) },
+  r2r: {
+    label: label(340, 166, 118, COLORS.value, align.CENTER_H, 20),
+    value: value(340, 190, 118, 38),
+  },
+  r3l: {
+    label: label(22, 284, 118, COLORS.value, align.CENTER_H, 20),
+    value: value(22, 308, 118, 34),
+  },
+  r3c: { label: null, value: value(140, 284, 200, 60) },
+  r3r: {
+    label: label(340, 284, 118, COLORS.value, align.CENTER_H, 20),
+    value: value(340, 308, 118, 34),
+  },
+  r4l: {
+    label: label(58, 376, 94, COLORS.value, align.RIGHT, 20),
+    value: value(156, 370, 78, 30, align.LEFT),
+  },
+  r4r: {
+    label: label(324, 376, 80, COLORS.value, align.LEFT, 20),
+    value: value(246, 370, 72, 30, align.RIGHT),
+  },
+  r5l: {
+    label: label(132, 410, 104, COLORS.value, align.CENTER_H, 18),
+    value: value(132, 428, 104, 30),
+  },
+  r5r: {
+    label: label(246, 410, 104, COLORS.value, align.CENTER_H, 18),
+    value: value(246, 428, 104, 30),
+  },
+}
 
-// --- lap pace | CENTER | avg pace -------------------------------------------
-export const LAP_PACE_LABEL = label(
-  22,
-  180,
-  118,
-  COLORS.paceLabel,
-  align.CENTER_H,
-  20,
-)
-export const LAP_PACE_VALUE = value(22, 204, 118, 38)
-export const CENTER_VALUE = value(140, 168, 200, 72)
-export const CENTER_VALUE_WIDE_SIZE = px(52) // 5+ characters, e.g. "284W"
-export const AVG_PACE_LABEL = label(
-  340,
-  166,
-  118,
-  COLORS.paceLabel,
-  align.CENTER_H,
-  20,
-)
-export const AVG_PACE_VALUE = value(340, 190, 118, 38)
+// Average glyph width as a fraction of the font size, used to shrink text
+// that would overflow its slot (the watch font is narrower; this is safe).
+export const GLYPH_WIDTH = 0.62
 
 // --- zone bar ---------------------------------------------------------------
 export const ZONE_BAR = {
@@ -104,61 +133,6 @@ export const ZONE_BAR = {
   gap: px(3),
   marker: { w: px(8), y: px(250), h: px(30), color: 0xffffff },
 }
-
-// --- lap time | ELAPSED | cadence -------------------------------------------
-export const LAP_TIME_LABEL = label(
-  22,
-  284,
-  118,
-  COLORS.timeLabel,
-  align.CENTER_H,
-  20,
-)
-export const LAP_TIME_VALUE = value(22, 308, 118, 34)
-export const ELAPSED_VALUE = value(140, 284, 200, 60)
-export const ELAPSED_VALUE_LONG_SIZE = px(46) // past one hour: "1:03:34"
-export const CADENCE_LABEL = label(
-  340,
-  284,
-  118,
-  COLORS.timeLabel,
-  align.CENTER_H,
-  20,
-)
-export const CADENCE_VALUE = value(340, 308, 118, 34)
-
-// --- lap dist | grade -------------------------------------------------------
-export const LAP_DIST_LABEL = label(
-  58,
-  376,
-  94,
-  COLORS.distLabel,
-  align.RIGHT,
-  20,
-)
-export const LAP_DIST_VALUE = value(156, 370, 78, 30, align.LEFT)
-export const GRADE_VALUE = value(246, 370, 72, 30, align.RIGHT)
-export const GRADE_LABEL = label(324, 376, 80, COLORS.distLabel, align.LEFT, 20)
-
-// --- distance | ascent ------------------------------------------------------
-export const DIST_LABEL = label(
-  132,
-  410,
-  104,
-  COLORS.distLabel,
-  align.CENTER_H,
-  18,
-)
-export const DIST_VALUE = value(132, 428, 104, 30)
-export const ASCENT_LABEL = label(
-  246,
-  410,
-  104,
-  COLORS.distLabel,
-  align.CENTER_H,
-  18,
-)
-export const ASCENT_VALUE = value(246, 428, 104, 30)
 
 // --- notice (trial status, lap flash, locked) overlaying the lap dist row ---
 export const NOTICE = {

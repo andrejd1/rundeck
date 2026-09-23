@@ -10,7 +10,9 @@ export async function bootWidget({
   config,
   licensed,
   trial,
+  layout,
   sideResponse,
+  sim = {},
 } = {}) {
   __resetWidgets()
   const store = await import("../shared/device-store.js")
@@ -21,6 +23,8 @@ export async function bootWidget({
   else store.removeObject(store.LICENSE_KEY)
   if (trial) store.saveObject(store.TRIAL_KEY, trial)
   else store.removeObject(store.TRIAL_KEY)
+  if (layout) store.saveObject(store.LAYOUT_KEY, layout)
+  else store.removeObject(store.LAYOUT_KEY)
 
   globalThis.__sim = {
     hr: 148,
@@ -34,6 +38,7 @@ export async function bootWidget({
       total_up_altitude: { total_up_altitude: "0" },
     },
     sideResponse: sideResponse || (() => Promise.reject(new Error("offline"))),
+    ...sim,
   }
   globalThis.getApp = () => ({ globalData: {} })
   let page
@@ -99,4 +104,40 @@ export async function bootWidget({
       __widgets.map((w) => ({ type: w.type, props: { ...w.props } })),
   }
   return world
+}
+
+let editorCount = 0
+
+/** Boot the on-watch layout editor page with router params. */
+export async function bootEditor(params = {}, { config, layout } = {}) {
+  __resetWidgets()
+  const store = await import("../shared/device-store.js")
+  if (config) store.saveObject(store.CONFIG_KEY, config)
+  if (layout) store.saveObject(store.LAYOUT_KEY, layout)
+  globalThis.__sim = {
+    ...(globalThis.__sim || {}),
+    navigation: [],
+    sideCalls: [],
+  }
+  let page
+  globalThis.Page = (p) => {
+    page = p
+  }
+  await import(`../page/index.js?boot=${editorCount++}`)
+  page.onInit(JSON.stringify(params))
+  page.build()
+  return {
+    page,
+    widgets: () => __widgets,
+    snapshot: () =>
+      __widgets.map((w) => ({ type: w.type, props: { ...w.props } })),
+    buttons: () => __widgets.filter((w) => w.type === "BUTTON"),
+    tap(text) {
+      const b = __widgets.find(
+        (w) => w.type === "BUTTON" && w.props.text === text,
+      )
+      if (!b) throw new Error(`no button "${text}"`)
+      b.props.click_func()
+    },
+  }
 }

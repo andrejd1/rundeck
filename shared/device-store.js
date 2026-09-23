@@ -1,4 +1,4 @@
-// Durable on-watch persistence (config, trial counter, license flag).
+// Durable on-watch persistence (config, layout, trial counter, license).
 // localStorage (@zos/storage) alone proved unreliable on-device in Intervals
 // Guide: leaving the extension page (or an abrupt kill of the extension
 // runtime) can come back with an empty localStorage. Every value is therefore
@@ -11,6 +11,7 @@ import { localStorage } from "@zos/storage"
 export const CONFIG_KEY = "rundeck_config" // screen config from the phone
 export const TRIAL_KEY = "rundeck_trial" // {used, last}
 export const LICENSE_KEY = "rundeck_license" // {licensed, checked_at}
+export const LAYOUT_KEY = "rundeck_layout" // layout edited on the watch
 
 const filePath = (key) => `${key}.json`
 

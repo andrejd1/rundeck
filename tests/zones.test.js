@@ -1,6 +1,8 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import {
+  ageHrZones,
+  deviceHrZones,
   hrZones,
   isValidBounds,
   paceZones,
@@ -53,4 +55,18 @@ test("zone position: equal-width segments, clamped ends", () => {
   assert.deepEqual(zonePosition(250, b), { zone: 5, pos: 1 })
   assert.equal(zonePosition(null, b), null)
   assert.equal(zonePosition(150, [1, 2]), null)
+})
+
+test("device zones: the watch's own settings, validated", () => {
+  assert.deepEqual(
+    deviceHrZones({ type: 1, rest: 70, range: [90, 108, 126, 144, 162, 181] }),
+    [90, 108, 126, 144, 162, 181],
+  )
+  assert.equal(deviceHrZones({ range: [90, 80, 126, 144, 162, 181] }), null)
+  assert.equal(deviceHrZones(undefined), null)
+})
+
+test("age fallback: 220 - age", () => {
+  assert.deepEqual(ageHrZones(40), [90, 108, 126, 144, 162, 180])
+  assert.equal(ageHrZones(0), null)
 })

@@ -2,43 +2,21 @@
 // running workout (app.json extType "workout"): the native workout keeps GPS,
 // recording and laps; this page renders a dense one-screen dashboard on top.
 //
-// Access: 5 free runs, then the full screen needs a license (see
-// shared/trial.js). Locked mode keeps the basics (HR, pace, time, distance)
-// so the page is never a dead end mid-run.
+// The screen is a fixed grid of slots (shared/fields.js); which field sits in
+// which slot is the user's layout, edited in the phone settings or on the
+// watch (page/). Access: 5 free runs, then the full screen needs a license
+// (shared/trial.js). Locked mode keeps the three main slots so the page is
+// never a dead end mid-run.
 
 import {
-  ASCENT_LABEL,
-  ASCENT_VALUE,
-  AVG_HR_LABEL,
-  AVG_HR_VALUE,
-  AVG_PACE_LABEL,
-  AVG_PACE_VALUE,
-  CADENCE_LABEL,
-  CADENCE_VALUE,
-  CENTER_VALUE,
-  CENTER_VALUE_WIDE_SIZE,
   COLORS,
-  DIST_LABEL,
-  DIST_VALUE,
   DIVIDERS,
-  ELAPSED_VALUE,
-  ELAPSED_VALUE_LONG_SIZE,
-  GRADE_LABEL,
-  GRADE_VALUE,
+  GLYPH_WIDTH,
+  HEADER_SUFFIX,
   HR_GRAPH,
-  HR_LABEL,
-  HR_VALUE,
-  HR_ZONE,
-  LAP_DIST_LABEL,
-  LAP_DIST_VALUE,
-  LAP_HR_LABEL,
-  LAP_HR_VALUE,
-  LAP_PACE_LABEL,
-  LAP_PACE_VALUE,
-  LAP_TIME_LABEL,
-  LAP_TIME_VALUE,
   NOTICE,
   NOTICE_SUB,
+  SLOT_GEOMETRY,
   ZONE_BAR,
 } from "zosLoader:./index.[pf].layout.js"
 import { BasePage } from "@zeppos/zml/base-page"
@@ -49,20 +27,20 @@ import { appGlobals } from "../../shared/app-globals.js"
 import { normalizeConfig } from "../../shared/config.js"
 import {
   CONFIG_KEY,
+  LAYOUT_KEY,
   LICENSE_KEY,
   loadObject,
   saveObject,
   TRIAL_KEY,
 } from "../../shared/device-store.js"
 import {
-  ascentStr,
-  distanceStr,
-  durationStr,
-  gradeStr,
-  intStr,
-  lapTimeStr,
-  paceStr,
-} from "../../shared/format.js"
+  channelsNeeded,
+  FIELDS,
+  fieldValue,
+  newerLayout,
+  SLOT_IDS,
+} from "../../shared/fields.js"
+import { lapTimeStr, paceStr } from "../../shared/format.js"
 import { MSG } from "../../shared/messages.js"
 import { HR_GRAPH_BARS, RunStats } from "../../shared/stats.js"
 import { TargetTracker } from "../../shared/target.js"
@@ -73,6 +51,7 @@ import {
   zoneColor,
   zonePosition,
 } from "../../shared/zones.js"
+import { resolveHrZones } from "./hr-zones.js"
 import { LiveMetrics } from "./metrics.js"
 
 const TICK_MS = 1000
@@ -84,11 +63,18 @@ const CONFIG_RETRY_SEC = 60
 // Wait this long for the phone's reply (license, trial count) before the
 // access mode is latched for the activity; offline, the cached state decides.
 const PHONE_GRACE_SEC = 10
+// Slots still shown in locked (trial over) mode.
+const LOCKED_SLOTS = ["header", "r2c", "r3c"]
+// Slots the notice lines cover while they are up.
+const NOTICE_SLOTS = ["r4l", "r4r"]
+const NOTICE_SUB_SLOTS = ["r1l", "r1r"]
 
 DataWidget(
   BasePage({
     state: {
       config: null,
+      layout: null, // effective layout: newer of phone config vs watch edit
+      hrZones: null,
       licensed: false,
       trial: null, // TrialSession
       mode: "pending",
@@ -98,7 +84,7 @@ DataWidget(
       timer: null,
       ticks: 0,
       ui: {},
-      cache: {}, // last rendered text/color/visibility per widget key
+      cache: {}, // last rendered text/color/size/visibility per widget key
       notice: null, // {text, color, until}
       lastLapAt: null,
       lastConfigAttemptAt: null,
@@ -116,6 +102,11 @@ DataWidget(
     onInit() {
       this.state.initAt = this.nowSec()
       this.state.config = normalizeConfig(loadObject(CONFIG_KEY))
+      this.state.layout = newerLayout(
+        this.state.config.layout,
+        loadObject(LAYOUT_KEY),
+      )
+      this.state.hrZones = resolveHrZones(this.state.config)
       const lic = loadObject(LICENSE_KEY)
       this.state.licensed = !!(lic && lic.licensed)
       this.state.trial = new TrialSession(
@@ -136,7 +127,7 @@ DataWidget(
       const cfg = this.state.config
       this.state.metrics = new LiveMetrics({
         paceUnit: cfg.pace_unit,
-        wantPower: this.usesPower(cfg),
+        channels: this.channels(),
       })
       this.state.stats = new RunStats({ autoLapM: cfg.auto_lap_m })
       this.state.tracker = new TargetTracker(cfg.target)
@@ -146,7 +137,10 @@ DataWidget(
       this.onTick()
     },
 
+    // Back from the on-watch layout editor (or any other page): pick up a
+    // layout edited there.
     onResume() {
+      this.applyLayout(newerLayout(this.state.layout, loadObject(LAYOUT_KEY)))
       this.onTick()
     },
 
@@ -237,22 +231,44 @@ DataWidget(
       }
       if (data.trial_used != null) this.state.trial.mergeRemote(data.trial_used)
       this.persistTrial()
-      if (this.state.ui.center) this.render()
+      if (this.state.ui.slots) this.render()
     },
 
     applyConfig(cfg) {
       this.state.config = cfg
+      this.state.hrZones = resolveHrZones(cfg)
       const { metrics, stats, tracker } = this.state
-      if (metrics) {
-        metrics.paceUnit = cfg.pace_unit
-        metrics.wantPower = this.usesPower(cfg)
-      }
+      if (metrics) metrics.paceUnit = cfg.pace_unit
       if (stats) stats.setAutoLap(cfg.auto_lap_m)
       if (tracker) tracker.setTarget(cfg.target)
+      const local = loadObject(LAYOUT_KEY)
+      const layout = newerLayout(cfg.layout, local)
+      // edited on the watch while the phone was away: hand it over now
+      if (local && layout.updated_at > cfg.layout.updated_at)
+        this.sendLayout(layout)
+      this.applyLayout(layout)
     },
 
-    usesPower(cfg) {
-      return cfg.primary === "power" || cfg.bar === "power"
+    applyLayout(layout) {
+      this.state.layout = layout
+      if (this.state.metrics) this.state.metrics.channels = this.channels()
+      if (this.state.ui.slots) this.render()
+    },
+
+    sendLayout(layout) {
+      try {
+        this.call({ method: MSG.LAYOUT_UPDATE, params: { layout } })
+      } catch (e) {
+        /* sent again on the next config reply */
+      }
+    },
+
+    channels() {
+      const t = this.state.config.target
+      return channelsNeeded(
+        this.state.layout,
+        t && t.metric === "power" ? ["power"] : [],
+      )
     },
 
     persistTrial() {
@@ -310,7 +326,7 @@ DataWidget(
 
       if (
         !this.state.configReceived &&
-        this.nowSec() - this.state.lastConfigAttemptAt >= CONFIG_RETRY_SEC
+        now - this.state.lastConfigAttemptAt >= CONFIG_RETRY_SEC
       )
         this.fetchConfig()
       this.render()
@@ -335,9 +351,7 @@ DataWidget(
 
     buildUi() {
       const ui = this.state.ui
-      const text = (key, props) => {
-        ui[key] = createWidget(widget.TEXT, { ...props, text: "" })
-      }
+      const text = (props) => createWidget(widget.TEXT, { ...props, text: "" })
       createWidget(widget.FILL_RECT, {
         x: 0,
         y: 0,
@@ -359,19 +373,16 @@ DataWidget(
           }),
         )
       }
-      text("hrLabel", HR_LABEL)
-      text("hr", HR_VALUE)
-      text("hrZone", HR_ZONE)
-      text("lapHrLabel", LAP_HR_LABEL)
-      text("lapHr", LAP_HR_VALUE)
-      text("avgHr", AVG_HR_VALUE)
-      text("avgHrLabel", AVG_HR_LABEL)
 
-      text("leftLabel", LAP_PACE_LABEL)
-      text("left", LAP_PACE_VALUE)
-      text("center", CENTER_VALUE)
-      text("rightLabel", AVG_PACE_LABEL)
-      text("right", AVG_PACE_VALUE)
+      ui.slots = {}
+      for (const id of SLOT_IDS) {
+        const g = SLOT_GEOMETRY[id]
+        ui.slots[id] = {
+          label: g.label ? text(g.label) : null,
+          value: text(g.value),
+        }
+      }
+      ui.headerSuffix = text(HEADER_SUFFIX)
 
       const segW = (ZONE_BAR.w - ZONE_BAR.gap * (ZONE_COUNT - 1)) / ZONE_COUNT
       ui.zoneSegs = []
@@ -396,205 +407,167 @@ DataWidget(
         color: ZONE_BAR.marker.color,
       })
 
-      text("lapTimeLabel", LAP_TIME_LABEL)
-      text("lapTime", LAP_TIME_VALUE)
-      text("elapsed", ELAPSED_VALUE)
-      text("cadenceLabel", CADENCE_LABEL)
-      text("cadence", CADENCE_VALUE)
-
-      text("lapDistLabel", LAP_DIST_LABEL)
-      text("lapDist", LAP_DIST_VALUE)
-      text("grade", GRADE_VALUE)
-      text("gradeLabel", GRADE_LABEL)
-
-      text("distLabel", DIST_LABEL)
-      text("dist", DIST_VALUE)
-      text("ascentLabel", ASCENT_LABEL)
-      text("ascent", ASCENT_VALUE)
-
-      text("notice", NOTICE)
-      text("noticeSub", NOTICE_SUB)
-
-      this.setText("hrLabel", "HR")
-      this.setText("lapHrLabel", "Lap HR")
-      this.setText("avgHrLabel", "Avg HR")
-      this.setText("lapTimeLabel", "Lap Time")
-      this.setText("cadenceLabel", "Cadence")
-      this.setText("lapDistLabel", "Lap Dist")
-      this.setText("gradeLabel", "Grade")
-      this.setText("distLabel", "Distance")
-      this.setText("ascentLabel", "Ascent")
+      ui.notice = text(NOTICE)
+      ui.noticeSub = text(NOTICE_SUB)
     },
 
-    // redraw-avoiding setters: each widget update is an IPC on device
-    setText(key, text, color) {
-      const c = this.state.cache
-      const w = this.state.ui[key]
+    // Redraw-avoiding property setter: every widget update is an IPC on
+    // device, so each (widget, property) pair remembers its last value.
+    setProp(key, w, name, value) {
       if (!w) return
-      if (c[`t:${key}`] !== text) {
-        c[`t:${key}`] = text
-        w.setProperty(prop.TEXT, text)
-      }
-      if (color != null && c[`c:${key}`] !== color) {
-        c[`c:${key}`] = color
-        w.setProperty(prop.MORE, { color })
-      }
-    },
-
-    setTextSize(key, size) {
-      const w = this.state.ui[key]
-      if (!w || this.state.cache[`s:${key}`] === size) return
-      this.state.cache[`s:${key}`] = size
-      w.setProperty(prop.MORE, { text_size: size })
-    },
-
-    setVisible(key, visible, w = this.state.ui[key]) {
       const c = this.state.cache
-      if (!w || c[`v:${key}`] === visible) return
-      c[`v:${key}`] = visible
-      w.setProperty(prop.VISIBLE, visible)
+      const k = `${key}:${name}`
+      if (c[k] === value) return
+      c[k] = value
+      if (name === "text") w.setProperty(prop.TEXT, value)
+      else if (name === "visible") w.setProperty(prop.VISIBLE, value)
+      else w.setProperty(prop.MORE, { [name]: value })
     },
 
-    setGroupVisible(keys, visible) {
-      for (const k of keys) this.setVisible(k, visible)
+    /** Text + color + a size shrunk to fit the widget's width. */
+    setFitted(key, w, props, text, color) {
+      const len = String(text).length
+      const fit = len
+        ? Math.floor(props.w / (len * GLYPH_WIDTH))
+        : props.text_size
+      this.setProp(key, w, "text_size", Math.min(props.text_size, fit))
+      this.setProp(key, w, "text", text)
+      if (color != null) this.setProp(key, w, "color", color)
     },
 
     render() {
-      const { ui, config: cfg, stats, metrics, mode } = this.state
-      if (!ui.center || !metrics) return
+      const { ui, config: cfg, stats, metrics, mode, layout } = this.state
+      if (!ui.slots || !metrics) return
       const s = metrics.snapshot
-      const unit = cfg.pace_unit
       const locked = mode === "locked"
+      const ctx = {
+        s,
+        stats,
+        unit: cfg.pace_unit,
+        hrZones: this.state.hrZones,
+        now: new Date(),
+      }
 
-      // --- header: HR + zone + graph
-      const hrPos = zonePosition(s.hr, cfg.hr_zones)
-      this.setText("hr", intStr(s.hr))
-      this.setText(
-        "hrZone",
-        hrPos && hrPos.zone > 0 ? `Z${hrPos.zone}` : "",
+      // target: colors every slot that shows the target's live metric
+      const t = cfg.target
+      const status = this.state.tracker.update(
+        t ? (t.metric === "power" ? s.power : s.speed) : null,
+      )
+      const targetField = t ? t.metric : null
+
+      const n = this.state.notice
+      const noticeOn = !locked && !!n && this.nowSec() < n.until
+      if (!noticeOn) this.state.notice = null
+
+      for (const id of SLOT_IDS) {
+        const slot = ui.slots[id]
+        const g = SLOT_GEOMETRY[id]
+        const visible =
+          (!locked || LOCKED_SLOTS.indexOf(id) >= 0) &&
+          !(noticeOn && NOTICE_SLOTS.indexOf(id) >= 0) &&
+          !(locked && NOTICE_SUB_SLOTS.indexOf(id) >= 0)
+        this.setProp(`${id}v`, slot.value, "visible", visible)
+        this.setProp(`${id}l`, slot.label, "visible", visible)
+        if (!visible) continue
+        const fieldId = layout.slots[id]
+        const f = FIELDS[fieldId] || FIELDS.none
+        if (slot.label)
+          this.setFitted(
+            `${id}l`,
+            slot.label,
+            g.label,
+            f.label,
+            COLORS[f.group],
+          )
+        const valueColor =
+          fieldId === targetField && status ? COLORS[status] : COLORS.value
+        this.setFitted(
+          `${id}v`,
+          slot.value,
+          g.value,
+          fieldValue(fieldId, ctx),
+          valueColor,
+        )
+      }
+
+      // header extras: zone suffix + HR graph when the header shows HR
+      const headerField = layout.slots.header
+      const headerIsHr = headerField === "hr"
+      const hrPos = zonePosition(s.hr, this.state.hrZones)
+      this.setProp(
+        "suffix",
+        ui.headerSuffix,
+        "text",
+        headerIsHr && hrPos && hrPos.zone > 0 ? `Z${hrPos.zone}` : "",
+      )
+      this.setProp(
+        "suffix",
+        ui.headerSuffix,
+        "color",
         zoneColor(hrPos ? hrPos.zone : 0),
       )
-      if (this.state.ticks % GRAPH_EVERY_TICKS === 1 || locked)
-        this.renderGraph(locked)
+      const showGraph =
+        !locked && (FIELDS[headerField] || FIELDS.none).group === "hr"
+      if (this.state.ticks % GRAPH_EVERY_TICKS === 1 || !showGraph)
+        this.renderGraph(!showGraph)
 
-      // --- center: primary metric colored against its target
-      const primaryValue = cfg.primary === "power" ? s.power : s.speed
-      const status = this.state.tracker.update(primaryValue)
-      const centerText =
-        cfg.primary === "power" ? `${intStr(s.power)}W` : paceStr(s.speed, unit)
-      this.setTextSize(
-        "center",
-        centerText.length > 4 ? CENTER_VALUE_WIDE_SIZE : CENTER_VALUE.text_size,
-      )
-      this.setText("center", centerText, status ? COLORS[status] : COLORS.value)
-      const el = s.elapsed
-      this.setText("elapsed", durationStr(el))
-      this.setTextSize(
-        "elapsed",
-        el != null && el >= 3600
-          ? ELAPSED_VALUE_LONG_SIZE
-          : ELAPSED_VALUE.text_size,
-      )
-      this.setText("dist", distanceStr(s.distance, unit))
-
-      const detail = [
-        "lapHrLabel",
-        "lapHr",
-        "avgHr",
-        "avgHrLabel",
-        "leftLabel",
-        "left",
-        "rightLabel",
-        "right",
-        "lapTimeLabel",
-        "lapTime",
-        "cadenceLabel",
-        "cadence",
-        "ascentLabel",
-        "ascent",
-      ]
-      const lapRow = ["lapDistLabel", "lapDist", "grade", "gradeLabel"]
-      this.setGroupVisible(detail, !locked)
-      for (let i = 0; i < ui.zoneSegs.length; i++)
-        this.setVisible(`seg${i}`, !locked, ui.zoneSegs[i])
+      // dividers: only the header rule stays in locked mode
       for (let i = 1; i < ui.dividers.length; i++)
-        this.setVisible(`div${i}`, !locked, ui.dividers[i])
+        this.setProp(`div${i}`, ui.dividers[i], "visible", !locked)
 
+      this.renderZoneBar(locked)
+
+      this.setProp("notice", ui.notice, "visible", noticeOn || locked)
+      this.setProp("noticeSub", ui.noticeSub, "visible", locked)
       if (locked) {
-        this.setVisible("marker", false)
-        this.setGroupVisible(lapRow, false)
-        this.setVisible("notice", true)
-        this.setVisible("noticeSub", true)
-        this.setText("noticeSub", `Trial ended (${TRIAL_RUNS} runs)`)
-        this.setText("notice", "Unlock in Zepp app", COLORS.noticeWarn)
-        return
-      }
-      this.setVisible("noticeSub", false)
-
-      // --- HR row
-      this.setText("lapHr", intStr(stats.lapHr()))
-      this.setText("avgHr", intStr(stats.avgHr.value))
-
-      // --- pace/power row
-      if (cfg.primary === "power") {
-        this.setText("leftLabel", "Lap Pwr")
-        this.setText("left", intStr(stats.lapPower()))
-        this.setText("rightLabel", "Pace")
-        this.setText("right", paceStr(s.speed, unit))
-      } else {
-        this.setText("leftLabel", "Lap Pace")
-        this.setText("left", paceStr(stats.lapSpeed(), unit))
-        this.setText("rightLabel", "Avg Pace")
-        this.setText(
-          "right",
-          paceStr(s.avg_speed != null ? s.avg_speed : stats.avgSpeed(), unit),
+        this.setProp(
+          "noticeSub",
+          ui.noticeSub,
+          "text",
+          `Trial ended (${TRIAL_RUNS} runs)`,
         )
+        this.setProp("notice", ui.notice, "text", "Unlock in Zepp app")
+        this.setProp("notice", ui.notice, "color", COLORS.noticeWarn)
+      } else if (noticeOn) {
+        this.setProp("notice", ui.notice, "text", n.text)
+        this.setProp("notice", ui.notice, "color", n.color)
       }
+    },
 
-      // --- zone bar marker
-      const barValue =
-        cfg.bar === "power" ? s.power : cfg.bar === "pace" ? s.speed : s.hr
-      const bounds =
-        cfg.bar === "power"
-          ? cfg.power_zones
-          : cfg.bar === "pace"
-            ? cfg.pace_zones
-            : cfg.hr_zones
-      const pos = zonePosition(barValue, bounds)
-      this.setVisible("marker", !!pos)
-      if (pos) {
-        const x = Math.round(
-          ZONE_BAR.x + pos.pos * (ZONE_BAR.w - ZONE_BAR.marker.w),
-        )
-        if (this.state.cache.markerX !== x) {
-          this.state.cache.markerX = x
-          ui.marker.setProperty(prop.MORE, {
-            x,
-            y: ZONE_BAR.marker.y,
-            w: ZONE_BAR.marker.w,
-            h: ZONE_BAR.marker.h,
-          })
-        }
+    renderZoneBar(locked) {
+      const { ui, config: cfg, layout, metrics } = this.state
+      const s = metrics.snapshot
+      const on = !locked && layout.bar !== "off"
+      for (let i = 0; i < ui.zoneSegs.length; i++)
+        this.setProp(`seg${i}`, ui.zoneSegs[i], "visible", on)
+      let value = s.hr
+      let bounds = this.state.hrZones
+      if (layout.bar === "pace" && cfg.pace_zones) {
+        value = s.speed
+        bounds = cfg.pace_zones
+      } else if (layout.bar === "power" && cfg.power_zones) {
+        value = s.power
+        bounds = cfg.power_zones
       }
-
-      // --- time row
-      this.setText("lapTime", lapTimeStr(stats.lapTime()))
-      this.setText("cadence", intStr(s.cadence))
-
-      // --- lap distance / grade, or a notice over them
-      const n = this.state.notice
-      const noticeOn = !!n && this.nowSec() < n.until
-      if (!noticeOn) this.state.notice = null
-      this.setGroupVisible(lapRow, !noticeOn)
-      this.setVisible("notice", noticeOn)
-      if (noticeOn) this.setText("notice", n.text, n.color)
-      this.setText("lapDist", distanceStr(stats.lapDistance(), unit))
-      this.setText("grade", gradeStr(stats.grade))
-      this.setText("ascent", ascentStr(s.ascent, unit))
+      const pos = on ? zonePosition(value, bounds) : null
+      this.setProp("marker", ui.marker, "visible", !!pos)
+      if (!pos) return
+      const x = Math.round(
+        ZONE_BAR.x + pos.pos * (ZONE_BAR.w - ZONE_BAR.marker.w),
+      )
+      if (this.state.cache.markerX === x) return
+      this.state.cache.markerX = x
+      ui.marker.setProperty(prop.MORE, {
+        x,
+        y: ZONE_BAR.marker.y,
+        w: ZONE_BAR.marker.w,
+        h: ZONE_BAR.marker.h,
+      })
     },
 
     renderGraph(hidden) {
-      const { ui, stats, config: cfg } = this.state
+      const { ui, stats } = this.state
+      const zones = this.state.hrZones
       const bars = hidden ? [] : stats.graph()
       const vals = bars.filter((v) => v != null)
       let lo = vals.length ? Math.min(...vals) - 5 : 0
@@ -615,11 +588,11 @@ DataWidget(
                 HR_GRAPH.minBarH,
                 Math.round(((v - lo) / (hi - lo)) * HR_GRAPH.h),
               )
-        const pos = v == null ? null : zonePosition(v, cfg.hr_zones)
+        const pos = v == null ? null : zonePosition(v, zones)
         const color =
           v == null ? COLORS.graphEmpty : zoneColor(pos ? pos.zone : 0)
         const key = `g${i}`
-        const sig = `${h}:${color}`
+        const sig = hidden ? "hidden" : `${h}:${color}`
         if (this.state.cache[key] === sig) continue
         this.state.cache[key] = sig
         ui.graph[i].setProperty(prop.MORE, {
@@ -627,7 +600,7 @@ DataWidget(
           y: HR_GRAPH.y + HR_GRAPH.h - h,
           w: HR_GRAPH.barW - 1,
           h,
-          color,
+          color: hidden ? COLORS.bg : color,
         })
       }
     },

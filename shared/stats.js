@@ -38,6 +38,7 @@ export class RunStats {
     this.distance = null
     this.avgHr = new WeightedMean()
     this.avgPower = new WeightedMean()
+    this.maxHr = null
     this.laps = [] // closed laps: {index, time, distance, hr, power}
     this.hrGraph = [] // closed buckets, oldest first
     this.bucket = { start: null, mean: new WeightedMean() }
@@ -82,6 +83,8 @@ export class RunStats {
       return null
     }
     const dt = elapsed - prev
+    if (dt > 0 && hr != null && Number.isFinite(hr) && hr > 0)
+      this.maxHr = this.maxHr == null ? hr : Math.max(this.maxHr, hr)
     if (dt > 0 && dt <= MAX_TICK_GAP_SEC) {
       this.avgHr.add(hr, dt)
       this.avgPower.add(power, dt)

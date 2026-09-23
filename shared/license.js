@@ -6,7 +6,7 @@
 // Platform-free: the HTTP call is injected (`http(url, jsonBody)` resolving to
 // {status, body}), so this runs under Node tests and in the side service.
 
-export const POLAR_ORG_ID = "00000000-0000-0000-0000-000000000000" // TODO: your Polar organization id
+export const POLAR_ORG_ID = "129d1276-7133-4b9f-959a-1a464c8edf67"
 export const POLAR_API = "https://api.polar.sh/v1/customer-portal/license-keys"
 export const POLAR_SANDBOX_API =
   "https://sandbox-api.polar.sh/v1/customer-portal/license-keys"

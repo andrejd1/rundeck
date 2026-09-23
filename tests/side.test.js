@@ -34,10 +34,13 @@ const getConfig = (params) =>
 
 test("GET_CONFIG returns the built config and remembers the watch", async () => {
   store.clear()
-  store.set("primary_metric", "power")
+  store.set(
+    "layout_json",
+    JSON.stringify({ slots: { r2c: "power" }, updated_at: 3 }),
+  )
   const r = await getConfig({ device_uuid: "abc123", trial_used: 2 })
   assert.equal(r.code, 0)
-  assert.equal(r.config.primary, "power")
+  assert.equal(r.config.layout.slots.r2c, "power")
   assert.equal(r.licensed, false)
   assert.equal(r.trial_used, 2)
   assert.equal(store.get("device_uuid"), "abc123")
@@ -122,7 +125,7 @@ test("settings changes push a new config", async () => {
   store.clear()
   const pushes = []
   svc.call = (msg) => pushes.push(msg)
-  await svc.onSettingsChange({ key: "bar_metric", newValue: "hr" })
+  await svc.onSettingsChange({ key: "layout_json", newValue: "{}" })
   await svc.onSettingsChange({ key: "unrelated", newValue: "x" })
   assert.equal(pushes.length, 1)
   assert.equal(pushes[0].method, MSG.CONFIG_PUSH)
@@ -133,4 +136,24 @@ test("watch trial reports only ever raise the phone count", () => {
   svc.onCall({ method: MSG.TRIAL_REPORT, params: { trial_used: 4 } })
   svc.onCall({ method: MSG.TRIAL_REPORT, params: { trial_used: 1 } })
   assert.equal(store.get("trial_used"), "4")
+})
+
+test("watch layout edits are kept only when newer", () => {
+  store.clear()
+  store.set(
+    "layout_json",
+    JSON.stringify({ slots: { r2c: "pace" }, updated_at: 100 }),
+  )
+  svc.onCall({
+    method: MSG.LAYOUT_UPDATE,
+    params: { layout: { slots: { r2c: "power" }, updated_at: 50 } },
+  })
+  assert.equal(JSON.parse(store.get("layout_json")).slots.r2c, "pace")
+  svc.onCall({
+    method: MSG.LAYOUT_UPDATE,
+    params: { layout: { slots: { r2c: "power" }, updated_at: 200 } },
+  })
+  const saved = JSON.parse(store.get("layout_json"))
+  assert.equal(saved.slots.r2c, "power")
+  assert.equal(saved.updated_at, 200)
 })

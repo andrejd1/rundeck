@@ -1,6 +1,6 @@
 {
   "name": "rundeck",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "RunDeck: dense one-screen running dashboard as a Zepp OS Workout Extension",
   "main": "app.js",
   "type": "module",

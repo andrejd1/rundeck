@@ -10,6 +10,10 @@ native data and renders it.
 
 ![RunDeck screens](docs/ui-preview.png)
 
+Icon options (the shipped one is A): [docs/icons/options.png](docs/icons/options.png) — copy
+any `docs/icons/*.png` over `assets/common.r/icon.png` to switch (`node docs/icons/gen.mjs`
+regenerates them).
+
 ## The screen
 
 ```
@@ -31,9 +35,30 @@ native data and renders it.
 | Power | `getSportData("power")` — **not in the documented types**, probed only when power is shown |
 | Lap HR / pace / time / distance, avg HR, HR graph, grade | computed in `shared/stats.js` from the native samples, driven by the native elapsed clock (a paused workout accumulates nothing) |
 
-Settings (Zepp app → RunDeck): pace unit, center metric (pace / power), zone bar metric
-(HR / pace / power), auto-lap (1 km|mi or off), a target range for the center metric, HR
-zones (from max HR, threshold HR, or custom bounds), threshold pace and FTP.
+### Customizing the screen
+
+The screen is a fixed grid of **13 slots** (top value, four two-column rows around two big
+center values, and a bottom row) plus the zone bar. Any of 25 fields can go in any slot —
+HR, HR zone, avg/lap/max HR, pace, avg/lap/last-lap pace, speed, power, avg/lap power,
+workout time, lap time, clock, distance, lap distance, lap count, grade, ascent, altitude,
+cadence, avg cadence, calories, or empty. Text shrinks to fit its slot.
+
+Two places to edit, one layout:
+
+- **Phone:** Zepp app → RunDeck settings → *Screen layout* (a picker per slot + zone bar).
+- **Watch:** open RunDeck from the watch's app list → tap a slot → tap a field.
+
+Both write the same layout with an `updated_at` stamp; the newer copy wins in both
+directions (watch edits reach the phone on the next sync, `LAYOUT_UPDATE`). Only the native
+channels the layout shows are polled (calories, average cadence and power are skipped when
+nothing displays them).
+
+Other settings: pace unit, auto-lap (1 km|mi or off), a pace **or** power target (every
+slot showing the live pace/power turns green/blue/red), HR zones, threshold pace and FTP.
+
+**HR zones** default to **the watch's own zones** (`Workout.getUserHrZoneSettings`, Zepp OS
+4.2+). Older firmware falls back to 220 − age from the Zepp profile (`data:user.info`), then
+max HR 190. Max HR %, threshold HR (Friel) or custom bounds can be picked instead.
 
 **Laps:** the lap key closes a RunDeck lap *and* the native lap. Native auto-laps are not
 visible to extensions, so RunDeck runs its own auto-lap — set the watch's auto-lap to the
@@ -77,8 +102,8 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 1. Create an organization on polar.sh (test first on `sandbox.polar.sh`).
 2. Create a product **RunDeck**, one-time price **€6**, with a **License Keys** benefit:
    activation limit 3 (one person, a couple of watches), no expiry.
-3. Copy the organization id and the product's checkout link into `shared/license.js`
-   (`POLAR_ORG_ID`, `BUY_URL`). For sandbox testing pass `api: POLAR_SANDBOX_API`.
+3. The organization id is set in `shared/license.js`; the product's checkout link still
+   needs to go into `BUY_URL`. For sandbox testing pass `api: POLAR_SANDBOX_API`.
 
 ## Project layout
 
@@ -87,6 +112,9 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 | `data-widget/common/index.js` | the screen: tick loop, rendering, lap key, trial/license gating |
 | `data-widget/common/index.r.layout.js` | 480px round layout (px()-scaled) |
 | `data-widget/common/metrics.js` | native data reader with battery-aware polling |
+| `data-widget/common/hr-zones.js` | watch HR zones → age → default fallback chain |
+| `page/index.js` | on-watch layout editor (app list entry) |
+| `shared/fields.js` | field catalog, slots, layout model and merge rule |
 | `app.js` | receives phone pushes (config/license) for the whole mini program |
 | `app-side/index.js` | phone side service: config build, Polar activation, trial mirror |
 | `setting/index.js` | Zepp app settings page |
@@ -97,17 +125,21 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 
 ```
 npm install
-npm test              # 53 tests: logic + the real widget/side service against stubs
+npm test              # 73 tests: logic + the real widget/side service against stubs
 npm run preview       # renders sim/out/preview.html
 npm run screenshots   # regenerates docs/ui-preview.png and docs/screenshots/
 ```
 
-Device: install the Zeus CLI (`npm i -g @zeppos/zeus-cli`), register the app in the Zepp
-developer console and put its id in `app.json` (`appId` is `0` until then), then
+Device: install the Zeus CLI (`npm i -g @zeppos/zeus-cli`) (`appId` 1128268), then
 `zeus preview` and scan the QR code in the Zepp app (developer mode). Requires Zepp OS 3.6+
 (workout-extension watches: T-Rex 3, Balance 2, Active 2, Cheetah family, ...).
 
 ## Needs on-device verification
+
+- The layout editor page: that RunDeck shows up in the watch's app list with a page module,
+  that `setScrollMode` scrolls the long lists, and that button text fits.
+- `getUserHrZoneSettings` on a 4.2+ watch, and the age fallback on an older one.
+- `getSportData` for `calories` and `avg_cadence`.
 
 - Real font widths: the preview renders with DejaVu Sans Bold, which is wider than the
   watch font, so the device should have *more* room than the screenshots — but check the
