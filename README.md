@@ -165,6 +165,13 @@ the Zepp logo repeatedly), switch on **Bridge**, then run `zeus bridge` → `con
 `install`; `console.log` output streams to that terminal. `zeus dev` (simulator) shows the
 console as well.
 
+## Landing page
+
+`site/template.html` → `node site/build.mjs` → `site/index.html`: a single static page that
+inlines the simulator's real watch frames (`docs/screenshots/*.svg`), the field list and the
+Polar checkout link. `.github/workflows/pages.yml` deploys it to GitHub Pages on pushes to
+`main` (Settings → Pages → Source: GitHub Actions; free only for public repositories).
+
 ## Needs on-device verification
 
 - The layout editor page: that RunDeck shows up in the watch's app list with a page module,

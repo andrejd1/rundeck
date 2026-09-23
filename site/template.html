@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RunDeck</title>
+<meta name="description" content="RunDeck puts every running number on one screen of your Amazfit watch: heart-rate graph and zones, lap vs average pace, targets, laps, grade and ascent. 5 runs free, €6 to unlock.">
+<meta property="og:title" content="RunDeck — every running number on one screen">
+<meta property="og:description" content="A dense, customizable data screen for Amazfit running workouts. 5 runs free, €6 once.">
+<meta name="theme-color" content="#0a0d12">
+<link rel="icon" type="image/png" href="{{icon}}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root {
+  --ground: #eef2f6;
+  --panel: #ffffff;
+  --line: #d4dbe3;
+  --ink: #0b1118;
+  --muted: #5a6574;
+  --bezel-a: #c9d1da;
+  --bezel-b: #8e99a6;
+  --z1: #3b82f6;
+  --z2: #14b8a6;
+  --z3: #22c55e;
+  --z4: #f59e0b;
+  --z5: #ef4444;
+  --cta-ink: #ffffff;
+  --cta-bg: #0b1118;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #0a0d12;
+    --panel: #121821;
+    --line: #1f2833;
+    --ink: #e9eef4;
+    --muted: #8a96a6;
+    --bezel-a: #3a4350;
+    --bezel-b: #161b22;
+    --cta-ink: #0a0d12;
+    --cta-bg: #e9eef4;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #0a0d12;
+  --panel: #121821;
+  --line: #1f2833;
+  --ink: #e9eef4;
+  --muted: #8a96a6;
+  --bezel-a: #3a4350;
+  --bezel-b: #161b22;
+  --cta-ink: #0a0d12;
+  --cta-bg: #e9eef4;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 17px/1.55 var(--body);
+  padding-inline: 20px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--z1); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.02; margin: 0; text-wrap: balance; letter-spacing: 0.005em; }
+h1 { font-size: clamp(46px, 7.4vw, 88px); text-transform: uppercase; }
+h2 { font-size: clamp(34px, 4.6vw, 54px); text-transform: uppercase; }
+h3 { font-size: 24px; font-weight: 600; }
+p { margin: 0; max-width: 62ch; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* the zone bar: the product's own signature, used as the page's divider */
+.zones { display: flex; gap: 4px; height: 8px; }
+.zones span { flex: 1; border-radius: 4px; }
+.zones span:nth-child(1) { background: var(--z1); }
+.zones span:nth-child(2) { background: var(--z2); }
+.zones span:nth-child(3) { background: var(--z3); }
+.zones span:nth-child(4) { background: var(--z4); }
+.zones span:nth-child(5) { background: var(--z5); }
+
+/* ------------------------------------------------------------ top bar */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px; }
+.brand { display: flex; align-items: center; gap: 12px; font-family: var(--display); font-weight: 700; font-size: 26px; text-decoration: none; letter-spacing: 0.02em; }
+.brand img { width: 36px; height: 36px; border-radius: 50%; background: #0a0d12; }
+.top nav { display: flex; gap: 22px; font-weight: 500; }
+.top nav a { text-decoration: none; color: var(--muted); }
+.top nav a:hover { color: var(--ink); }
+
+/* ------------------------------------------------------------ hero */
+.hero { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; padding-block: 28px 64px; }
+.hero .kicker { color: var(--muted); margin-bottom: 18px; }
+.hero h1 em { font-style: normal; color: var(--z4); }
+.hero .lede { margin-top: 22px; font-size: 20px; color: var(--muted); }
+.ctas { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 32px; align-items: center; }
+.btn {
+  display: inline-flex; flex-direction: column; text-decoration: none; font-weight: 600;
+  border-radius: 12px; overflow: hidden; font-size: 17px;
+}
+.btn .lbl { padding: 14px 22px 12px; }
+.btn.primary { background: var(--cta-bg); color: var(--cta-ink); }
+.btn.primary .zones { height: 5px; gap: 0; }
+.btn.primary .zones span { border-radius: 0; }
+.btn.ghost { border: 1.5px solid var(--line); padding: 13px 20px; flex-direction: row; }
+.btn:hover { transform: translateY(-1px); }
+.price-note { margin-top: 16px; font-size: 15px; color: var(--muted); }
+
+.watch {
+  width: min(460px, 100%); aspect-ratio: 1; border-radius: 50%; margin-inline: auto;
+  padding: 5.5%;
+  background: radial-gradient(circle at 30% 25%, var(--bezel-a), var(--bezel-b) 70%);
+  box-shadow: 0 30px 60px -30px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.06);
+  position: relative;
+}
+.watch::after { /* crown */
+  content: ""; position: absolute; right: -10px; top: 30%; width: 14px; height: 54px;
+  border-radius: 6px; background: linear-gradient(90deg, var(--bezel-b), var(--bezel-a));
+}
+.watch svg { width: 100%; height: 100%; display: block; border-radius: 50%; }
+
+/* ------------------------------------------------------------ sections */
+section { padding-block: 72px; }
+.section-head { display: grid; gap: 16px; margin-bottom: 40px; }
+.section-head .zones { width: 120px; }
+
+.anatomy { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 56px; align-items: center; }
+.legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 18px; }
+.legend li { display: grid; grid-template-columns: 14px 1fr; gap: 14px; align-items: baseline; }
+.legend .dot { width: 14px; height: 14px; border-radius: 50%; transform: translateY(2px); }
+.legend b { font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: 0.02em; }
+
+.variants { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+.variant { display: grid; gap: 14px; justify-items: center; text-align: center; }
+.variant .watch { width: 100%; max-width: 250px; padding: 6%; }
+.variant .watch::after { right: -7px; width: 9px; height: 34px; }
+.variant p { font-size: 15px; color: var(--muted); max-width: 26ch; }
+.variant h3 { font-size: 21px; }
+
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px 40px; }
+.feature { border-top: 3px solid var(--line); padding-top: 18px; display: grid; gap: 10px; }
+.feature:nth-child(5n+1) { border-color: var(--z1); }
+.feature:nth-child(5n+2) { border-color: var(--z2); }
+.feature:nth-child(5n+3) { border-color: var(--z3); }
+.feature:nth-child(5n+4) { border-color: var(--z4); }
+.feature:nth-child(5n+5) { border-color: var(--z5); }
+.feature p { font-size: 16px; color: var(--muted); }
+
+.fields { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 8px; }
+.fields span { font-family: var(--mono); font-size: 12.5px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+
+.plans { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.plan { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 30px; display: grid; gap: 14px; align-content: start; }
+.plan .figure { font-family: var(--display); font-weight: 700; font-size: 64px; line-height: 1; }
+.plan .figure small { font-size: 22px; font-weight: 600; color: var(--muted); margin-left: 6px; }
+.plan ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--muted); }
+.plan.unlock { border-color: var(--ink); }
+
+.faq { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.faq details { border-bottom: 1px solid var(--line); padding-block: 18px; }
+.faq summary { cursor: pointer; font-weight: 600; font-size: 19px; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-family: var(--mono); color: var(--muted); }
+.faq details[open] summary::after { content: "–"; }
+.faq details p { margin-top: 10px; color: var(--muted); }
+
+footer { padding-block: 40px 56px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 15px; border-top: 1px solid var(--line); }
+
+@media (max-width: 900px) {
+  .hero, .anatomy { grid-template-columns: 1fr; }
+  .hero .watch { order: -1; width: min(360px, 100%); }
+  .variants { grid-template-columns: repeat(2, 1fr); }
+  .features { grid-template-columns: 1fr 1fr; }
+  .top nav { display: none; }
+}
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  .features, .plans { grid-template-columns: 1fr; }
+  .variants { gap: 20px; }
+  section { padding-block: 52px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn { transition: transform 0.15s ease; }
+  .hero .watch { animation: rise 0.7s ease-out both; }
+  @keyframes rise { from { transform: translateY(12px); } to { transform: none; } }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <a class="brand" href="#top"><img src="{{icon}}" alt="">RunDeck</a>
+  <nav>
+    <a href="#screen">The screen</a>
+    <a href="#layouts">Layouts</a>
+    <a href="#price">Price</a>
+    <a href="#faq">FAQ</a>
+  </nav>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div>
+      <p class="mono kicker">For Amazfit running watches · Zepp OS</p>
+      <h1>Every number.<br><em>One glance.</em></h1>
+      <p class="lede">RunDeck adds a dense data page to your Amazfit run: heart-rate graph and zones, lap against average pace, targets that turn green, grade, ascent and more — all on one screen you design yourself.</p>
+      <div class="ctas">
+        <a class="btn primary" href="{{buy}}"><span class="lbl">Unlock RunDeck · €6</span><span class="zones" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span></a>
+        <a class="btn ghost" href="#install">Try 5 runs free</a>
+      </div>
+      <p class="price-note">One-time purchase. No subscription, no account.</p>
+    </div>
+    <div class="watch" role="img" aria-label="RunDeck screen during a run: heart rate 106 with graph, lap and average heart rate, pace 5'38 in green inside the target, zone bar, elapsed time 25:43, cadence, lap distance, grade, distance and ascent">{{watch:0}}</div>
+  </div>
+
+  <section id="screen">
+    <div class="anatomy">
+      <div class="section-head">
+        <div class="zones" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+        <h2>Read it at 5:00/km</h2>
+        <p class="muted">Big numbers where your eyes land, the rest around them. Label colors tell you what kind of number you're looking at before you read it.</p>
+        <ul class="legend">
+          <li><span class="dot" style="background:var(--z5)"></span><span><b>Heart rate</b> — live, lap, average and max, zone, and a 6-minute graph colored by zone.</span></li>
+          <li><span class="dot" style="background:var(--z1)"></span><span><b>Pace &amp; power</b> — current, lap, average, last lap, speed; power with a Stryd paired.</span></li>
+          <li><span class="dot" style="background:var(--z3)"></span><span><b>Time</b> — workout time, lap time, time of day.</span></li>
+          <li><span class="dot" style="background:var(--z4)"></span><span><b>Distance &amp; terrain</b> — distance, lap distance, grade, ascent, descent, altitude.</span></li>
+          <li><span class="dot" style="background:var(--z2)"></span><span><b>Body</b> — cadence, stride, steps, calories, training effect and load.</span></li>
+        </ul>
+      </div>
+      <div class="watch" role="img" aria-label="RunDeck screen with icon labels and three columns in rows one and four">{{watch:4}}</div>
+    </div>
+  </section>
+
+  <section id="layouts">
+    <div class="section-head">
+      <div class="zones" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <h2>Your screen, your call</h2>
+      <p class="muted">Pick the field for every spot, choose one to three columns per row, and show names as text, short text or icons. Change it in the Zepp app on your phone — or right on the watch.</p>
+    </div>
+    <div class="variants">
+      <figure class="variant">
+        <div class="watch" role="img" aria-label="Layout with heart rate and time side by side on top">{{watch:6}}</div>
+        <h3>Two up top</h3>
+        <p>Heart rate with its zone next to workout time.</p>
+      </figure>
+      <figure class="variant">
+        <div class="watch" role="img" aria-label="Power layout with power in red above target">{{watch:3}}</div>
+        <h3>Run by power</h3>
+        <p>Power front and center, colored against your target.</p>
+      </figure>
+      <figure class="variant">
+        <div class="watch" role="img" aria-label="Minimal layout with two big paces and a single elapsed time">{{watch:5}}</div>
+        <h3>Fewer, bigger</h3>
+        <p>One or two columns when you want less to read.</p>
+      </figure>
+      <figure class="variant">
+        <div class="watch" role="img" aria-label="Layout with descent, stride, training effect and load">{{watch:7}}</div>
+        <h3>Trail &amp; training</h3>
+        <p>Descent, stride, training effect and load.</p>
+      </figure>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="section-head">
+      <div class="zones" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <h2>Built for how you run</h2>
+    </div>
+    <div class="features">
+      <div class="feature"><h3>Your watch's own HR zones</h3><p>Zones come straight from your watch settings, so RunDeck agrees with the rest of your Amazfit data. Max HR, threshold HR or custom zones if you prefer.</p></div>
+      <div class="feature"><h3>Targets that turn green</h3><p>Set a pace, power or heart-rate range. The live value goes green inside it, blue below, red above — and the range is marked on the zone bar.</p></div>
+      <div class="feature"><h3>A zone bar that follows you</h3><p>Auto mode shows power zones for a power target, pace zones from your LT pace, heart-rate zones otherwise.</p></div>
+      <div class="feature"><h3>Laps that make sense</h3><p>Press lap for lap time, pace, HR and distance, with a short lap summary. Auto-lap every km or mile.</p></div>
+      <div class="feature"><h3>Stays out of the way</h3><p>Your run is still a native Amazfit workout: GPS, recording, sync and route navigation work as usual. RunDeck is one data page inside it.</p></div>
+      <div class="feature"><h3>Kind to your battery</h3><p>Only the data on your screen is read, and nothing redraws that hasn't changed.</p></div>
+    </div>
+    <div class="fields" aria-label="All data fields">{{fields}}</div>
+  </section>
+
+  <section id="price">
+    <div class="section-head">
+      <div class="zones" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <h2>Try it on real runs</h2>
+    </div>
+    <div class="plans">
+      <div class="plan" id="install">
+        <p class="mono muted">Free trial</p>
+        <div class="figure">5<small>runs</small></div>
+        <p>Every feature, on five runs of five minutes or more. Opening the screen or a short warm-up doesn't count.</p>
+        <ul>
+          <li>Install RunDeck from the Zepp App on your phone.</li>
+          <li>In your Run workout's data pages on the watch, add RunDeck.</li>
+          <li>Start a run.</li>
+        </ul>
+      </div>
+      <div class="plan unlock">
+        <p class="mono muted">Unlock</p>
+        <div class="figure">€6<small>once</small></div>
+        <p>Keep the full screen for good. After the trial, RunDeck still shows the basics — heart rate, pace and time — so a run is never left without data.</p>
+        <ul>
+          <li>Pay once through Polar — VAT handled, key by e-mail.</li>
+          <li>Paste the key in RunDeck's settings in the Zepp App.</li>
+          <li>Moving to a new watch? Clear the key and enter it there.</li>
+        </ul>
+        <div class="ctas" style="margin-top:8px">
+          <a class="btn primary" href="{{buy}}"><span class="lbl">Unlock RunDeck · €6</span><span class="zones" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="section-head">
+      <div class="zones" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <h2>Questions</h2>
+    </div>
+    <div class="faq">
+      <details><summary>Which watches does it work on?</summary><p>Amazfit watches on Zepp OS 3.6 or newer that support workout extensions (data pages from apps inside the native workout). It's developed and tested on the Cheetah 2 Ultra.</p></details>
+      <details><summary>Does it replace the Amazfit running workout?</summary><p>No. You run the normal Amazfit workout; RunDeck is one of its data pages. Recording, GPS, laps, sync to Zepp and Strava all stay native.</p></details>
+      <details><summary>Where do my heart-rate zones come from?</summary><p>By default from the zones set on your watch (Zepp OS 4.2 and newer). Older watches estimate them from your age in the Zepp profile. You can also set max HR, threshold HR or your own zones.</p></details>
+      <details><summary>Can I show GAP, vertical oscillation or ground contact time?</summary><p>Not yet — Zepp OS doesn't share those with apps. Everything RunDeck shows comes from the watch itself, never estimated.</p></details>
+      <details><summary>What happens after the 5 free runs?</summary><p>The screen keeps heart rate, your main pace and time, and a note to unlock. Everything comes back as soon as you enter a key — even mid-run.</p></details>
+      <details><summary>Is my data sent anywhere?</summary><p>Your workout data never leaves the watch. The only thing sent online is your license key, to Polar, when you activate it.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>RunDeck — a Zepp OS app by andrejd1</span>
+  <span>Payments by <a href="https://polar.sh">Polar</a>, merchant of record</span>
+</footer>
+
+</div>
+</body>
+</html>
