@@ -87,7 +87,7 @@ test("only channels on screen are polled", () => {
 test("units: short ones and the pace suffix only", () => {
   const km = { unit: "min_per_km" }
   const mi = { unit: "min_per_mile" }
-  const allowed = ["", "km", "mi", "W", "/km", "/mi"]
+  const allowed = ["", "km", "mi", "m", "ft", "W", "/km", "/mi"]
   for (const id of FIELD_IDS)
     for (const c of [km, mi])
       assert.ok(
@@ -98,4 +98,7 @@ test("units: short ones and the pace suffix only", () => {
   assert.equal(fieldUnit("cadence", km), "")
   assert.equal(fieldUnit("calories", km), "")
   assert.equal(fieldUnit("speed", km), "")
+  assert.equal(fieldUnit("altitude", km), "m")
+  assert.equal(fieldUnit("altitude", mi), "ft")
+  assert.equal(fieldUnit("ascent", km), "") // matches the native descent
 })

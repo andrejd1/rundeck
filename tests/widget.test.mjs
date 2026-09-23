@@ -522,7 +522,7 @@ const powerSport = () => ({
 })
 // value text -> size of every visible value (unit texts excluded)
 const valueSizes = (w) => {
-  const units = new Set(["km", "mi", "W", "/km", "/mi"])
+  const units = new Set(["km", "mi", "m", "ft", "W", "/km", "/mi"])
   const out = {}
   for (const x of w.widgets())
     if (
