@@ -166,7 +166,38 @@ const layoutJson = (slots, bar = "hr", extra = {}) =>
   snap(w, "Row 2 as 2 columns, row 3 and bottom as 1, short labels")
 }
 
-// 6. trial used up: basic screen
+// 6. top row as 2 columns (HR + time), rows 1 and 4 with 3 columns
+{
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: layoutJson(
+        {
+          headerl: "hr",
+          headerr: "elapsed",
+          r1l: "lap_hr",
+          r1c: "max_hr",
+          r1r: "avg_hr",
+          r4l: "lap_distance",
+          r4c: "distance",
+          r4r: "last_lap_pace",
+          r5l: "avg_cadence",
+          r5r: "ascent",
+        },
+        "auto",
+        { cols: { header: 2, r1: 3, r2: 3, r3: 3, r4: 3, r5: 2 } },
+      ),
+    }),
+    sim: { hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] } },
+  })
+  w.set({
+    sport: { ...globalThis.__sim.sport, avg_cadence: { avg_cadence: "171" } },
+  })
+  w.run(1400, { speed: 3.4, grade: 1, hr: 152 })
+  snap(w, "Top row as 2 columns (HR with zone), rows 1 and 4 with 3 columns")
+}
+
+// 7. trial used up: basic screen
 {
   const w = await bootWidget({
     config: cfg({}),
@@ -176,7 +207,7 @@ const layoutJson = (slots, bar = "hr", extra = {}) =>
   snap(w, "Trial over - basic screen")
 }
 
-// 7-8. on-watch layout editor
+// 8-9. on-watch layout editor
 {
   const e = await bootEditor({})
   snap(e, "Watch editor - slot list")

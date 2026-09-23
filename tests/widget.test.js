@@ -214,7 +214,8 @@ test("custom phone zones override the watch", async () => {
 
 test("watch editor: pick a field for a slot", async () => {
   const list = await bootEditor({})
-  assert.equal(list.buttons()[0].props.text, "Top: Heart rate")
+  assert.equal(list.buttons()[0].props.text, "Top row: 1 col")
+  assert.equal(list.buttons()[1].props.text, "Top: Heart rate")
   list.tap("2 center: Pace")
   assert.deepEqual(JSON.parse(globalThis.__sim.navigation.at(-1).params), {
     pick: "r2c",
@@ -338,4 +339,51 @@ test("short labels", async () => {
   })
   w.run(3)
   assert.equal(labelAt(w, "r1l"), "LapHR")
+})
+
+test("top row: two columns, HR label carries the zone", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({
+        cols: { header: 2 },
+        slots: { headerl: "hr", headerr: "elapsed" },
+        updated_at: 2,
+      }),
+    }),
+    sim: { hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] } },
+  })
+  w.run(5, { hr: 150 })
+  assert.equal(w.textAt(RG.header[2].headerl.label), "HR Z4")
+  assert.equal(w.textAt(RG.header[2].headerr.label), "Time")
+  assert.ok(!w.textAt(HEADER_SUFFIX)) // no zone suffix in 2 columns
+})
+
+test("single non-HR top value is centered, no graph", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({
+        slots: { header: "elapsed" },
+        updated_at: 2,
+      }),
+    }),
+  })
+  w.run(5)
+  // graph bars live in the header band (y 50-102); none may be drawn
+  const bars = w
+    .widgets()
+    .filter(
+      (x) =>
+        x.type === "FILL_RECT" &&
+        x.props.visible !== false &&
+        x.props.y >= 50 &&
+        x.props.y + x.props.h <= 102 &&
+        x.props.h > 2 &&
+        x.props.color !== 0,
+    )
+  assert.deepEqual(
+    bars.map((b) => b.props),
+    [],
+  )
 })

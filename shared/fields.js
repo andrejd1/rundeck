@@ -23,6 +23,8 @@ export const LAYOUT_VERSION = 1
 // side = left/right of a big center, center = big value, bottom = last row.
 export const SLOTS = [
   { id: "header", row: "header", name: "Top", short: "Top" },
+  { id: "headerl", row: "header", name: "Top left", short: "Top left" },
+  { id: "headerr", row: "header", name: "Top right", short: "Top right" },
   { id: "r1l", row: "r1", name: "Row 1 left", short: "1 left" },
   { id: "r1c", row: "r1", name: "Row 1 middle", short: "1 middle" },
   { id: "r1r", row: "r1", name: "Row 1 right", short: "1 right" },
@@ -40,21 +42,24 @@ export const SLOTS = [
   { id: "r5r", row: "r5", name: "Bottom right", short: "5 right" },
 ]
 
-// Rows with a user-chosen column count. The header row is always 1 slot.
-// Limits keep text readable on a round 480 px screen: rows 1 and 4 are
-// thin strips (2 or 3), the big-number rows 2 and 3 take 1-3, and the bottom
-// row, where the screen is only ~200 px wide, takes 1 or 2.
+// Rows with a user-chosen column count. Limits keep text readable on a
+// round 480 px screen: the top row takes 1 (with the HR graph) or 2, rows 1
+// and 4 are thin strips (2 or 3), the big-number rows 2 and 3 take 1-3, and
+// the bottom row, where the screen is only ~200 px wide, takes 1 or 2.
 export const ROWS = [
+  { id: "header", name: "Top row", cols: [1, 2] },
   { id: "r1", name: "Row 1", cols: [2, 3] },
   { id: "r2", name: "Row 2", cols: [1, 2, 3] },
   { id: "r3", name: "Row 3", cols: [1, 2, 3] },
   { id: "r4", name: "Row 4", cols: [2, 3] },
   { id: "r5", name: "Bottom row", cols: [1, 2] },
 ]
-export const DEFAULT_COLS = { r1: 2, r2: 3, r3: 3, r4: 2, r5: 2 }
+export const DEFAULT_COLS = { header: 1, r1: 2, r2: 3, r3: 3, r4: 2, r5: 2 }
 
 // Which slots a row shows for a column count.
 export function rowSlots(rowId, cols) {
+  if (rowId === "header")
+    return cols === 2 ? ["headerl", "headerr"] : ["header"]
   if (cols === 1) return [`${rowId}c`]
   if (cols === 2) return [`${rowId}l`, `${rowId}r`]
   return [`${rowId}l`, `${rowId}c`, `${rowId}r`]
@@ -62,7 +67,7 @@ export function rowSlots(rowId, cols) {
 
 /** Slots on screen for a layout, top to bottom. */
 export function activeSlots(layout) {
-  const out = ["header"]
+  const out = []
   for (const row of ROWS) out.push(...rowSlots(row.id, layout.cols[row.id]))
   return out
 }
@@ -389,6 +394,8 @@ export const BAR_NAMES = {
 // The reference layout.
 export const DEFAULT_SLOTS = {
   header: "hr",
+  headerl: "hr",
+  headerr: "elapsed",
   r1l: "lap_hr",
   r1c: "max_hr",
   r1r: "avg_hr",

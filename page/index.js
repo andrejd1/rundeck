@@ -111,7 +111,6 @@ Page(
           this.go({ pick: id }),
         )
       this.title("RunDeck layout")
-      slotButton("header")
       for (const row of ROWS) {
         const cols = layout.cols[row.id]
         this.button(

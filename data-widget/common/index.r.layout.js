@@ -81,12 +81,19 @@ const stack = (x, y, w, labelSize, valueSize) => ({
 // Geometry per row and column count: { [cols]: { [slotId]: {label, value} } }.
 // `label: null` means the slot shows no label (big center values).
 export const ROW_GEOMETRY = {
+  // The top center (x ~220-260, y < 56) can be covered by the system's
+  // workout-extension gear icon, so no label sits there.
   header: {
     1: {
+      // HR: graph on the left, value, label above the zone suffix
       header: {
-        label: label(214, 30, 120, COLORS.value, align.LEFT, 20),
+        label: label(330, 40, 90, COLORS.value, align.LEFT, 18),
         value: value(212, 50, 124, 56, align.LEFT),
       },
+    },
+    2: {
+      headerl: stack(96, 34, 140, 18, 42),
+      headerr: stack(244, 34, 140, 18, 42),
     },
   },
   r1: {
@@ -137,30 +144,39 @@ export const ROW_GEOMETRY = {
     2: { r3l: stack(40, 284, 196, 20, 44), r3r: stack(244, 284, 196, 20, 44) },
     1: { r3c: { label: null, value: value(70, 284, 340, 68) } },
   },
+  // Row 4 mirrors row 1: same 50 px band, same sizes (it used to be 44 px
+  // with a smaller value font, which read as squeezed).
   r4: {
     2: {
       r4l: {
-        label: label(58, 376, 94, COLORS.value, align.RIGHT, 20),
-        value: value(156, 370, 78, 30, align.LEFT),
+        label: label(56, 372, 92, COLORS.value, align.RIGHT),
+        value: value(154, 365, 76, 34, align.LEFT),
       },
       r4r: {
-        label: label(324, 376, 80, COLORS.value, align.LEFT, 20),
-        value: value(246, 370, 72, 30, align.RIGHT),
+        label: label(332, 372, 92, COLORS.value, align.LEFT),
+        value: value(250, 365, 76, 34, align.RIGHT),
       },
     },
     3: {
-      r4l: stack(58, 364, 118, 16, 22),
-      r4c: stack(178, 364, 124, 16, 22),
-      r4r: stack(304, 364, 118, 16, 22),
+      r4l: stack(56, 360, 120, 16, 24),
+      r4c: stack(178, 360, 124, 16, 24),
+      r4r: stack(304, 360, 120, 16, 24),
     },
   },
   r5: {
     2: {
-      r5l: stack(132, 410, 104, 18, 30),
-      r5r: stack(246, 410, 104, 18, 30),
+      r5l: stack(132, 413, 104, 18, 28),
+      r5r: stack(246, 413, 104, 18, 28),
     },
-    1: { r5c: stack(170, 410, 140, 18, 30) },
+    1: { r5c: stack(170, 413, 140, 18, 28) },
   },
+}
+
+// Single top value that is not HR: no graph, so the value is centered and
+// its label sits to the right of the gear area.
+export const HEADER_CENTERED = {
+  label: label(266, 30, 100, COLORS.value, align.LEFT, 18),
+  value: value(130, 50, 220, 56),
 }
 
 // Column separators per row and column count.
@@ -170,8 +186,8 @@ export const ROW_DIVIDERS = {
     3: [line(166, 114, 2, 40), line(314, 114, 2, 40)],
   },
   r4: {
-    2: [line(239, 368, 2, 36)],
-    3: [line(177, 368, 2, 36), line(303, 368, 2, 36)],
+    2: [line(239, 363, 2, 42)],
+    3: [line(177, 363, 2, 42), line(303, 363, 2, 42)],
   },
 }
 
@@ -197,9 +213,9 @@ export const ZONE_BAR = {
 // --- notice (trial status, lap flash, locked) overlaying the lap dist row ---
 export const NOTICE = {
   x: px(56),
-  y: px(366),
+  y: px(362),
   w: px(368),
-  h: px(40),
+  h: px(44),
   color: COLORS.notice,
   text_size: px(26),
   align_h: align.CENTER_H,
@@ -221,6 +237,6 @@ export const NOTICE_SUB = {
 export const DIVIDERS = [
   line(60, 108, 360, 2),
   line(28, 158, 424, 2),
-  line(48, 362, 384, 2),
-  line(92, 406, 296, 2),
+  line(44, 357, 392, 2),
+  line(84, 409, 312, 2),
 ]

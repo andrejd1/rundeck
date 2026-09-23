@@ -12,6 +12,7 @@ import {
   COLORS,
   DIVIDERS,
   GLYPH_WIDTH,
+  HEADER_CENTERED,
   HEADER_SUFFIX,
   HR_GRAPH,
   ICON,
@@ -267,16 +268,19 @@ DataWidget(
     // layout changes only, not per tick; slots of other column counts hide.
     applyGeometry() {
       const { ui, layout } = this.state
-      const geo = { header: ROW_GEOMETRY.header[1].header }
+      const geo = {}
       for (const row of ROWS) {
         const cols = layout.cols[row.id]
         for (const id of rowSlots(row.id, cols))
           geo[id] = ROW_GEOMETRY[row.id][cols][id]
       }
+      // a single top value without the HR graph is centered
+      if (geo.header && layout.slots.header !== "hr")
+        geo.header = HEADER_CENTERED
       this.state.geo = geo
       // sizes/positions changed: forget what was drawn for the slots
       for (const k of Object.keys(this.state.cache))
-        if (/^(r\d[lcr]|header)[lvi]:/.test(k)) delete this.state.cache[k]
+        if (/^(r\d[lcr]|header[lr]?)[lvi]:/.test(k)) delete this.state.cache[k]
       for (const id of SLOT_IDS) {
         const g = geo[id]
         const slot = ui.slots[id]
@@ -504,12 +508,12 @@ DataWidget(
     },
 
     // Field name as text, short text, or icon + qualifier ("Avg", "Lap").
-    renderLabel(id, slot, box, f, style) {
+    renderLabel(id, slot, box, f, style, colorOverride) {
       const iconMode = style === "icons" && !!box && !!f.icon
       this.setProp(`${id}l`, slot.label, "visible", !!box)
       this.setProp(`${id}i`, slot.icon, "visible", iconMode)
       if (!box) return
-      const color = COLORS[f.group]
+      const color = colorOverride || COLORS[f.group]
       if (!iconMode) {
         this.setProp(`${id}l`, slot.label, "x", box.x)
         this.setProp(`${id}l`, slot.label, "w", box.w)
@@ -577,9 +581,11 @@ DataWidget(
       const noticeOn = !locked && !!n && this.nowSec() < n.until
       if (!noticeOn) this.state.notice = null
 
-      // locked mode keeps the header and one big value from rows 2 and 3
+      const hrPos = zonePosition(s.hr, this.state.hrZones)
+
+      // locked mode keeps the top row and one big value from rows 2 and 3
       const shown = activeSlots(layout)
-      const lockedKeep = ["header"]
+      const lockedKeep = rowSlots("header", layout.cols.header)
       for (const r of ["r2", "r3"]) {
         const ids = rowSlots(r, layout.cols[r])
         lockedKeep.push(ids.indexOf(`${r}c`) >= 0 ? `${r}c` : ids[0])
@@ -599,8 +605,18 @@ DataWidget(
           continue
         }
         const fieldId = layout.slots[id]
-        const f = FIELDS[fieldId] || FIELDS.none
-        this.renderLabel(id, slot, g.label, f, layout.labels)
+        let f = FIELDS[fieldId] || FIELDS.none
+        let labelColor = null
+        // HR in a two-column top row: no room for the graph or the zone
+        // suffix, so the zone rides in the label, in the zone's color
+        if (fieldId === "hr" && (id === "headerl" || id === "headerr")) {
+          const z = hrPos && hrPos.zone > 0 ? `Z${hrPos.zone}` : ""
+          if (z) {
+            f = { ...f, label: `HR ${z}`, short: `HR ${z}`, qual: z }
+            labelColor = zoneColor(hrPos.zone)
+          }
+        }
+        this.renderLabel(id, slot, g.label, f, layout.labels, labelColor)
         const valueColor =
           fieldId === targetField && status ? COLORS[status] : COLORS.value
         this.setFitted(
@@ -612,10 +628,9 @@ DataWidget(
         )
       }
 
-      // header extras: zone suffix + HR graph when the header shows HR
-      const headerField = layout.slots.header
-      const headerIsHr = headerField === "hr"
-      const hrPos = zonePosition(s.hr, this.state.hrZones)
+      // single top value showing HR: zone suffix + HR graph
+      const headerIsHr =
+        layout.cols.header === 1 && layout.slots.header === "hr"
       this.setProp(
         "suffix",
         ui.headerSuffix,
@@ -628,8 +643,7 @@ DataWidget(
         "color",
         zoneColor(hrPos ? hrPos.zone : 0),
       )
-      const showGraph =
-        !locked && (FIELDS[headerField] || FIELDS.none).group === "hr"
+      const showGraph = !locked && headerIsHr
       if (this.state.ticks % GRAPH_EVERY_TICKS === 1 || !showGraph)
         this.renderGraph(!showGraph)
 

@@ -42,6 +42,7 @@ const C = {
 // Spot name within its row. The big-number rows (2, 3) call their middle
 // spot "Center" (it is the big value); thin rows call it "Middle".
 function slotPosition(slotId, cols) {
+  if (slotId === "header") return "Value"
   const end = slotId.slice(-1)
   if (end === "l") return "Left"
   if (end === "r") return "Right"
@@ -231,8 +232,6 @@ AppSettingsPage({
       hint(
         "Top to bottom, as on the watch. Tap a spot to pick its field. You can also edit the layout on the watch: open RunDeck from the app list.",
       ),
-      label("Top"),
-      slotRow("header", 1),
       ...ROWS.map((row) => {
         const cols = layout.cols[row.id]
         return block([

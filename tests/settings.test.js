@@ -161,3 +161,12 @@ test("enum chips write their key", () => {
   assert.equal(store.get("pace_unit"), "min_per_mile")
   assert.equal(store.get("hr_zone_method"), "lthr")
 })
+
+test("top row has its own column chips and names its single spot", () => {
+  const { tree } = render({})
+  assert.ok(
+    all(tree, "Button").some((b) => /^Value:\s+Heart rate/.test(b.props.label)),
+  )
+  const ones = all(tree, "Button").filter((b) => b.props.label === "1 column")
+  assert.ok(ones.length >= 1)
+})
