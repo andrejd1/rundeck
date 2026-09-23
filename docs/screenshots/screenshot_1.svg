@@ -75,7 +75,8 @@
     <rect x="198" y="258" width="83" height="14" rx="7" fill="#22c55e"/>
     <rect x="285" y="258" width="83" height="14" rx="7" fill="#f59e0b"/>
     <rect x="371" y="258" width="83" height="14" rx="7" fill="#ef4444"/>
-    <rect x="87" y="250" width="8" height="30" rx="4" fill="#ffffff"/>
+    <rect x="141" y="275" width="42" height="5" rx="3" fill="#ffffff"/>
+    <rect x="163" y="250" width="8" height="30" rx="4" fill="#ffffff"/>
     <text x="240" y="395.1" text-anchor="middle" font-size="26" fill="#f2f2f2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap 7  5'33  00:43</text>
     
   </g>

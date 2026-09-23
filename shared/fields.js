@@ -243,8 +243,9 @@ export const FIELD_NAMES = {
   calories: "Calories",
 }
 
-export const BAR_OPTIONS = ["hr", "pace", "power", "off"]
+export const BAR_OPTIONS = ["auto", "hr", "pace", "power", "off"]
 export const BAR_NAMES = {
+  auto: "Auto",
   hr: "HR zones",
   pace: "Pace zones",
   power: "Power zones",
@@ -271,7 +272,7 @@ export const DEFAULT_SLOTS = {
 export const defaultLayout = () => ({
   v: LAYOUT_VERSION,
   slots: { ...DEFAULT_SLOTS },
-  bar: "hr",
+  bar: "auto",
   updated_at: 0,
 })
 

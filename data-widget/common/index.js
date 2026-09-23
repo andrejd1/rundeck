@@ -24,6 +24,7 @@ import { getDeviceInfo } from "@zos/device"
 import { KEY_EVENT_CLICK, KEY_SHORTCUT, offKey, onKey } from "@zos/interaction"
 import { createWidget, prop, widget } from "@zos/ui"
 import { appGlobals } from "../../shared/app-globals.js"
+import { barValue, resolveBar } from "../../shared/bar.js"
 import { normalizeConfig } from "../../shared/config.js"
 import {
   CONFIG_KEY,
@@ -398,6 +399,14 @@ DataWidget(
           }),
         )
       }
+      ui.band = createWidget(widget.FILL_RECT, {
+        x: ZONE_BAR.x,
+        y: ZONE_BAR.band.y,
+        w: ZONE_BAR.band.minW,
+        h: ZONE_BAR.band.h,
+        radius: Math.round(ZONE_BAR.band.h / 2),
+        color: ZONE_BAR.band.color,
+      })
       ui.marker = createWidget(widget.FILL_RECT, {
         x: ZONE_BAR.x,
         y: ZONE_BAR.marker.y,
@@ -536,20 +545,36 @@ DataWidget(
 
     renderZoneBar(locked) {
       const { ui, config: cfg, layout, metrics } = this.state
-      const s = metrics.snapshot
-      const on = !locked && layout.bar !== "off"
+      const bar = locked
+        ? null
+        : resolveBar(layout.bar, cfg, this.state.hrZones)
       for (let i = 0; i < ui.zoneSegs.length; i++)
-        this.setProp(`seg${i}`, ui.zoneSegs[i], "visible", on)
-      let value = s.hr
-      let bounds = this.state.hrZones
-      if (layout.bar === "pace" && cfg.pace_zones) {
-        value = s.speed
-        bounds = cfg.pace_zones
-      } else if (layout.bar === "power" && cfg.power_zones) {
-        value = s.power
-        bounds = cfg.power_zones
+        this.setProp(`seg${i}`, ui.zoneSegs[i], "visible", !!bar)
+
+      // target range under the bar, when the bar shows the target's metric
+      const band = bar && bar.band
+      this.setProp("band", ui.band, "visible", !!band)
+      if (band) {
+        const x = Math.round(ZONE_BAR.x + band.from * ZONE_BAR.w)
+        const w = Math.max(
+          ZONE_BAR.band.minW,
+          Math.round((band.to - band.from) * ZONE_BAR.w),
+        )
+        const sig = `${x}:${w}`
+        if (this.state.cache.band !== sig) {
+          this.state.cache.band = sig
+          ui.band.setProperty(prop.MORE, {
+            x: Math.min(x, ZONE_BAR.x + ZONE_BAR.w - w),
+            y: ZONE_BAR.band.y,
+            w,
+            h: ZONE_BAR.band.h,
+          })
+        }
       }
-      const pos = on ? zonePosition(value, bounds) : null
+
+      const pos = bar
+        ? zonePosition(barValue(bar.metric, metrics.snapshot), bar.bounds)
+        : null
       this.setProp("marker", ui.marker, "visible", !!pos)
       if (!pos) return
       const x = Math.round(

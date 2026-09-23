@@ -232,7 +232,7 @@ test("watch editor: zone bar and reset", async () => {
   const list = await bootEditor({})
   list.tap("Reset to default")
   const l = loadObject(LAYOUT_KEY)
-  assert.equal(l.bar, "hr")
+  assert.equal(l.bar, "auto")
   assert.equal(l.slots.r2c, "pace")
 })
 
@@ -246,4 +246,24 @@ test("zone bar off hides the bar", async () => {
     .widgets()
     .find((x) => x.type === "FILL_RECT" && x.props.w === 8)
   assert.equal(marker.props.visible, false)
+})
+
+test("auto bar follows a power target and marks the range", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      ftp: "300",
+      target_metric: "power",
+      target_range: "270-300",
+    }),
+  })
+  w.set({ sport: { ...globalThis.__sim.sport, power: { power: "285" } } })
+  w.run(3)
+  const band = w
+    .widgets()
+    .find((x) => x.type === "FILL_RECT" && x.props.h === 5)
+  assert.equal(band.props.visible, true)
+  assert.ok(band.props.w > 10)
+  // power is polled because the target needs it
+  assert.ok(globalThis.__sim.sportReads.power > 0)
 })

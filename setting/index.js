@@ -107,6 +107,9 @@ AppSettingsPage({
       select("Zone bar (middle)", layout.bar, BAR_SELECT, (val) =>
         saveLayout({ ...layout, bar: String(val) }),
       ),
+      hint(
+        "Auto follows your target: power zones (from FTP) for a power target, pace zones (from LT pace) for a pace target, heart rate zones otherwise. The target range is marked under the bar. Zepp doesn't share planned workouts with extensions, so the bar can't follow workout steps.",
+      ),
       Button({
         label: "Reset layout to default",
         onClick: () => saveLayout(defaultLayout()),
@@ -183,16 +186,16 @@ AppSettingsPage({
 
       heading("Pace and power zones"),
       field(
-        `Threshold pace (${perUnit})`,
+        `Lactate threshold (LT) pace (${perUnit})`,
         "threshold_pace",
         "4:30",
-        "Needed for the pace zone bar.",
+        "Pace zones for the zone bar are built from this.",
       ),
       field(
         "FTP / critical power (W)",
         "ftp",
         "280",
-        "Needed for the power zone bar and power targets.",
+        "Power zones for the zone bar are built from this.",
       ),
       gap(24),
     ])

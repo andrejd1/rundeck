@@ -56,6 +56,13 @@ nothing displays them).
 Other settings: pace unit, auto-lap (1 km|mi or off), a pace **or** power target (every
 slot showing the live pace/power turns green/blue/red), HR zones, threshold pace and FTP.
 
+**Zone bar:** *Auto* (default) follows the target — power zones from FTP / critical power
+for a power target, pace zones from LT pace for a pace target, HR zones otherwise — and
+marks the target range as a white strip under the bar. HR / pace / power / off can be
+forced. Zepp OS gives extensions no access to planned structured workouts (the `Workout`
+sensor only exposes status, history, HR zone settings and route navigation), so the bar
+cannot follow workout steps.
+
 **HR zones** default to **the watch's own zones** (`Workout.getUserHrZoneSettings`, Zepp OS
 4.2+). Older firmware falls back to 220 − age from the Zepp profile (`data:user.info`), then
 max HR 190. Max HR %, threshold HR (Friel) or custom bounds can be picked instead.
@@ -100,10 +107,10 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 ### Polar setup (one-time, needed before release)
 
 1. Create an organization on polar.sh (test first on `sandbox.polar.sh`).
-2. Create a product **RunDeck**, one-time price **€6**, with a **License Keys** benefit:
+2. Create a product **RunDeck** (done: checkout link in `BUY_URL`), one-time price **€6**, with a **License Keys** benefit:
    activation limit 3 (one person, a couple of watches), no expiry.
-3. The organization id is set in `shared/license.js`; the product's checkout link still
-   needs to go into `BUY_URL`. For sandbox testing pass `api: POLAR_SANDBOX_API`.
+3. Organization id and checkout link are set in `shared/license.js`. For sandbox testing
+   pass `api: POLAR_SANDBOX_API`.
 
 ## Project layout
 
@@ -125,7 +132,7 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 
 ```
 npm install
-npm test              # 73 tests: logic + the real widget/side service against stubs
+npm test              # 80 tests: logic + the real widget/side service against stubs
 npm run preview       # renders sim/out/preview.html
 npm run screenshots   # regenerates docs/ui-preview.png and docs/screenshots/
 ```

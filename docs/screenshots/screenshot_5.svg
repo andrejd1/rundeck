@@ -16,7 +16,7 @@
     <rect x="50" y="840" width="380" height="64" rx="32" fill="#222222"/><text x="240" y="881.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">4 right: Grade</text>
     <rect x="50" y="914" width="380" height="64" rx="32" fill="#222222"/><text x="240" y="955.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">5 left: Distance</text>
     <rect x="50" y="988" width="380" height="64" rx="32" fill="#222222"/><text x="240" y="1029.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">5 right: Total ascent</text>
-    <rect x="50" y="1062" width="380" height="64" rx="32" fill="#222222"/><text x="240" y="1103.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">Zone bar: HR zones</text>
+    <rect x="50" y="1062" width="380" height="64" rx="32" fill="#222222"/><text x="240" y="1103.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">Zone bar: Auto</text>
     <rect x="50" y="1136" width="380" height="64" rx="32" fill="#6b1d1d"/><text x="240" y="1177.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">Reset to default</text>
     <rect x="0" y="1210" width="1" height="160" rx="0" fill="#000000"/>
   </g>

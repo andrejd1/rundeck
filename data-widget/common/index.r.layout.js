@@ -132,6 +132,8 @@ export const ZONE_BAR = {
   h: px(14),
   gap: px(3),
   marker: { w: px(8), y: px(250), h: px(30), color: 0xffffff },
+  // target range: a white strip just under the bar
+  band: { y: px(275), h: px(5), minW: px(10), color: 0xffffff },
 }
 
 // --- notice (trial status, lap flash, locked) overlaying the lap dist row ---

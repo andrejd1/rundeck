@@ -9,7 +9,9 @@
 - Pace or power target, colored wherever that live value is on screen.
 - New fields: max HR, last lap pace, speed, clock, lap count, altitude, avg cadence,
   calories, HR zone.
-- App id and Polar organization set; new icon (six options in docs/icons).
+- Zone bar "Auto" (default): follows the target's metric when its threshold is set (FTP,
+  LT pace), else HR; the target range is marked under the bar.
+- App id, Polar organization and checkout link set; new icon (six options in docs/icons).
 
 ## 0.1.0 — first build
 

@@ -61,7 +61,7 @@ test("normalize keeps valid picks and repairs the rest", () => {
   })
   assert.equal(l.slots.header, "pace")
   assert.equal(l.slots.r1l, DEFAULT_SLOTS.r1l)
-  assert.equal(l.bar, "hr")
+  assert.equal(l.bar, "auto")
   assert.equal(l.updated_at, 12)
 })
 

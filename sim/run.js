@@ -24,7 +24,7 @@ const layoutJson = (slots, bar = "hr") =>
 {
   const w = await bootWidget({
     licensed: true,
-    config: cfg({ target_range: "5:30-5:50" }),
+    config: cfg({ target_range: "5:30-5:50", threshold_pace: "4:45" }),
     sim: {
       hrZoneSettings: {
         type: 1,
@@ -40,7 +40,7 @@ const layoutJson = (slots, bar = "hr") =>
   })
   w.pressLap()
   w.run(43, { speed: 3.0, grade: -3, hr: 106 })
-  snap(w, "Default layout - watch HR zones, pace target")
+  snap(w, "Auto bar: pace zones from LT pace, target 5:30-5:50 marked")
   w.pressLap()
   snap(w, "Lap key - lap summary flash")
 }
