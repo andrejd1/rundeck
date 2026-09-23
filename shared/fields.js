@@ -22,20 +22,58 @@ export const LAYOUT_VERSION = 1
 // header = the big top value, half = two-column rows with inline labels,
 // side = left/right of a big center, center = big value, bottom = last row.
 export const SLOTS = [
-  { id: "header", kind: "header", name: "Top", short: "Top" },
-  { id: "r1l", kind: "half", name: "Row 1 left", short: "1 left" },
-  { id: "r1r", kind: "half", name: "Row 1 right", short: "1 right" },
-  { id: "r2l", kind: "side", name: "Row 2 left", short: "2 left" },
-  { id: "r2c", kind: "center", name: "Row 2 center", short: "2 center" },
-  { id: "r2r", kind: "side", name: "Row 2 right", short: "2 right" },
-  { id: "r3l", kind: "side", name: "Row 3 left", short: "3 left" },
-  { id: "r3c", kind: "center", name: "Row 3 center", short: "3 center" },
-  { id: "r3r", kind: "side", name: "Row 3 right", short: "3 right" },
-  { id: "r4l", kind: "half", name: "Row 4 left", short: "4 left" },
-  { id: "r4r", kind: "half", name: "Row 4 right", short: "4 right" },
-  { id: "r5l", kind: "bottom", name: "Bottom left", short: "5 left" },
-  { id: "r5r", kind: "bottom", name: "Bottom right", short: "5 right" },
+  { id: "header", row: "header", name: "Top", short: "Top" },
+  { id: "r1l", row: "r1", name: "Row 1 left", short: "1 left" },
+  { id: "r1c", row: "r1", name: "Row 1 middle", short: "1 middle" },
+  { id: "r1r", row: "r1", name: "Row 1 right", short: "1 right" },
+  { id: "r2l", row: "r2", name: "Row 2 left", short: "2 left" },
+  { id: "r2c", row: "r2", name: "Row 2 center", short: "2 center" },
+  { id: "r2r", row: "r2", name: "Row 2 right", short: "2 right" },
+  { id: "r3l", row: "r3", name: "Row 3 left", short: "3 left" },
+  { id: "r3c", row: "r3", name: "Row 3 center", short: "3 center" },
+  { id: "r3r", row: "r3", name: "Row 3 right", short: "3 right" },
+  { id: "r4l", row: "r4", name: "Row 4 left", short: "4 left" },
+  { id: "r4c", row: "r4", name: "Row 4 middle", short: "4 middle" },
+  { id: "r4r", row: "r4", name: "Row 4 right", short: "4 right" },
+  { id: "r5l", row: "r5", name: "Bottom left", short: "5 left" },
+  { id: "r5c", row: "r5", name: "Bottom middle", short: "5 middle" },
+  { id: "r5r", row: "r5", name: "Bottom right", short: "5 right" },
 ]
+
+// Rows with a user-chosen column count. The header row is always 1 slot.
+// Limits keep text readable on a round 480 px screen: rows 1 and 4 are
+// thin strips (2 or 3), the big-number rows 2 and 3 take 1-3, and the bottom
+// row, where the screen is only ~200 px wide, takes 1 or 2.
+export const ROWS = [
+  { id: "r1", name: "Row 1", cols: [2, 3] },
+  { id: "r2", name: "Row 2", cols: [1, 2, 3] },
+  { id: "r3", name: "Row 3", cols: [1, 2, 3] },
+  { id: "r4", name: "Row 4", cols: [2, 3] },
+  { id: "r5", name: "Bottom row", cols: [1, 2] },
+]
+export const DEFAULT_COLS = { r1: 2, r2: 3, r3: 3, r4: 2, r5: 2 }
+
+// Which slots a row shows for a column count.
+export function rowSlots(rowId, cols) {
+  if (cols === 1) return [`${rowId}c`]
+  if (cols === 2) return [`${rowId}l`, `${rowId}r`]
+  return [`${rowId}l`, `${rowId}c`, `${rowId}r`]
+}
+
+/** Slots on screen for a layout, top to bottom. */
+export function activeSlots(layout) {
+  const out = ["header"]
+  for (const row of ROWS) out.push(...rowSlots(row.id, layout.cols[row.id]))
+  return out
+}
+
+// How field names appear on the watch.
+export const LABEL_STYLES = ["text", "short", "icons"]
+export const LABEL_STYLE_NAMES = {
+  text: "Text",
+  short: "Short text",
+  icons: "Icons",
+}
 
 export const SLOT_IDS = SLOTS.map((s) => s.id)
 
@@ -47,13 +85,32 @@ const avgSpeed = (ctx) =>
 const pad2 = (n) => (n < 10 ? `0${n}` : `${n}`)
 
 /**
- * Field catalog. `label` fits every slot (<= 9 chars); `needs` names the
+ * Field catalog. `label` fits every slot (<= 9 chars), `short` is the
+ * compact label (<= 5 chars), `icon` + `qual` the icon-mode label (icon file
+ * in assets/common.r/icons, qualifier text next to it); `needs` names the
  * extra native channels the field polls (battery: only what is on screen).
  */
 export const FIELDS = {
-  none: { label: "", group: "body", value: () => "" },
-  hr: { label: "HR", group: "hr", value: (c) => intStr(c.s.hr) },
+  none: {
+    short: "",
+    icon: "",
+    qual: "",
+    label: "",
+    group: "body",
+    value: () => "",
+  },
+  hr: {
+    short: "HR",
+    icon: "heart",
+    qual: "",
+    label: "HR",
+    group: "hr",
+    value: (c) => intStr(c.s.hr),
+  },
   hr_zone: {
+    short: "Zone",
+    icon: "zone",
+    qual: "",
     label: "HR Zone",
     group: "hr",
     value: (c) => {
@@ -62,28 +119,57 @@ export const FIELDS = {
     },
   },
   avg_hr: {
+    short: "AvgHR",
+    icon: "heart",
+    qual: "Avg",
     label: "Avg HR",
     group: "hr",
     value: (c) => intStr(c.stats.avgHr.value),
   },
   lap_hr: {
+    short: "LapHR",
+    icon: "heart",
+    qual: "Lap",
     label: "Lap HR",
     group: "hr",
     value: (c) => intStr(c.stats.lapHr()),
   },
-  max_hr: { label: "Max HR", group: "hr", value: (c) => intStr(c.stats.maxHr) },
-  pace: { label: "Pace", group: "pace", value: (c) => pace(c.s.speed, c) },
+  max_hr: {
+    short: "MaxHR",
+    icon: "heart",
+    qual: "Max",
+    label: "Max HR",
+    group: "hr",
+    value: (c) => intStr(c.stats.maxHr),
+  },
+  pace: {
+    short: "Pace",
+    icon: "gauge",
+    qual: "",
+    label: "Pace",
+    group: "pace",
+    value: (c) => pace(c.s.speed, c),
+  },
   avg_pace: {
+    short: "AvgP",
+    icon: "gauge",
+    qual: "Avg",
     label: "Avg Pace",
     group: "pace",
     value: (c) => pace(avgSpeed(c), c),
   },
   lap_pace: {
+    short: "LapP",
+    icon: "gauge",
+    qual: "Lap",
     label: "Lap Pace",
     group: "pace",
     value: (c) => pace(c.stats.lapSpeed(), c),
   },
   last_lap_pace: {
+    short: "LastP",
+    icon: "gauge",
+    qual: "Last",
     label: "Last Lap",
     group: "pace",
     value: (c) => {
@@ -92,6 +178,9 @@ export const FIELDS = {
     },
   },
   speed: {
+    short: "Spd",
+    icon: "gauge",
+    qual: "Spd",
     label: "Speed",
     group: "pace",
     value: (c) => {
@@ -102,80 +191,125 @@ export const FIELDS = {
     },
   },
   power: {
+    short: "Pwr",
+    icon: "bolt",
+    qual: "",
     label: "Power",
     group: "pace",
     needs: ["power"],
     value: (c) => intStr(c.s.power),
   },
   avg_power: {
+    short: "AvgW",
+    icon: "bolt",
+    qual: "Avg",
     label: "Avg Pwr",
     group: "pace",
     needs: ["power"],
     value: (c) => intStr(c.stats.avgPower.value),
   },
   lap_power: {
+    short: "LapW",
+    icon: "bolt",
+    qual: "Lap",
     label: "Lap Pwr",
     group: "pace",
     needs: ["power"],
     value: (c) => intStr(c.stats.lapPower()),
   },
   elapsed: {
+    short: "Time",
+    icon: "stopwatch",
+    qual: "",
     label: "Time",
     group: "time",
     value: (c) => durationStr(c.s.elapsed),
   },
   lap_time: {
+    short: "LapT",
+    icon: "stopwatch",
+    qual: "Lap",
     label: "Lap Time",
     group: "time",
     value: (c) => lapTimeStr(c.stats.lapTime()),
   },
   clock: {
+    short: "Clock",
+    icon: "clock",
+    qual: "",
     label: "Clock",
     group: "time",
     value: (c) => `${c.now.getHours()}:${pad2(c.now.getMinutes())}`,
   },
   distance: {
+    short: "Dist",
+    icon: "flag",
+    qual: "",
     label: "Distance",
     group: "dist",
     value: (c) => distanceStr(c.s.distance, c.unit),
   },
   lap_distance: {
+    short: "LapD",
+    icon: "flag",
+    qual: "Lap",
     label: "Lap Dist",
     group: "dist",
     value: (c) => distanceStr(c.stats.lapDistance(), c.unit),
   },
   laps: {
+    short: "Laps",
+    icon: "laps",
+    qual: "",
     label: "Laps",
     group: "dist",
     value: (c) => `${c.stats.laps.length}`,
   },
   grade: {
+    short: "Grade",
+    icon: "slope",
+    qual: "",
     label: "Grade",
     group: "dist",
     value: (c) => gradeStr(c.stats.grade),
   },
   ascent: {
+    short: "Asc",
+    icon: "ascent",
+    qual: "",
     label: "Ascent",
     group: "dist",
     value: (c) => ascentStr(c.s.ascent, c.unit),
   },
   altitude: {
+    short: "Alt",
+    icon: "altitude",
+    qual: "",
     label: "Altitude",
     group: "dist",
     value: (c) => ascentStr(c.s.altitude, c.unit),
   },
   cadence: {
+    short: "Cad",
+    icon: "feet",
+    qual: "",
     label: "Cadence",
     group: "body",
     value: (c) => intStr(c.s.cadence),
   },
   avg_cadence: {
+    short: "AvgC",
+    icon: "feet",
+    qual: "Avg",
     label: "Avg Cad",
     group: "body",
     needs: ["avg_cadence"],
     value: (c) => intStr(c.s.avg_cadence),
   },
   calories: {
+    short: "Cal",
+    icon: "flame",
+    qual: "",
     label: "Calories",
     group: "body",
     needs: ["calories"],
@@ -256,6 +390,7 @@ export const BAR_NAMES = {
 export const DEFAULT_SLOTS = {
   header: "hr",
   r1l: "lap_hr",
+  r1c: "max_hr",
   r1r: "avg_hr",
   r2l: "lap_pace",
   r2c: "pace",
@@ -264,14 +399,18 @@ export const DEFAULT_SLOTS = {
   r3c: "elapsed",
   r3r: "cadence",
   r4l: "lap_distance",
+  r4c: "laps",
   r4r: "grade",
   r5l: "distance",
+  r5c: "calories",
   r5r: "ascent",
 }
 
 export const defaultLayout = () => ({
   v: LAYOUT_VERSION,
   slots: { ...DEFAULT_SLOTS },
+  cols: { ...DEFAULT_COLS },
+  labels: "text",
   bar: "auto",
   updated_at: 0,
 })
@@ -284,6 +423,12 @@ export function normalizeLayout(raw) {
   for (const id of SLOT_IDS) {
     if (FIELDS[slots[id]]) out.slots[id] = slots[id]
   }
+  const cols = raw.cols && typeof raw.cols === "object" ? raw.cols : {}
+  for (const row of ROWS) {
+    const n = Number(cols[row.id])
+    if (row.cols.indexOf(n) >= 0) out.cols[row.id] = n
+  }
+  if (LABEL_STYLES.indexOf(raw.labels) >= 0) out.labels = raw.labels
   if (BAR_OPTIONS.indexOf(raw.bar) >= 0) out.bar = raw.bar
   const t = Number(raw.updated_at)
   if (Number.isFinite(t) && t > 0) out.updated_at = t
@@ -297,10 +442,10 @@ export function newerLayout(a, b) {
   return lb.updated_at > la.updated_at ? lb : la
 }
 
-/** Extra native channels the layout needs polled. */
+/** Extra native channels the layout needs polled (visible slots only). */
 export function channelsNeeded(layout, extra = []) {
   const set = {}
-  for (const id of SLOT_IDS) {
+  for (const id of activeSlots(layout)) {
     const f = FIELDS[layout.slots[id]]
     for (const n of (f && f.needs) || []) set[n] = true
   }

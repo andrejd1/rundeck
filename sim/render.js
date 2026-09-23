@@ -1,5 +1,27 @@
 // Render the recorded widget tree to SVG (one 480x480 round screen per frame).
 
+import { existsSync, readFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
+
+const ASSETS = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "../assets/common.r",
+)
+const imgCache = new Map()
+function imgData(src) {
+  if (!imgCache.has(src)) {
+    const file = join(ASSETS, src)
+    imgCache.set(
+      src,
+      existsSync(file)
+        ? `data:image/png;base64,${readFileSync(file).toString("base64")}`
+        : null,
+    )
+  }
+  return imgCache.get(src)
+}
+
 const hex = (n) => `#${(n == null ? 0 : n).toString(16).padStart(6, "0")}`
 const esc = (s) =>
   String(s == null ? "" : s)
@@ -78,6 +100,11 @@ function renderWidget(w) {
         `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${r}" fill="${hex(p.normal_color)}"/>` +
         `<text x="${cx}" y="${cy}" text-anchor="middle" font-size="${size}" fill="${hex(p.color != null ? p.color : 0xffffff)}" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">${esc(p.text)}</text>`
       )
+    }
+    case "IMG": {
+      const data = imgData(p.src)
+      if (!data) return ""
+      return `<image x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" href="${data}"/>`
     }
     default:
       return ""

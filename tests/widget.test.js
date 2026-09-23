@@ -5,13 +5,22 @@ import {
   HEADER_SUFFIX,
   NOTICE,
   NOTICE_SUB,
-  SLOT_GEOMETRY,
+  ROW_GEOMETRY as RG,
 } from "../data-widget/common/index.r.layout.js"
 import { buildConfig } from "../shared/config.js"
 import { LAYOUT_KEY, loadObject, TRIAL_KEY } from "../shared/device-store.js"
 import { MSG } from "../shared/messages.js"
 import { bootEditor, bootWidget } from "../sim/world.js"
 
+// geometry of the default column counts
+const SLOT_GEOMETRY = {
+  header: RG.header[1].header,
+  ...RG.r1[2],
+  ...RG.r2[3],
+  ...RG.r3[3],
+  ...RG.r4[2],
+  ...RG.r5[2],
+}
 const CENTER_VALUE = SLOT_GEOMETRY.r2c.value
 const LAP_HR_VALUE = SLOT_GEOMETRY.r1l.value
 const LAP_TIME_VALUE = SLOT_GEOMETRY.r3l.value
@@ -285,4 +294,48 @@ test("watch editor: a failure is shown on screen, not a black page", async () =>
   const added = e.widgets().slice(before)
   assert.equal(added.length, 1)
   assert.match(added[0].props.text, /RunDeck editor error:\nboom/)
+})
+
+test("watch editor: row buttons cycle the column count", async () => {
+  const list = await bootEditor({})
+  assert.ok(list.buttons().some((b) => b.props.text === "Row 1: 2 cols"))
+  list.tap("Row 1: 2 cols")
+  assert.equal(loadObject(LAYOUT_KEY).cols.r1, 3)
+  const again = await bootEditor({})
+  assert.ok(again.buttons().some((b) => b.props.text === "1 middle: Max HR"))
+  again.tap("Labels: Text")
+  assert.equal(loadObject(LAYOUT_KEY).labels, "short")
+})
+
+test("3 columns and icon labels on the run screen", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({
+        cols: { r1: 3, r4: 3 },
+        labels: "icons",
+        updated_at: 2,
+      }),
+    }),
+  })
+  w.run(20)
+  const r1c = RG.r1[3].r1c
+  assert.equal(w.textAt(r1c.value) != null, true)
+  const icons = w
+    .widgets()
+    .filter((x) => x.type === "IMG" && x.props.visible !== false)
+  assert.ok(icons.some((i) => i.props.src === "icons/20/heart.png"))
+  // the two-column slot of row 1 isn't drawn at its old spot any more
+  assert.equal(w.textAt(RG.r1[2].r1l.value), null)
+})
+
+test("short labels", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({ labels: "short", updated_at: 2 }),
+    }),
+  })
+  w.run(3)
+  assert.equal(labelAt(w, "r1l"), "LapHR")
 })

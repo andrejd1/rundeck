@@ -29,7 +29,11 @@ import {
   defaultLayout,
   FIELD_IDS,
   FIELD_NAMES,
+  LABEL_STYLE_NAMES,
+  LABEL_STYLES,
   newerLayout,
+  ROWS,
+  rowSlots,
   SLOTS,
 } from "../shared/fields.js"
 import { MSG } from "../shared/messages.js"
@@ -97,15 +101,44 @@ Page(
 
     // ---------------------------------------------------------------- views
 
+    // Rows top to bottom: a column-count button (tap cycles through the
+    // allowed counts) followed by the spots that count shows.
     buildList() {
       const { layout } = this.state
-      this.title("RunDeck layout")
-      for (const slot of SLOTS) {
-        this.button(
-          `${slot.short}: ${FIELD_NAMES[layout.slots[slot.id]]}`,
-          () => this.go({ pick: slot.id }),
+      const short = (id) => SLOTS.find((s) => s.id === id).short
+      const slotButton = (id) =>
+        this.button(`${short(id)}: ${FIELD_NAMES[layout.slots[id]]}`, () =>
+          this.go({ pick: id }),
         )
+      this.title("RunDeck layout")
+      slotButton("header")
+      for (const row of ROWS) {
+        const cols = layout.cols[row.id]
+        this.button(
+          `${row.name}: ${cols} col${cols > 1 ? "s" : ""}`,
+          () => {
+            const next =
+              row.cols[(row.cols.indexOf(cols) + 1) % row.cols.length]
+            this.save({
+              ...layout,
+              cols: { ...layout.cols, [row.id]: next },
+              updated_at: Date.now(),
+            })
+            this.go({})
+          },
+          COLORS.row,
+        )
+        for (const id of rowSlots(row.id, cols)) slotButton(id)
       }
+      this.button(`Labels: ${LABEL_STYLE_NAMES[layout.labels]}`, () => {
+        const i = LABEL_STYLES.indexOf(layout.labels)
+        this.save({
+          ...layout,
+          labels: LABEL_STYLES[(i + 1) % LABEL_STYLES.length],
+          updated_at: Date.now(),
+        })
+        this.go({})
+      })
       this.button(`Zone bar: ${BAR_NAMES[layout.bar]}`, () =>
         this.go({ pick: "bar" }),
       )

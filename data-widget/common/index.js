@@ -14,15 +14,17 @@ import {
   GLYPH_WIDTH,
   HEADER_SUFFIX,
   HR_GRAPH,
+  ICON,
   NOTICE,
   NOTICE_SUB,
-  SLOT_GEOMETRY,
+  ROW_DIVIDERS,
+  ROW_GEOMETRY,
   ZONE_BAR,
 } from "zosLoader:./index.[pf].layout.js"
 import { BasePage } from "@zeppos/zml/base-page"
 import { getDeviceInfo } from "@zos/device"
 import { KEY_EVENT_CLICK, KEY_SHORTCUT, offKey, onKey } from "@zos/interaction"
-import { createWidget, prop, widget } from "@zos/ui"
+import { align, createWidget, prop, widget } from "@zos/ui"
 import { appGlobals } from "../../shared/app-globals.js"
 import { barValue, resolveBar } from "../../shared/bar.js"
 import { normalizeConfig } from "../../shared/config.js"
@@ -35,10 +37,13 @@ import {
   TRIAL_KEY,
 } from "../../shared/device-store.js"
 import {
+  activeSlots,
   channelsNeeded,
   FIELDS,
   fieldValue,
   newerLayout,
+  ROWS,
+  rowSlots,
   SLOT_IDS,
 } from "../../shared/fields.js"
 import { lapTimeStr, paceStr } from "../../shared/format.js"
@@ -64,11 +69,9 @@ const CONFIG_RETRY_SEC = 60
 // Wait this long for the phone's reply (license, trial count) before the
 // access mode is latched for the activity; offline, the cached state decides.
 const PHONE_GRACE_SEC = 10
-// Slots still shown in locked (trial over) mode.
-const LOCKED_SLOTS = ["header", "r2c", "r3c"]
-// Slots the notice lines cover while they are up.
-const NOTICE_SLOTS = ["r4l", "r4r"]
-const NOTICE_SUB_SLOTS = ["r1l", "r1r"]
+// Rows the notice lines cover while they are up.
+const NOTICE_ROW = "r4"
+const NOTICE_SUB_ROW = "r1"
 
 DataWidget(
   BasePage({
@@ -133,6 +136,7 @@ DataWidget(
       this.state.stats = new RunStats({ autoLapM: cfg.auto_lap_m })
       this.state.tracker = new TargetTracker(cfg.target)
       this.buildUi()
+      this.applyGeometry()
       this.registerKeys()
       this.state.timer = setInterval(() => this.onTick(), TICK_MS)
       this.onTick()
@@ -253,7 +257,47 @@ DataWidget(
     applyLayout(layout) {
       this.state.layout = layout
       if (this.state.metrics) this.state.metrics.channels = this.channels()
-      if (this.state.ui.slots) this.render()
+      if (this.state.ui.slots) {
+        this.applyGeometry()
+        this.render()
+      }
+    },
+
+    // Place every slot for the layout's column counts. Runs on build and on
+    // layout changes only, not per tick; slots of other column counts hide.
+    applyGeometry() {
+      const { ui, layout } = this.state
+      const geo = { header: ROW_GEOMETRY.header[1].header }
+      for (const row of ROWS) {
+        const cols = layout.cols[row.id]
+        for (const id of rowSlots(row.id, cols))
+          geo[id] = ROW_GEOMETRY[row.id][cols][id]
+      }
+      this.state.geo = geo
+      // sizes/positions changed: forget what was drawn for the slots
+      for (const k of Object.keys(this.state.cache))
+        if (/^(r\d[lcr]|header)[lvi]:/.test(k)) delete this.state.cache[k]
+      for (const id of SLOT_IDS) {
+        const g = geo[id]
+        const slot = ui.slots[id]
+        if (!g) {
+          this.setProp(`${id}v`, slot.value, "visible", false)
+          this.setProp(`${id}l`, slot.label, "visible", false)
+          this.setProp(`${id}i`, slot.icon, "visible", false)
+          continue
+        }
+        slot.value.setProperty(prop.MORE, { ...g.value })
+        if (g.label) slot.label.setProperty(prop.MORE, { ...g.label })
+      }
+      for (const row of ROWS) {
+        const lines = ui.rowDividers[row.id] || []
+        const want = (ROW_DIVIDERS[row.id] || {})[layout.cols[row.id]] || []
+        lines.forEach((w, i) => {
+          const d = want[i]
+          this.setProp(`rd${row.id}${i}`, w, "visible", !!d)
+          if (d) w.setProperty(prop.MORE, { x: d.x, y: d.y, w: d.w, h: d.h })
+        })
+      }
     },
 
     sendLayout(layout) {
@@ -375,13 +419,28 @@ DataWidget(
         )
       }
 
+      // every slot of every column count exists once; applyGeometry places
+      // the ones the layout shows and hides the rest
+      const blank = ROW_GEOMETRY.header[1].header
       ui.slots = {}
       for (const id of SLOT_IDS) {
-        const g = SLOT_GEOMETRY[id]
         ui.slots[id] = {
-          label: g.label ? text(g.label) : null,
-          value: text(g.value),
+          label: text(blank.label),
+          value: text(blank.value),
+          icon: createWidget(widget.IMG, {
+            x: 0,
+            y: 0,
+            w: ICON.maxSize,
+            h: ICON.maxSize,
+            src: "icons/26/heart.png",
+          }),
         }
+      }
+      ui.rowDividers = {}
+      for (const row of ROWS) {
+        ui.rowDividers[row.id] = [0, 1].map(() =>
+          createWidget(widget.FILL_RECT, { ...DIVIDERS[0], w: 2, h: 2 }),
+        )
       }
       ui.headerSuffix = text(HEADER_SUFFIX)
 
@@ -444,6 +503,56 @@ DataWidget(
       if (color != null) this.setProp(key, w, "color", color)
     },
 
+    // Field name as text, short text, or icon + qualifier ("Avg", "Lap").
+    renderLabel(id, slot, box, f, style) {
+      const iconMode = style === "icons" && !!box && !!f.icon
+      this.setProp(`${id}l`, slot.label, "visible", !!box)
+      this.setProp(`${id}i`, slot.icon, "visible", iconMode)
+      if (!box) return
+      const color = COLORS[f.group]
+      if (!iconMode) {
+        this.setProp(`${id}l`, slot.label, "x", box.x)
+        this.setProp(`${id}l`, slot.label, "w", box.w)
+        this.setProp(`${id}l`, slot.label, "align_h", box.align_h)
+        this.setFitted(
+          `${id}l`,
+          slot.label,
+          box,
+          style === "short" ? f.short : f.label,
+          color,
+        )
+        return
+      }
+      const size = box.text_size <= 18 ? 20 : 26
+      const qual = f.qual || ""
+      const qualW = qual
+        ? Math.ceil(qual.length * box.text_size * GLYPH_WIDTH)
+        : 0
+      const unitW = size + (qual ? ICON.gap + qualW : 0)
+      let x0 = box.x
+      if (box.align_h === align.CENTER_H)
+        x0 = box.x + Math.round((box.w - unitW) / 2)
+      else if (box.align_h === align.RIGHT) x0 = box.x + box.w - unitW
+      const src = `icons/${size}/${f.icon}.png`
+      const sig = `${x0}:${size}:${src}`
+      if (this.state.cache[`${id}i:sig`] !== sig) {
+        this.state.cache[`${id}i:sig`] = sig
+        slot.icon.setProperty(prop.MORE, {
+          x: x0,
+          y: box.y + Math.round((box.h - size) / 2),
+          w: size,
+          h: size,
+          src,
+        })
+      }
+      this.setProp(`${id}l`, slot.label, "x", x0 + size + ICON.gap)
+      this.setProp(`${id}l`, slot.label, "w", Math.max(qualW, 1))
+      this.setProp(`${id}l`, slot.label, "align_h", align.LEFT)
+      this.setProp(`${id}l`, slot.label, "text_size", box.text_size)
+      this.setProp(`${id}l`, slot.label, "text", qual)
+      this.setProp(`${id}l`, slot.label, "color", color)
+    },
+
     render() {
       const { ui, config: cfg, stats, metrics, mode, layout } = this.state
       if (!ui.slots || !metrics) return
@@ -468,26 +577,30 @@ DataWidget(
       const noticeOn = !locked && !!n && this.nowSec() < n.until
       if (!noticeOn) this.state.notice = null
 
-      for (const id of SLOT_IDS) {
+      // locked mode keeps the header and one big value from rows 2 and 3
+      const shown = activeSlots(layout)
+      const lockedKeep = ["header"]
+      for (const r of ["r2", "r3"]) {
+        const ids = rowSlots(r, layout.cols[r])
+        lockedKeep.push(ids.indexOf(`${r}c`) >= 0 ? `${r}c` : ids[0])
+      }
+      for (const id of shown) {
         const slot = ui.slots[id]
-        const g = SLOT_GEOMETRY[id]
+        const g = this.state.geo[id]
+        const row = id.slice(0, 2)
         const visible =
-          (!locked || LOCKED_SLOTS.indexOf(id) >= 0) &&
-          !(noticeOn && NOTICE_SLOTS.indexOf(id) >= 0) &&
-          !(locked && NOTICE_SUB_SLOTS.indexOf(id) >= 0)
+          (!locked || lockedKeep.indexOf(id) >= 0) &&
+          !(noticeOn && row === NOTICE_ROW) &&
+          !(locked && row === NOTICE_SUB_ROW)
         this.setProp(`${id}v`, slot.value, "visible", visible)
-        this.setProp(`${id}l`, slot.label, "visible", visible)
-        if (!visible) continue
+        if (!visible) {
+          this.setProp(`${id}l`, slot.label, "visible", false)
+          this.setProp(`${id}i`, slot.icon, "visible", false)
+          continue
+        }
         const fieldId = layout.slots[id]
         const f = FIELDS[fieldId] || FIELDS.none
-        if (slot.label)
-          this.setFitted(
-            `${id}l`,
-            slot.label,
-            g.label,
-            f.label,
-            COLORS[f.group],
-          )
+        this.renderLabel(id, slot, g.label, f, layout.labels)
         const valueColor =
           fieldId === targetField && status ? COLORS[status] : COLORS.value
         this.setFitted(
@@ -523,6 +636,12 @@ DataWidget(
       // dividers: only the header rule stays in locked mode
       for (let i = 1; i < ui.dividers.length; i++)
         this.setProp(`div${i}`, ui.dividers[i], "visible", !locked)
+      for (const row of ROWS) {
+        const want = (ROW_DIVIDERS[row.id] || {})[layout.cols[row.id]] || []
+        ui.rowDividers[row.id].forEach((w, i) => {
+          this.setProp(`rd${row.id}${i}`, w, "visible", !locked && !!want[i])
+        })
+      }
 
       this.renderZoneBar(locked)
 

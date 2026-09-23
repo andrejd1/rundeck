@@ -58,8 +58,9 @@ const line = (x, y, w, h) => ({
 })
 
 // --- slots ------------------------------------------------------------------
-// Every slot is a {label, value} pair of TEXT props; any field can go in any
-// slot, so the widget shrinks text that would overflow its slot width.
+// Every slot is a {label, value} pair of TEXT props placed by row and column
+// count (ROW_GEOMETRY); any field can go in any slot, so the widget shrinks
+// text that would overflow its slot width.
 
 export const HR_GRAPH = {
   x: px(92),
@@ -71,54 +72,111 @@ export const HR_GRAPH = {
 // zone ("Z2") next to the header value when the header shows heart rate
 export const HEADER_SUFFIX = label(330, 64, 70, COLORS.value, align.LEFT, 28)
 
-export const SLOT_GEOMETRY = {
+// Label stacked above its value, both centered in a cell.
+const stack = (x, y, w, labelSize, valueSize) => ({
+  label: label(x, y, w, COLORS.value, align.CENTER_H, labelSize),
+  value: value(x, y + labelSize + 4, w, valueSize),
+})
+
+// Geometry per row and column count: { [cols]: { [slotId]: {label, value} } }.
+// `label: null` means the slot shows no label (big center values).
+export const ROW_GEOMETRY = {
   header: {
-    label: label(214, 30, 120, COLORS.value, align.LEFT, 20),
-    value: value(212, 50, 124, 56, align.LEFT),
+    1: {
+      header: {
+        label: label(214, 30, 120, COLORS.value, align.LEFT, 20),
+        value: value(212, 50, 124, 56, align.LEFT),
+      },
+    },
   },
-  r1l: {
-    label: label(56, 121, 92, COLORS.value, align.RIGHT),
-    value: value(154, 114, 76, 34, align.LEFT),
+  r1: {
+    2: {
+      r1l: {
+        label: label(56, 121, 92, COLORS.value, align.RIGHT),
+        value: value(154, 114, 76, 34, align.LEFT),
+      },
+      r1r: {
+        label: label(332, 121, 92, COLORS.value, align.LEFT),
+        value: value(250, 114, 76, 34, align.RIGHT),
+      },
+    },
+    3: {
+      r1l: stack(44, 109, 120, 16, 24),
+      r1c: stack(168, 109, 144, 16, 24),
+      r1r: stack(316, 109, 120, 16, 24),
+    },
   },
-  r1r: {
-    label: label(332, 121, 92, COLORS.value, align.LEFT),
-    value: value(250, 114, 76, 34, align.RIGHT),
+  r2: {
+    // left and right labels on one line (the left used to sit 14 px lower)
+    3: {
+      r2l: {
+        label: label(22, 166, 118, COLORS.value, align.CENTER_H, 20),
+        value: value(22, 190, 118, 38),
+      },
+      r2c: { label: null, value: value(140, 168, 200, 72) },
+      r2r: {
+        label: label(340, 166, 118, COLORS.value, align.CENTER_H, 20),
+        value: value(340, 190, 118, 38),
+      },
+    },
+    2: { r2l: stack(36, 164, 200, 20, 54), r2r: stack(244, 164, 200, 20, 54) },
+    1: { r2c: { label: null, value: value(60, 166, 360, 80) } },
   },
-  r2l: {
-    label: label(22, 180, 118, COLORS.value, align.CENTER_H, 20),
-    value: value(22, 204, 118, 38),
+  r3: {
+    3: {
+      r3l: {
+        label: label(22, 284, 118, COLORS.value, align.CENTER_H, 20),
+        value: value(22, 308, 118, 34),
+      },
+      r3c: { label: null, value: value(140, 284, 200, 60) },
+      r3r: {
+        label: label(340, 284, 118, COLORS.value, align.CENTER_H, 20),
+        value: value(340, 308, 118, 34),
+      },
+    },
+    2: { r3l: stack(40, 284, 196, 20, 44), r3r: stack(244, 284, 196, 20, 44) },
+    1: { r3c: { label: null, value: value(70, 284, 340, 68) } },
   },
-  r2c: { label: null, value: value(140, 168, 200, 72) },
-  r2r: {
-    label: label(340, 166, 118, COLORS.value, align.CENTER_H, 20),
-    value: value(340, 190, 118, 38),
+  r4: {
+    2: {
+      r4l: {
+        label: label(58, 376, 94, COLORS.value, align.RIGHT, 20),
+        value: value(156, 370, 78, 30, align.LEFT),
+      },
+      r4r: {
+        label: label(324, 376, 80, COLORS.value, align.LEFT, 20),
+        value: value(246, 370, 72, 30, align.RIGHT),
+      },
+    },
+    3: {
+      r4l: stack(58, 364, 118, 16, 22),
+      r4c: stack(178, 364, 124, 16, 22),
+      r4r: stack(304, 364, 118, 16, 22),
+    },
   },
-  r3l: {
-    label: label(22, 284, 118, COLORS.value, align.CENTER_H, 20),
-    value: value(22, 308, 118, 34),
-  },
-  r3c: { label: null, value: value(140, 284, 200, 60) },
-  r3r: {
-    label: label(340, 284, 118, COLORS.value, align.CENTER_H, 20),
-    value: value(340, 308, 118, 34),
-  },
-  r4l: {
-    label: label(58, 376, 94, COLORS.value, align.RIGHT, 20),
-    value: value(156, 370, 78, 30, align.LEFT),
-  },
-  r4r: {
-    label: label(324, 376, 80, COLORS.value, align.LEFT, 20),
-    value: value(246, 370, 72, 30, align.RIGHT),
-  },
-  r5l: {
-    label: label(132, 410, 104, COLORS.value, align.CENTER_H, 18),
-    value: value(132, 428, 104, 30),
-  },
-  r5r: {
-    label: label(246, 410, 104, COLORS.value, align.CENTER_H, 18),
-    value: value(246, 428, 104, 30),
+  r5: {
+    2: {
+      r5l: stack(132, 410, 104, 18, 30),
+      r5r: stack(246, 410, 104, 18, 30),
+    },
+    1: { r5c: stack(170, 410, 140, 18, 30) },
   },
 }
+
+// Column separators per row and column count.
+export const ROW_DIVIDERS = {
+  r1: {
+    2: [line(239, 114, 2, 40)],
+    3: [line(166, 114, 2, 40), line(314, 114, 2, 40)],
+  },
+  r4: {
+    2: [line(239, 368, 2, 36)],
+    3: [line(177, 368, 2, 36), line(303, 368, 2, 36)],
+  },
+}
+
+// Icon-mode labels: icon square next to the qualifier text ("Avg", "Lap").
+export const ICON = { maxSize: px(26), gap: px(4) }
 
 // Average glyph width as a fraction of the font size, used to shrink text
 // that would overflow its slot (the watch font is narrower; this is safe).
@@ -159,11 +217,10 @@ export const NOTICE_SUB = {
   align_v: align.CENTER_V,
 }
 
+// Horizontal rules between rows (always the same).
 export const DIVIDERS = [
   line(60, 108, 360, 2),
-  line(239, 114, 2, 40),
   line(28, 158, 424, 2),
   line(48, 362, 384, 2),
-  line(239, 368, 2, 36),
   line(92, 406, 296, 2),
 ]

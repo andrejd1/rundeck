@@ -37,11 +37,15 @@ regenerates them).
 
 ### Customizing the screen
 
-The screen is a fixed grid of **13 slots** (top value, four two-column rows around two big
-center values, and a bottom row) plus the zone bar. Any of 25 fields can go in any slot —
-HR, HR zone, avg/lap/max HR, pace, avg/lap/last-lap pace, speed, power, avg/lap power,
-workout time, lap time, clock, distance, lap distance, lap count, grade, ascent, altitude,
-cadence, avg cadence, calories, or empty. Text shrinks to fit its slot.
+The screen is a top value plus five rows and the zone bar. Each row has a **column count**
+(rows 1 and 4: 2–3, the big-number rows 2 and 3: 1–3, bottom row: 1–2; the limits keep text
+readable on the round screen), and any of 25 fields can go in any spot — HR, HR zone,
+avg/lap/max HR, pace, avg/lap/last-lap pace, speed, power, avg/lap power, workout time, lap
+time, clock, distance, lap distance, lap count, grade, ascent, altitude, cadence, avg
+cadence, calories, or empty. Text shrinks to fit its spot.
+
+**Field names** can be full text, short text ("LapHR") or **icons** with a qualifier
+("♥ Avg"); icons live in `assets/common.r/icons/{20,26}` (`node sim/gen-icons.mjs`).
 
 Two places to edit, one layout:
 
@@ -132,7 +136,7 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 
 ```
 npm install
-npm test              # 80 tests: logic + the real widget/side service against stubs
+npm test              # 92 tests: logic + the real widget/side service against stubs
 npm run preview       # renders sim/out/preview.html
 npm run screenshots   # regenerates docs/ui-preview.png and docs/screenshots/
 ```

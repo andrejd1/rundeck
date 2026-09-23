@@ -9,6 +9,11 @@
 - Pace or power target, colored wherever that live value is on screen.
 - New fields: max HR, last lap pace, speed, clock, lap count, altitude, avg cadence,
   calories, HR zone.
+- Column count per row (rows 1/4: 2-3, rows 2/3: 1-3, bottom: 1-2) and field names as
+  text, short text or icons; both editable on the phone and the watch.
+- Row 2 left label/value aligned with the right one.
+- Phone settings rebuilt: chips instead of dropdowns (the Zepp app's Select showed no
+  value), saved values printed above every input, one block per line, cards.
 - Zone bar "Auto" (default): follows the target's metric when its threshold is set (FTP,
   LT pace), else HR; the target range is marked under the bar.
 - App id, Polar organization and checkout link set; new "RD" monogram icon (six options in docs/icons).

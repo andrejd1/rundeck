@@ -17,8 +17,8 @@ const snap = (world, caption) =>
   frames.push({ caption, widgets: world.snapshot() })
 
 const cfg = (obj) => buildConfig((k) => obj[k])
-const layoutJson = (slots, bar = "hr") =>
-  JSON.stringify({ v: 1, slots, bar, updated_at: 1 })
+const layoutJson = (slots, bar = "hr", extra = {}) =>
+  JSON.stringify({ v: 1, slots, bar, updated_at: 1, ...extra })
 
 // 1. default layout, watch HR zones, pace target
 {
@@ -117,7 +117,56 @@ const layoutJson = (slots, bar = "hr") =>
   snap(w, "Power layout (above 250-270 W), >1 h")
 }
 
-// 4. trial used up: basic screen
+// 4. three columns in rows 1, 4 and 5, icon labels
+{
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      threshold_pace: "4:45",
+      target_range: "5:30-5:50",
+      layout_json: layoutJson(
+        {
+          r1l: "lap_hr",
+          r1c: "max_hr",
+          r1r: "avg_hr",
+          r4l: "lap_distance",
+          r4c: "laps",
+          r4r: "grade",
+          r5l: "distance",
+          r5c: "calories",
+          r5r: "ascent",
+        },
+        "auto",
+        { cols: { r1: 3, r2: 3, r3: 3, r4: 3, r5: 2 }, labels: "icons" },
+      ),
+    }),
+  })
+  w.set({ sport: { ...globalThis.__sim.sport, calories: { calories: "412" } } })
+  w.run(1500, {
+    speed: 3.55,
+    grade: 2,
+    hr: (t) => 140 + Math.round(10 * Math.sin(t / 90)),
+  })
+  snap(w, "3 columns in rows 1 and 4, icon labels")
+}
+
+// 5. big-number rows as 2 and 1 columns, short labels
+{
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: layoutJson(
+        { r2l: "pace", r2r: "lap_pace", r3c: "elapsed", r5c: "distance" },
+        "auto",
+        { cols: { r1: 2, r2: 2, r3: 1, r4: 2, r5: 1 }, labels: "short" },
+      ),
+    }),
+  })
+  w.run(900, { speed: 3.3, hr: 150 })
+  snap(w, "Row 2 as 2 columns, row 3 and bottom as 1, short labels")
+}
+
+// 6. trial used up: basic screen
 {
   const w = await bootWidget({
     config: cfg({}),
@@ -127,7 +176,7 @@ const layoutJson = (slots, bar = "hr") =>
   snap(w, "Trial over - basic screen")
 }
 
-// 5-6. on-watch layout editor
+// 7-8. on-watch layout editor
 {
   const e = await bootEditor({})
   snap(e, "Watch editor - slot list")

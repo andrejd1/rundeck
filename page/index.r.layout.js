@@ -9,6 +9,7 @@ export const COLORS = {
   pressed: 0x444444,
   muted: 0x111111,
   danger: 0x6b1d1d,
+  row: 0x13324f, // row header (tap to change the column count)
 }
 
 export const TITLE = {

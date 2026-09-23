@@ -93,12 +93,17 @@ export async function bootWidget({
     },
     widgets: () => __widgets,
     // visible text of the widget whose props match `slot` (layout object)
+    // text of the visible TEXT widget at a layout position (hidden widgets
+    // can share a position), null when nothing visible is there
     textAt(slot) {
       const w = __widgets.find(
         (x) =>
-          x.type === "TEXT" && x.props.x === slot.x && x.props.y === slot.y,
+          x.type === "TEXT" &&
+          x.props.visible !== false &&
+          x.props.x === slot.x &&
+          x.props.y === slot.y,
       )
-      return w && w.props.visible !== false ? w.props.text : null
+      return w ? w.props.text : null
     },
     snapshot: () =>
       __widgets.map((w) => ({ type: w.type, props: { ...w.props } })),
