@@ -6,10 +6,16 @@
 // so they beat the phone's copy until the phone changes the layout again,
 // and are sent to the phone right away when it is in range.
 
+import {
+  BUTTON,
+  COLORS,
+  ERROR_TEXT,
+  ROW,
+  TITLE,
+} from "zosLoader:./index.[pf].layout.js"
 import { BasePage } from "@zeppos/zml/base-page"
-import { SCROLL_MODE_FREE, setScrollMode } from "@zos/page"
 import { replace } from "@zos/router"
-import { createWidget, widget } from "@zos/ui"
+import { createWidget, text_style, widget } from "@zos/ui"
 import { normalizeConfig } from "../shared/config.js"
 import {
   CONFIG_KEY,
@@ -27,7 +33,6 @@ import {
   SLOTS,
 } from "../shared/fields.js"
 import { MSG } from "../shared/messages.js"
-import { BUTTON, COLORS, ROW, TITLE } from "./index.r.layout.js"
 
 function parseParams(params) {
   if (!params) return {}
@@ -41,29 +46,53 @@ function parseParams(params) {
 
 Page(
   BasePage({
-    state: { mode: "list", slot: null, layout: null, y: 0 },
+    name: "layout.page",
+    state: {},
 
+    // The state object can outlive a replace() to this same page, so every
+    // field is reset here rather than relying on its initial value.
     onInit(params) {
-      const p = parseParams(params)
-      if (p.pick === "bar") this.state.mode = "bar"
-      else if (SLOTS.some((s) => s.id === p.pick)) {
-        this.state.mode = "pick"
-        this.state.slot = p.pick
+      this.state.mode = "list"
+      this.state.slot = null
+      this.state.y = 0
+      this.state.error = null
+      try {
+        const p = parseParams(params)
+        if (p.pick === "bar") this.state.mode = "bar"
+        else if (SLOTS.some((s) => s.id === p.pick)) {
+          this.state.mode = "pick"
+          this.state.slot = p.pick
+        }
+        const cfg = normalizeConfig(loadObject(CONFIG_KEY))
+        this.state.layout = newerLayout(cfg.layout, loadObject(LAYOUT_KEY))
+      } catch (e) {
+        this.state.error = e
       }
-      const cfg = normalizeConfig(loadObject(CONFIG_KEY))
-      this.state.layout = newerLayout(cfg.layout, loadObject(LAYOUT_KEY))
     },
 
+    // Any failure is printed on the screen instead of leaving it black.
     build() {
       try {
-        setScrollMode({ mode: SCROLL_MODE_FREE })
+        if (this.state.error) throw this.state.error
+        const { mode } = this.state
+        if (mode === "pick") this.buildPick()
+        else if (mode === "bar") this.buildBar()
+        else this.buildList()
       } catch (e) {
-        /* pages scroll by default on older firmware */
+        this.showError(e)
       }
-      const { mode } = this.state
-      if (mode === "pick") this.buildPick()
-      else if (mode === "bar") this.buildBar()
-      else this.buildList()
+    },
+
+    showError(e) {
+      try {
+        createWidget(widget.TEXT, {
+          ...ERROR_TEXT,
+          text_style: text_style.WRAP,
+          text: `RunDeck editor error:\n${(e && e.message) || e}`,
+        })
+      } catch (_) {
+        /* nothing left to draw with */
+      }
     },
 
     // ---------------------------------------------------------------- views

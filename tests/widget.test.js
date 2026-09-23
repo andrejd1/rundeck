@@ -267,3 +267,22 @@ test("auto bar follows a power target and marks the range", async () => {
   // power is polled because the target needs it
   assert.ok(globalThis.__sim.sportReads.power > 0)
 })
+
+test("watch editor: reusing the page instance goes back to the list", async () => {
+  const e = await bootEditor({ pick: "r2c" })
+  assert.equal(e.page.state.mode, "pick")
+  // replace() to the same page may keep the state object: re-init with {}
+  e.page.onInit(JSON.stringify({}))
+  assert.equal(e.page.state.mode, "list")
+  assert.equal(e.page.state.slot, null)
+})
+
+test("watch editor: a failure is shown on screen, not a black page", async () => {
+  const e = await bootEditor({})
+  e.page.state.error = new Error("boom")
+  const before = e.widgets().length
+  e.page.build()
+  const added = e.widgets().slice(before)
+  assert.equal(added.length, 1)
+  assert.match(added[0].props.text, /RunDeck editor error:\nboom/)
+})

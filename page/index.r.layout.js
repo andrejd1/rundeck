@@ -32,3 +32,14 @@ export const BUTTON = {
 }
 
 export const ROW = { gap: px(10), bottomPad: px(160) }
+
+export const ERROR_TEXT = {
+  x: px(50),
+  y: px(160),
+  w: px(380),
+  h: px(200),
+  color: 0xff6b6b,
+  text_size: px(24),
+  align_h: align.CENTER_H,
+  align_v: align.CENTER_V,
+}
