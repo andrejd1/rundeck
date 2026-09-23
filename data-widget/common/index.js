@@ -771,7 +771,20 @@ DataWidget(
             labelColor = zoneColor(hrPos.zone)
           }
         }
-        this.renderLabel(id, slot, g.label, f, layout.labels, labelColor)
+        let labelBox = g.label
+        // top HR with the graph: the value is left-aligned, so center the
+        // icon over the digits rather than at the box's left edge
+        if (
+          id === "header" &&
+          fieldId === "hr" &&
+          layout.labels === "icons" &&
+          g.value.align_h === align.LEFT
+        ) {
+          const text = fieldValue(fieldId, ctx)
+          const w = this.measure(text, fittedSize(g.value, text))
+          labelBox = { ...g.label, x: g.value.x, w, align_h: align.CENTER_H }
+        }
+        this.renderLabel(id, slot, labelBox, f, layout.labels, labelColor)
         const valueColor =
           fieldId === targetField && status ? COLORS[status] : COLORS.value
         if (!f.native)
