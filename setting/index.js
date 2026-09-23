@@ -25,7 +25,7 @@ import {
   ROWS,
   rowSlots,
 } from "../shared/fields.js"
-import { BUY_URL } from "../shared/license.js"
+import { BUY_URL, PRIVACY_URL } from "../shared/license.js"
 
 const C = {
   page: "#f2f3f5",
@@ -278,6 +278,18 @@ AppSettingsPage({
         (v) => saveLayout({ ...layout, labels: v }),
       ),
       hint("Short text and icons leave more room for the numbers."),
+      label("Units after values"),
+      chips(
+        [
+          { name: "Show", value: "show" },
+          { name: "Hide", value: "hide" },
+        ],
+        layout.units,
+        (v) => saveLayout({ ...layout, units: v }),
+      ),
+      hint(
+        "Small km, m, W and /km after the numbers. Heart rate, cadence, calories, speed and the big center numbers stay unit-free.",
+      ),
       label("Zone bar (middle)"),
       chips(
         BAR_OPTIONS.map((id) => ({ name: BAR_NAMES[id], value: id })),
@@ -423,6 +435,9 @@ AppSettingsPage({
           "Power zones for the zone bar are built from this.",
         ),
       ]),
+      block([Link({ source: PRIVACY_URL }, "Privacy statement")], {
+        margin: "4px 0 0 4px",
+      }),
       block([], { height: "24px" }),
     ])
   },

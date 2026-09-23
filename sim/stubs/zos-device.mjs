@@ -1,9 +1,12 @@
-// @zos/device stub: a fixed round 480px device with a stable uuid.
+// @zos/device stub: a round device (SIM_SCREEN px, default 480) with a
+// stable uuid.
+import { SCREEN } from "./zos-utils.mjs"
+
 export function getDeviceInfo() {
   const sim = globalThis.__sim || {}
   return {
-    width: 480,
-    height: 480,
+    width: SCREEN,
+    height: SCREEN,
     screenShape: 1,
     deviceName: "Sim",
     deviceSource: 0,

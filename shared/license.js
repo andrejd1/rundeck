@@ -13,6 +13,8 @@ export const POLAR_SANDBOX_API =
 export const BUY_URL =
   "https://buy.polar.sh/polar_cl_H7Jc9kI2f1kridvcgvMAEXvoRCfqc4eWYb4IR1pEELc"
 
+export const PRIVACY_URL = "https://andrejd1.github.io/rundeck/privacy.html"
+
 // Re-check a granted license at most weekly; offline it simply stays granted.
 export const REVALIDATE_AFTER_MS = 7 * 24 * 3600 * 1000
 

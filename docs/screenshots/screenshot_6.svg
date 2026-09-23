@@ -46,47 +46,62 @@
     
     
     
+    
     <text x="166" y="52.3" text-anchor="middle" font-size="18" fill="#f59e0b" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">HR Z4</text>
     <text x="166" y="94.7" text-anchor="middle" font-size="42" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
+    
     
     <text x="314" y="52.3" text-anchor="middle" font-size="18" fill="#22c55e" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Time</text>
     <text x="314" y="94.7" text-anchor="middle" font-size="42" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">23:20</text>
     
+    
     <text x="104" y="125.6" text-anchor="middle" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap HR</text>
     <text x="104" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
+    
     
     <text x="240" y="125.6" text-anchor="middle" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Max HR</text>
     <text x="240" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
     
+    
     <text x="376" y="125.6" text-anchor="middle" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Avg HR</text>
     <text x="376" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
     
+    
     <text x="81" y="186" text-anchor="middle" font-size="20" fill="#60a5fa" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap Pace</text>
-    <text x="81" y="225.3" text-anchor="middle" font-size="38" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'53</text>
+    <text x="22" y="223.9" text-anchor="start" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'53</text>
+    <text x="111" y="221.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">/km</text>
     
     
     <text x="240" y="232.2" text-anchor="middle" font-size="72" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">5'38</text>
     
+    
     <text x="399" y="186" text-anchor="middle" font-size="20" fill="#60a5fa" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Avg Pace</text>
-    <text x="399" y="225.3" text-anchor="middle" font-size="38" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'42</text>
+    <text x="340" y="223.9" text-anchor="start" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'42</text>
+    <text x="429" y="221.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">/km</text>
     
     <text x="81" y="304" text-anchor="middle" font-size="20" fill="#22c55e" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap Time</text>
     <text x="81" y="339.9" text-anchor="middle" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">03:43</text>
     
     
+    
     <text x="240" y="338" text-anchor="middle" font-size="60" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">23:20</text>
+    
     
     <text x="399" y="304" text-anchor="middle" font-size="20" fill="#2dd4bf" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Cadence</text>
     <text x="399" y="339.9" text-anchor="middle" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
     
+    
     <text x="116" y="376.6" text-anchor="middle" font-size="16" fill="#f59e0b" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap Dist</text>
-    <text x="116" y="403.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">0.76</text>
+    <text x="74" y="403.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">0.76</text>
+    <text x="138" y="401.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">km</text>
     
     <text x="240" y="376.6" text-anchor="middle" font-size="16" fill="#f59e0b" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Distance</text>
-    <text x="240" y="403.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4.76</text>
+    <text x="198" y="403.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4.76</text>
+    <text x="262" y="401.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">km</text>
     
     <text x="364" y="376.6" text-anchor="middle" font-size="16" fill="#60a5fa" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Last Lap</text>
-    <text x="364" y="403.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'54</text>
+    <text x="317" y="403.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'54</text>
+    <text x="381" y="401.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">/km</text>
     
     <text x="184" y="431.3" text-anchor="middle" font-size="18" fill="#2dd4bf" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Avg Cad</text>
     <text x="184" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">171</text>
@@ -94,8 +109,11 @@
     
     
     
+    
+    
     <text x="298" y="431.3" text-anchor="middle" font-size="18" fill="#f59e0b" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Ascent</text>
-    <text x="298" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">48</text>
+    <text x="274" y="461.8" text-anchor="start" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">48</text>
+    <text x="313" y="459.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">m</text>
     
     
     

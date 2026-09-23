@@ -138,6 +138,17 @@ Page(
         })
         this.go({})
       })
+      this.button(
+        `Units: ${layout.units === "hide" ? "Hidden" : "Shown"}`,
+        () => {
+          this.save({
+            ...layout,
+            units: layout.units === "hide" ? "show" : "hide",
+            updated_at: Date.now(),
+          })
+          this.go({})
+        },
+      )
       this.button(`Zone bar: ${BAR_NAMES[layout.bar]}`, () =>
         this.go({ pick: "bar" }),
       )

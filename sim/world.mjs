@@ -94,16 +94,39 @@ export async function bootWidget({
     widgets: () => __widgets,
     // visible text of the widget whose props match `slot` (layout object)
     // text of the visible TEXT widget at a layout position (hidden widgets
-    // can share a position), null when nothing visible is there
+    // can share a position), null when nothing visible is there. A value
+    // with a unit starts inside its box rather than at the box edge, so a
+    // widget on the same line starting within the box also matches.
     textAt(slot) {
-      const w = __widgets.find(
+      const visible = __widgets.filter(
+        (x) => x.type === "TEXT" && x.props.visible !== false,
+      )
+      const exact = visible.find(
+        (x) => x.props.x === slot.x && x.props.y === slot.y,
+      )
+      if (exact) return exact.props.text
+      const inside = visible.find(
+        (x) =>
+          x.props.y === slot.y &&
+          x.props.x >= slot.x &&
+          x.props.x < slot.x + (slot.w || 0),
+      )
+      return inside ? inside.props.text : null
+    },
+    // unit text drawn after the value in a layout box, or null
+    unitAt(slot) {
+      const u = __widgets.find(
         (x) =>
           x.type === "TEXT" &&
           x.props.visible !== false &&
-          x.props.x === slot.x &&
-          x.props.y === slot.y,
+          x.props.y !== slot.y &&
+          x.props.y > slot.y &&
+          x.props.y < slot.y + slot.h &&
+          x.props.x > slot.x &&
+          x.props.x < slot.x + slot.w &&
+          x.props.color === 0x9aa4b2,
       )
-      return w ? w.props.text : null
+      return u ? u.props.text : null
     },
     snapshot: () =>
       __widgets.map((w) => ({ type: w.type, props: { ...w.props } })),

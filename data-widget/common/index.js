@@ -20,6 +20,7 @@ import {
   NOTICE_SUB,
   ROW_DIVIDERS,
   ROW_GEOMETRY,
+  UNIT,
   ZONE_BAR,
 } from "zosLoader:./index.[pf].layout.js"
 import { BasePage } from "@zeppos/zml/base-page"
@@ -30,10 +31,12 @@ import {
   createWidget,
   deleteWidget,
   edit_widget_group_type,
+  getTextLayout,
   prop,
   sport_data,
   widget,
 } from "@zos/ui"
+import { px } from "@zos/utils"
 import { appGlobals } from "../../shared/app-globals.js"
 import { barValue, resolveBar } from "../../shared/bar.js"
 import { normalizeConfig } from "../../shared/config.js"
@@ -49,6 +52,7 @@ import {
   activeSlots,
   channelsNeeded,
   FIELDS,
+  fieldUnit,
   fieldValue,
   newerLayout,
   ROWS,
@@ -81,6 +85,28 @@ const PHONE_GRACE_SEC = 10
 const NOTICE_ROW = "r4"
 const NOTICE_SUB_ROW = "r1"
 
+// x and width of HR graph bar i: positions come from the scaled graph width,
+// so rounding doesn't add up across the bars on smaller screens
+function graphBarX(i) {
+  const at = (k) => HR_GRAPH.x + Math.round((k * HR_GRAPH.w) / HR_GRAPH_BARS)
+  return { x: at(i), w: Math.max(1, at(i + 1) - at(i) - 1) }
+}
+
+// shipped icon size nearest to a scaled size
+function iconFile(size) {
+  let best = ICON.sizes[0]
+  for (const s of ICON.sizes)
+    if (Math.abs(s - size) < Math.abs(best - size)) best = s
+  return best
+}
+
+// Text size that fits `text` in the box's width (never above its own size).
+function fittedSize(box, text) {
+  const len = String(text).length
+  if (!len) return box.text_size
+  return Math.min(box.text_size, Math.floor(box.w / (len * GLYPH_WIDTH)))
+}
+
 DataWidget(
   BasePage({
     state: {
@@ -104,6 +130,8 @@ DataWidget(
       initAt: null,
       reportedUsed: null, // trial count last reported to the phone
       native: {}, // slotId -> {type, w}: SPORT_DATA widgets for native fields
+      measureCache: new Map(), // "size|text" -> px width
+      unitDropped: {}, // "slot|unit" -> true once the unit didn't fit
     },
 
     nowSec() {
@@ -290,7 +318,8 @@ DataWidget(
       for (const id of Object.keys(this.state.native)) this.dropNative(id)
       // sizes/positions changed: forget what was drawn for the slots
       for (const k of Object.keys(this.state.cache))
-        if (/^(r\d[lcr]|header[lr]?)[lvi]:/.test(k)) delete this.state.cache[k]
+        if (/^(r\d[lcr]|header[lr]?)[lviu]:/.test(k)) delete this.state.cache[k]
+      this.state.unitDropped = {}
       for (const id of SLOT_IDS) {
         const g = geo[id]
         const slot = ui.slots[id]
@@ -298,9 +327,11 @@ DataWidget(
           this.setProp(`${id}v`, slot.value, "visible", false)
           this.setProp(`${id}l`, slot.label, "visible", false)
           this.setProp(`${id}i`, slot.icon, "visible", false)
+          this.setProp(`${id}u`, slot.unit, "visible", false)
           continue
         }
-        slot.value.setProperty(prop.MORE, { ...g.value })
+        const { unitPad, ...valueProps } = g.value // unitPad is ours, not a widget prop
+        slot.value.setProperty(prop.MORE, valueProps)
         if (g.label) slot.label.setProperty(prop.MORE, { ...g.label })
       }
       for (const row of ROWS) {
@@ -399,8 +430,8 @@ DataWidget(
       createWidget(widget.FILL_RECT, {
         x: 0,
         y: 0,
-        w: 480,
-        h: 480,
+        w: px(480),
+        h: px(480),
         color: COLORS.bg,
       })
       ui.dividers = DIVIDERS.map((d) => createWidget(widget.FILL_RECT, d))
@@ -409,9 +440,8 @@ DataWidget(
       for (let i = 0; i < HR_GRAPH_BARS; i++) {
         ui.graph.push(
           createWidget(widget.FILL_RECT, {
-            x: HR_GRAPH.x + i * HR_GRAPH.barW,
+            ...graphBarX(i),
             y: HR_GRAPH.y + HR_GRAPH.h - HR_GRAPH.minBarH,
-            w: HR_GRAPH.barW - 1,
             h: HR_GRAPH.minBarH,
             color: COLORS.graphEmpty,
           }),
@@ -426,12 +456,13 @@ DataWidget(
         ui.slots[id] = {
           label: text(blank.label),
           value: text(blank.value),
+          unit: text({ ...blank.value, visible: false }),
           icon: createWidget(widget.IMG, {
             x: 0,
             y: 0,
-            w: ICON.maxSize,
-            h: ICON.maxSize,
-            src: "icons/26/heart.png",
+            w: ICON.large,
+            h: ICON.large,
+            src: `icons/${iconFile(ICON.large)}/heart.png`,
           }),
         }
       }
@@ -493,11 +524,7 @@ DataWidget(
 
     /** Text + color + a size shrunk to fit the widget's width. */
     setFitted(key, w, props, text, color) {
-      const len = String(text).length
-      const fit = len
-        ? Math.floor(props.w / (len * GLYPH_WIDTH))
-        : props.text_size
-      this.setProp(key, w, "text_size", Math.min(props.text_size, fit))
+      this.setProp(key, w, "text_size", fittedSize(props, text))
       this.setProp(key, w, "text", text)
       if (color != null) this.setProp(key, w, "color", color)
     },
@@ -555,6 +582,99 @@ DataWidget(
       delete this.state.cache[`${id}n:visible`]
     },
 
+    // Unit shown after a value, or "" for none: units can be switched off;
+    // the big center numbers of three-column rows stay unit-free (they are
+    // the main pace/time and a unit would shrink them); the single top HR
+    // shows its zone there instead.
+    unitFor(id, fieldId, ctx) {
+      const { layout } = this.state
+      if (layout.units === "hide") return ""
+      if ((id === "r2c" || id === "r3c") && layout.cols[id.slice(0, 2)] === 3)
+        return ""
+      if (id === "header" && fieldId === "hr") return ""
+      return fieldUnit(fieldId, ctx)
+    },
+
+    // Rendered text width in px: the watch's own layout engine when the
+    // firmware offers it, else an estimate that errs wide (never overlaps).
+    measure(text, size) {
+      const cache = this.state.measureCache
+      const key = `${size}|${text}`
+      if (cache.has(key)) return cache.get(key)
+      let w = null
+      try {
+        if (typeof getTextLayout === "function")
+          w = getTextLayout(text, {
+            text_size: size,
+            text_width: 1000, // wide enough never to wrap
+            wrapped: 0,
+          }).width
+      } catch (e) {
+        w = null
+      }
+      if (!(w > 0)) w = Math.ceil(String(text).length * size * GLYPH_WIDTH)
+      if (cache.size > 300) cache.clear()
+      cache.set(key, w)
+      return w
+    },
+
+    // Value with an optional small unit after it ("7.14 km"). The pair is
+    // measured, shrunk together to fit the box, then placed by the box's
+    // alignment; the unit sits on the value's baseline.
+    // Value + small unit. The unit never costs the value any size: the
+    // value keeps the size it would have alone, and the unit is shown only
+    // when it fits next to it. Once a unit doesn't fit (10.00 km, 10'05 /km)
+    // it stays off until the layout changes, so it doesn't flicker as the
+    // value's width changes.
+    renderValue(id, slot, box, text, unit, color) {
+      const key = `${id}v`
+      const size = fittedSize(box, text)
+      const unitSize = Math.max(UNIT.minSize, Math.round(size * UNIT.ratio))
+      const dropKey = `${id}|${unit}`
+      let vw = 0
+      let uw = 0
+      if (unit && !this.state.unitDropped[dropKey]) {
+        vw = this.measure(text, size)
+        uw = this.measure(unit, unitSize)
+        // the unit is always on the right; keep clear of a label/divider there
+        if (vw + UNIT.gap + uw > box.w - (box.unitPad || 0))
+          this.state.unitDropped[dropKey] = true
+      }
+      if (!unit || this.state.unitDropped[dropKey]) {
+        this.setProp(`${id}u`, slot.unit, "visible", false)
+        this.setProp(key, slot.value, "x", box.x)
+        this.setProp(key, slot.value, "w", box.w)
+        this.setProp(key, slot.value, "align_h", box.align_h)
+        this.setFitted(key, slot.value, box, text, color)
+        return
+      }
+      const room = box.w - (box.unitPad || 0)
+      const total = vw + UNIT.gap + uw
+      let x0 = box.x
+      if (box.align_h === align.CENTER_H)
+        x0 = box.x + Math.round((box.w - total) / 2)
+      else if (box.align_h === align.RIGHT) x0 = box.x + room - total
+      this.setProp(key, slot.value, "x", x0)
+      this.setProp(key, slot.value, "w", vw + 2)
+      this.setProp(key, slot.value, "align_h", align.LEFT)
+      this.setProp(key, slot.value, "text_size", size)
+      this.setProp(key, slot.value, "text", text)
+      this.setProp(key, slot.value, "color", color)
+      // baseline: the value is vertically centered in the box
+      const baseline = box.y + box.h / 2 + size * 0.36
+      const uk = `${id}u`
+      this.setProp(uk, slot.unit, "visible", true)
+      this.setProp(uk, slot.unit, "x", x0 + vw + UNIT.gap)
+      this.setProp(uk, slot.unit, "y", Math.round(baseline - unitSize * 1.05))
+      this.setProp(uk, slot.unit, "w", uw + 4)
+      this.setProp(uk, slot.unit, "h", unitSize + 6)
+      this.setProp(uk, slot.unit, "align_h", align.LEFT)
+      this.setProp(uk, slot.unit, "align_v", align.TOP)
+      this.setProp(uk, slot.unit, "text_size", unitSize)
+      this.setProp(uk, slot.unit, "text", unit)
+      this.setProp(uk, slot.unit, "color", COLORS.unit)
+    },
+
     // Field name as text, short text, or icon + qualifier ("Avg", "Lap").
     renderLabel(id, slot, box, f, style, colorOverride) {
       const iconMode = style === "icons" && !!box && !!f.icon
@@ -575,7 +695,9 @@ DataWidget(
         )
         return
       }
-      const size = box.text_size <= 18 ? 20 : 26
+      const size = iconFile(
+        box.text_size <= ICON.smallUpTo ? ICON.small : ICON.large,
+      )
       const qual = f.qual || ""
       const qualW = qual
         ? Math.ceil(qual.length * box.text_size * GLYPH_WIDTH)
@@ -649,6 +771,8 @@ DataWidget(
         // native-only fields: the watch draws the value (SPORT_DATA widget)
         this.showNative(id, visible && f.native ? f.native : null, g.value)
         this.setProp(`${id}v`, slot.value, "visible", visible && !f.native)
+        if (!visible || f.native)
+          this.setProp(`${id}u`, slot.unit, "visible", false)
         if (!visible) {
           this.setProp(`${id}l`, slot.label, "visible", false)
           this.setProp(`${id}i`, slot.icon, "visible", false)
@@ -664,16 +788,20 @@ DataWidget(
             labelColor = zoneColor(hrPos.zone)
           }
         }
-        this.renderLabel(id, slot, g.label, f, layout.labels, labelColor)
+        const labelBox =
+          layout.labels === "icons" && g.iconLabel ? g.iconLabel : g.label
+        this.renderLabel(id, slot, labelBox, f, layout.labels, labelColor)
         const valueColor =
           fieldId === targetField && status ? COLORS[status] : COLORS.value
-        this.setFitted(
-          `${id}v`,
-          slot.value,
-          g.value,
-          fieldValue(fieldId, ctx),
-          valueColor,
-        )
+        if (!f.native)
+          this.renderValue(
+            id,
+            slot,
+            g.value,
+            fieldValue(fieldId, ctx),
+            this.unitFor(id, fieldId, ctx),
+            valueColor,
+          )
       }
 
       // single top value showing HR: zone suffix + HR graph
@@ -802,9 +930,8 @@ DataWidget(
         if (this.state.cache[key] === sig) continue
         this.state.cache[key] = sig
         ui.graph[i].setProperty(prop.MORE, {
-          x: HR_GRAPH.x + i * HR_GRAPH.barW,
+          ...graphBarX(i),
           y: HR_GRAPH.y + HR_GRAPH.h - h,
-          w: HR_GRAPH.barW - 1,
           h,
           color: hidden ? COLORS.bg : color,
         })

@@ -1,8 +1,10 @@
-// Render the recorded widget tree to SVG (one 480x480 round screen per frame).
+// Render the recorded widget tree to SVG (one round screen per frame, sized
+// by SIM_SCREEN like px()).
 
 import { existsSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+import { SCREEN } from "./stubs/zos-utils.mjs"
 
 const ASSETS = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -118,15 +120,16 @@ function renderWidget(w) {
   }
 }
 
-export function frameToSvg(widgets, id) {
+export function frameToSvg(widgets, id, screen = SCREEN) {
   const body = widgets.map(renderWidget).join("\n    ")
-  return `<svg width="480" height="480" viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg">
-  <defs><clipPath id="round${id}"><circle cx="240" cy="240" r="240"/></clipPath></defs>
-  <circle cx="240" cy="240" r="239" fill="#000"/>
+  const c = screen / 2
+  return `<svg width="${screen}" height="${screen}" viewBox="0 0 ${screen} ${screen}" xmlns="http://www.w3.org/2000/svg">
+  <defs><clipPath id="round${id}"><circle cx="${c}" cy="${c}" r="${c}"/></clipPath></defs>
+  <circle cx="${c}" cy="${c}" r="${c - 1}" fill="#000"/>
   <g clip-path="url(#round${id})">
     ${body}
   </g>
-  <circle cx="240" cy="240" r="238" fill="none" stroke="#333" stroke-width="3"/>
+  <circle cx="${c}" cy="${c}" r="${c - 2}" fill="none" stroke="#333" stroke-width="3"/>
 </svg>`
 }
 

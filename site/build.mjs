@@ -40,6 +40,52 @@ html = html.replace(
   "family=Barlow+Condensed:wght@500;600;700&family=Barlow+Semi+Condensed:wght@600",
 )
 writeFileSync(new URL("site/index.html", root), html)
+
+// ---------------------------------------------------------------- privacy
+// PRIVACY.md is the single source; this tiny converter covers what it uses:
+// # / ## headings, paragraphs, "- " lists, **bold**, `code`, [links](url).
+function inline(t) {
+  return t
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/`(.+?)`/g, "<code>$1</code>")
+    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
+}
+function markdown(md) {
+  const out = []
+  let para = []
+  let list = null
+  const flush = () => {
+    if (para.length) out.push(`<p>${inline(para.join(" "))}</p>`)
+    para = []
+    if (list)
+      out.push(`<ul>${list.map((i) => `<li>${inline(i)}</li>`).join("")}</ul>`)
+    list = null
+  }
+  for (const line of md.split("\n")) {
+    const h = /^(#{1,2}) (.*)$/.exec(line)
+    if (h) {
+      flush()
+      out.push(`<h${h[1].length}>${inline(h[2])}</h${h[1].length}>`)
+    } else if (line.startsWith("- ")) {
+      if (para.length) flush()
+      list = list || []
+      list.push(line.slice(2))
+    } else if (/^\s+\S/.test(line) && list) {
+      list[list.length - 1] += ` ${line.trim()}`
+    } else if (line.trim() === "") flush()
+    else para.push(line.trim())
+  }
+  flush()
+  return out.join("\n")
+}
+const privacy = read("site/privacy-template.html")
+  .toString()
+  .replaceAll("{{icon}}", icon)
+  .replace("{{content}}", markdown(read("PRIVACY.md").toString()))
+writeFileSync(new URL("site/privacy.html", root), privacy)
+console.log("site/privacy.html")
 console.log(
   `site/index.html ${(html.length / 1024).toFixed(0)} KB, ${fields.split("<span>").length - 1} fields`,
 )

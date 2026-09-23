@@ -25,6 +25,7 @@ export const COLORS = {
   inside: 0x2ee66b,
   above: 0xef4444,
   graphEmpty: 0x1a1a1a,
+  unit: 0x9aa4b2, // units after values: quieter than the value itself
 }
 
 const label = (x, y, w, color, alignH = align.CENTER_H, size = 22) => ({
@@ -65,8 +66,8 @@ const line = (x, y, w, h) => ({
 export const HR_GRAPH = {
   x: px(92),
   y: px(50),
+  w: px(108), // 36 bars; each drawn 1 px narrower than its pitch
   h: px(52),
-  barW: px(3), // pitch per bar; drawn 1 px narrower so the bars read apart
   minBarH: px(2),
 }
 // zone ("Z2") next to the header value when the header shows heart rate
@@ -86,6 +87,8 @@ export const ROW_GEOMETRY = {
       // HR: graph on the left, label above the value, zone suffix after it
       header: {
         label: label(214, 30, 120, COLORS.value, align.LEFT, 20),
+        // icon-mode label: centered on the screen, not over the value
+        iconLabel: label(0, 30, 480, COLORS.value, align.CENTER_H, 20),
         value: value(212, 50, 124, 56, align.LEFT),
       },
     },
@@ -98,11 +101,11 @@ export const ROW_GEOMETRY = {
     2: {
       r1l: {
         label: label(56, 121, 92, COLORS.value, align.RIGHT),
-        value: value(154, 114, 76, 34, align.LEFT),
+        value: { ...value(154, 114, 76, 34, align.LEFT), unitPad: px(8) },
       },
       r1r: {
         label: label(332, 121, 92, COLORS.value, align.LEFT),
-        value: value(250, 114, 76, 34, align.RIGHT),
+        value: { ...value(250, 114, 76, 34, align.RIGHT), unitPad: px(8) },
       },
     },
     3: {
@@ -148,11 +151,11 @@ export const ROW_GEOMETRY = {
     2: {
       r4l: {
         label: label(56, 372, 92, COLORS.value, align.RIGHT),
-        value: value(154, 365, 76, 34, align.LEFT),
+        value: { ...value(154, 365, 76, 34, align.LEFT), unitPad: px(8) },
       },
       r4r: {
         label: label(332, 372, 92, COLORS.value, align.LEFT),
-        value: value(250, 365, 76, 34, align.RIGHT),
+        value: { ...value(250, 365, 76, 34, align.RIGHT), unitPad: px(8) },
       },
     },
     3: {
@@ -163,8 +166,10 @@ export const ROW_GEOMETRY = {
   },
   r5: {
     2: {
-      r5l: stack(132, 413, 104, 18, 28),
-      r5r: stack(246, 413, 104, 18, 28),
+      // pulled toward the middle: at the bottom edge the circle leaves
+      // little room for a 5-digit distance
+      r5l: stack(138, 413, 100, 18, 28),
+      r5r: stack(242, 413, 100, 18, 28),
     },
     1: { r5c: stack(170, 413, 140, 18, 28) },
   },
@@ -188,8 +193,21 @@ export const ROW_DIVIDERS = {
   },
 }
 
+// Units after values ("7.14 km"): a fraction of the value size, never tiny.
+// Value boxes with a label right beside them (the inline two-column rows)
+// carry `unitPad`: room kept free between the unit and that label/divider.
+export const UNIT = { ratio: 0.42, minSize: px(16), gap: px(4) }
+
 // Icon-mode labels: icon square next to the qualifier text ("Avg", "Lap").
-export const ICON = { maxSize: px(26), gap: px(4) }
+// IMG widgets aren't scaled by the watch, so the icons ship in these pixel
+// sizes (sim/gen-icons.mjs) and a label uses the one nearest its scaled size.
+export const ICON = {
+  large: px(26), // next to the regular labels
+  small: px(20), // next to the small labels of the dense rows
+  smallUpTo: px(18), // label text sizes up to this get the small icon
+  gap: px(4),
+  sizes: [16, 18, 20, 23, 26],
+}
 
 // Average glyph width as a fraction of the font size, used to shrink text
 // that would overflow its slot (the watch font is narrower; this is safe).

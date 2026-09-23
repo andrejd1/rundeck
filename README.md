@@ -54,8 +54,18 @@ value itself, in its own units) over the slot and adds its own label. GAP, verti
 oscillation and ground contact time are not exposed by Zepp OS at all, so they can't be
 shown.
 
+**Units** (km/mi, m/ft, W and the pace suffix /km or /mi) are drawn small after the
+value, placed from the watch's own text measurement (`getTextLayout`, with a width
+estimate as fallback). A unit never costs the value any size: the value keeps the size
+it has with units hidden, and the unit is shown only if it fits beside it. Once a unit
+doesn't fit in a slot (say at 10.00 km) it stays off until the layout changes, so it
+doesn't flicker as the value's width changes. The big center numbers of three-column
+rows and the single top HR (which shows its zone) stay unit-free; units can be hidden
+in the phone settings or on the watch.
+
 **Field names** can be full text, short text ("LapHR") or **icons** with a qualifier
-("♥ Avg"); icons live in `assets/common.r/icons/{20,26}` (`node sim/gen-icons.mjs`).
+("♥ Avg"); icons live in `assets/common.r/icons/<size>` in 16, 18, 20, 23 and 26 px, since the watch
+doesn't scale images; each screen uses the size nearest its scaled one (`node sim/gen-icons.mjs`).
 
 Two places to edit, one layout:
 
@@ -133,7 +143,7 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 | Path | What |
 |---|---|
 | `data-widget/common/index.js` | the screen: tick loop, rendering, lap key, trial/license gating |
-| `data-widget/common/index.r.layout.js` | 480px round layout (px()-scaled) |
+| `data-widget/common/index.r.layout.js` | round layout, designed at 480 px and px()-scaled to every round screen |
 | `data-widget/common/metrics.js` | native data reader with battery-aware polling |
 | `data-widget/common/hr-zones.js` | watch HR zones → age → default fallback chain |
 | `page/index.js` | on-watch layout editor (app list entry) |
@@ -148,10 +158,18 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 
 ```
 npm install
-npm test              # 95 tests: logic + the real widget/side service against stubs
+npm test              # logic + the real widget/side service against stubs, and
+                      # every round screen size (480-360 px): nothing off-screen or overlapping
+SIM_SCREEN=416 node --import ./sim/register.mjs sim/screen-check.mjs   # one size
 npm run preview       # renders sim/out/preview.html
 npm run screenshots   # regenerates docs/ui-preview.png and docs/screenshots/
 ```
+
+**`.js` vs `.mjs`:** `zeus build` compiles *every* `.js` file in the project to ES2015,
+imported or not (its ignore list is fixed: dot-folders, `dist/`, `node_modules/`). So `.js`
+is only for code that runs on the watch or phone (`app.js`, `app-side/`, `setting/`, `page/`,
+`data-widget/`, `shared/`); tests, the simulator and the site build are `.mjs`.
+`tests/zeus-build.test.mjs` fails if a stray `.js` file appears.
 
 Device: install the Zeus CLI (`npm i -g @zeppos/zeus-cli`) (`appId` 1128268), run
 `npm install` in this folder first (zeus bundles `@zeppos/zml` from `node_modules`; without it
@@ -167,7 +185,8 @@ console as well.
 
 ## Landing page
 
-`site/template.html` → `node site/build.mjs` → `site/index.html`: a single static page that
+`site/template.html` → `node site/build.mjs` → `site/index.html` (+ `site/privacy.html`,
+rendered from `PRIVACY.md`): a single static page that
 inlines the simulator's real watch frames (`docs/screenshots/*.svg`), the field list and the
 Polar checkout link. `.github/workflows/pages.yml` deploys it to GitHub Pages on pushes to
 `main` (Settings → Pages → Source: GitHub Actions; free only for public repositories).
