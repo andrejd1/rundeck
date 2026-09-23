@@ -23,9 +23,10 @@
     <rect x="50" y="1358" width="380" height="64" rx="32" fill="#222222"/><text x="240" y="1399.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">5 left: Distance</text>
     <rect x="50" y="1432" width="380" height="64" rx="32" fill="#222222"/><text x="240" y="1473.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">5 right: Total ascent</text>
     <rect x="50" y="1506" width="380" height="64" rx="32" fill="#222222"/><text x="240" y="1547.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">Labels: Text</text>
-    <rect x="50" y="1580" width="380" height="64" rx="32" fill="#222222"/><text x="240" y="1621.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">Zone bar: Auto</text>
-    <rect x="50" y="1654" width="380" height="64" rx="32" fill="#6b1d1d"/><text x="240" y="1695.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">Reset to default</text>
-    <rect x="0" y="1728" width="1" height="160" rx="0" fill="#000000"/>
+    <rect x="50" y="1580" width="380" height="64" rx="32" fill="#222222"/><text x="240" y="1621.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">Units: Shown</text>
+    <rect x="50" y="1654" width="380" height="64" rx="32" fill="#222222"/><text x="240" y="1695.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">Zone bar: Auto</text>
+    <rect x="50" y="1728" width="380" height="64" rx="32" fill="#6b1d1d"/><text x="240" y="1769.1" text-anchor="middle" font-size="26" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="700">Reset to default</text>
+    <rect x="0" y="1802" width="1" height="160" rx="0" fill="#000000"/>
   </g>
   <circle cx="240" cy="240" r="238" fill="none" stroke="#333" stroke-width="3"/>
 </svg>

@@ -20,6 +20,7 @@ import {
   NOTICE_SUB,
   ROW_DIVIDERS,
   ROW_GEOMETRY,
+  UNIT,
   ZONE_BAR,
 } from "zosLoader:./index.[pf].layout.js"
 import { BasePage } from "@zeppos/zml/base-page"
@@ -30,6 +31,7 @@ import {
   createWidget,
   deleteWidget,
   edit_widget_group_type,
+  getTextLayout,
   prop,
   sport_data,
   widget,
@@ -49,6 +51,7 @@ import {
   activeSlots,
   channelsNeeded,
   FIELDS,
+  fieldUnit,
   fieldValue,
   newerLayout,
   ROWS,
@@ -104,6 +107,7 @@ DataWidget(
       initAt: null,
       reportedUsed: null, // trial count last reported to the phone
       native: {}, // slotId -> {type, w}: SPORT_DATA widgets for native fields
+      measureCache: new Map(), // "size|text" -> px width
     },
 
     nowSec() {
@@ -290,7 +294,7 @@ DataWidget(
       for (const id of Object.keys(this.state.native)) this.dropNative(id)
       // sizes/positions changed: forget what was drawn for the slots
       for (const k of Object.keys(this.state.cache))
-        if (/^(r\d[lcr]|header[lr]?)[lvi]:/.test(k)) delete this.state.cache[k]
+        if (/^(r\d[lcr]|header[lr]?)[lviu]:/.test(k)) delete this.state.cache[k]
       for (const id of SLOT_IDS) {
         const g = geo[id]
         const slot = ui.slots[id]
@@ -298,9 +302,11 @@ DataWidget(
           this.setProp(`${id}v`, slot.value, "visible", false)
           this.setProp(`${id}l`, slot.label, "visible", false)
           this.setProp(`${id}i`, slot.icon, "visible", false)
+          this.setProp(`${id}u`, slot.unit, "visible", false)
           continue
         }
-        slot.value.setProperty(prop.MORE, { ...g.value })
+        const { unitPad, ...valueProps } = g.value // unitPad is ours, not a widget prop
+        slot.value.setProperty(prop.MORE, valueProps)
         if (g.label) slot.label.setProperty(prop.MORE, { ...g.label })
       }
       for (const row of ROWS) {
@@ -426,6 +432,7 @@ DataWidget(
         ui.slots[id] = {
           label: text(blank.label),
           value: text(blank.value),
+          unit: text({ ...blank.value, visible: false }),
           icon: createWidget(widget.IMG, {
             x: 0,
             y: 0,
@@ -555,6 +562,94 @@ DataWidget(
       delete this.state.cache[`${id}n:visible`]
     },
 
+    // Unit shown after a value, or "" for none: units can be switched off;
+    // the big center numbers of three-column rows stay unit-free (they are
+    // the main pace/time and a unit would shrink them); the single top HR
+    // shows its zone there instead.
+    unitFor(id, fieldId, ctx) {
+      const { layout } = this.state
+      if (layout.units === "hide") return ""
+      if ((id === "r2c" || id === "r3c") && layout.cols[id.slice(0, 2)] === 3)
+        return ""
+      if (id === "header" && fieldId === "hr") return ""
+      return fieldUnit(fieldId, ctx)
+    },
+
+    // Rendered text width in px: the watch's own layout engine when the
+    // firmware offers it, else an estimate that errs wide (never overlaps).
+    measure(text, size) {
+      const cache = this.state.measureCache
+      const key = `${size}|${text}`
+      if (cache.has(key)) return cache.get(key)
+      let w = null
+      try {
+        if (typeof getTextLayout === "function")
+          w = getTextLayout(text, {
+            text_size: size,
+            text_width: 1000, // wide enough never to wrap
+            wrapped: 0,
+          }).width
+      } catch (e) {
+        w = null
+      }
+      if (!(w > 0)) w = Math.ceil(String(text).length * size * GLYPH_WIDTH)
+      if (cache.size > 300) cache.clear()
+      cache.set(key, w)
+      return w
+    },
+
+    // Value with an optional small unit after it ("7.14 km"). The pair is
+    // measured, shrunk together to fit the box, then placed by the box's
+    // alignment; the unit sits on the value's baseline.
+    renderValue(id, slot, box, text, unit, color) {
+      const key = `${id}v`
+      if (!unit) {
+        this.setProp(`${id}u`, slot.unit, "visible", false)
+        this.setProp(key, slot.value, "x", box.x)
+        this.setProp(key, slot.value, "w", box.w)
+        this.setProp(key, slot.value, "align_h", box.align_h)
+        this.setFitted(key, slot.value, box, text, color)
+        return
+      }
+      let size = box.text_size
+      let unitSize = Math.max(UNIT.minSize, Math.round(size * UNIT.ratio))
+      let vw = this.measure(text, size)
+      let uw = this.measure(unit, unitSize)
+      const total = () => vw + UNIT.gap + uw
+      // the unit is always on the right; keep clear of a label/divider there
+      const room = box.w - (box.unitPad || 0)
+      if (total() > room) {
+        const k = room / total()
+        size = Math.max(UNIT.minSize, Math.floor(size * k))
+        unitSize = Math.max(UNIT.minSize, Math.round(size * UNIT.ratio))
+        vw = this.measure(text, size)
+        uw = this.measure(unit, unitSize)
+      }
+      let x0 = box.x
+      if (box.align_h === align.CENTER_H)
+        x0 = box.x + Math.round((box.w - total()) / 2)
+      else if (box.align_h === align.RIGHT) x0 = box.x + room - total()
+      this.setProp(key, slot.value, "x", x0)
+      this.setProp(key, slot.value, "w", vw + 2)
+      this.setProp(key, slot.value, "align_h", align.LEFT)
+      this.setProp(key, slot.value, "text_size", size)
+      this.setProp(key, slot.value, "text", text)
+      this.setProp(key, slot.value, "color", color)
+      // baseline: the value is vertically centered in the box
+      const baseline = box.y + box.h / 2 + size * 0.36
+      const uk = `${id}u`
+      this.setProp(uk, slot.unit, "visible", true)
+      this.setProp(uk, slot.unit, "x", x0 + vw + UNIT.gap)
+      this.setProp(uk, slot.unit, "y", Math.round(baseline - unitSize * 1.05))
+      this.setProp(uk, slot.unit, "w", uw + 4)
+      this.setProp(uk, slot.unit, "h", unitSize + 6)
+      this.setProp(uk, slot.unit, "align_h", align.LEFT)
+      this.setProp(uk, slot.unit, "align_v", align.TOP)
+      this.setProp(uk, slot.unit, "text_size", unitSize)
+      this.setProp(uk, slot.unit, "text", unit)
+      this.setProp(uk, slot.unit, "color", COLORS.unit)
+    },
+
     // Field name as text, short text, or icon + qualifier ("Avg", "Lap").
     renderLabel(id, slot, box, f, style, colorOverride) {
       const iconMode = style === "icons" && !!box && !!f.icon
@@ -649,6 +744,8 @@ DataWidget(
         // native-only fields: the watch draws the value (SPORT_DATA widget)
         this.showNative(id, visible && f.native ? f.native : null, g.value)
         this.setProp(`${id}v`, slot.value, "visible", visible && !f.native)
+        if (!visible || f.native)
+          this.setProp(`${id}u`, slot.unit, "visible", false)
         if (!visible) {
           this.setProp(`${id}l`, slot.label, "visible", false)
           this.setProp(`${id}i`, slot.icon, "visible", false)
@@ -667,13 +764,15 @@ DataWidget(
         this.renderLabel(id, slot, g.label, f, layout.labels, labelColor)
         const valueColor =
           fieldId === targetField && status ? COLORS[status] : COLORS.value
-        this.setFitted(
-          `${id}v`,
-          slot.value,
-          g.value,
-          fieldValue(fieldId, ctx),
-          valueColor,
-        )
+        if (!f.native)
+          this.renderValue(
+            id,
+            slot,
+            g.value,
+            fieldValue(fieldId, ctx),
+            this.unitFor(id, fieldId, ctx),
+            valueColor,
+          )
       }
 
       // single top value showing HR: zone suffix + HR graph

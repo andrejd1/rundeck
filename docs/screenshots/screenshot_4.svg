@@ -45,6 +45,7 @@
     <rect x="197" y="92" width="2" height="10" rx="0" fill="#14b8a6"/>
     
     <text x="212" y="100.6" text-anchor="start" font-size="56" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">132</text>
+    
     <image x="214" y="30" width="26" height="26" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAABuElEQVR4nNyWP0hCQRjAv7unREtpUw0RQUEQrc2F59IurUFkU0NDNLU5Fi0N/YGWlob2QJ8ODpFBk0OL0BJtmjaYg++u78RHT98f7+xh0A/Ed3ff9/3u3p2HERgRERgRfysSAOSDsVnDsmYmms0XUip9BhWpMTaJsUtRy3ofLxbfSKdEL6S/AwVr+HWNn3mH+JEIcR7L528wgXf6UimjUatt4VgaCFl1lKgA59vxQqHoK6onEpuCkFvwQ4jniGFsGO12tEXpPSav+IXixFI4sTuXqJFMLnIhyvg4BsFUUBjFVcwFBQkhvqhhLMey2VfZpvYA5/xQQSJZGCSREELGBef7dtt5GBiEDO7fulukMEtdcJ+m7Wf6oxdVCBlcUdUlws4nCBncpweXiFJ6AuFi4eRPXaJYLpfHgWMICTzeR1OmWbbbPT/Y7tVzgZ078AuwzlXcNHedVxHxCsS763JYmZTgStL9/dQrWAbKBNDnzEviK7JlMhE0JPi69vwGaVBmN1FFFigZKFKRyZM6SKIksmVeR1/24Ss+UKmhJJLIgk6ZjkRCQJM6YxmUtHCVGZ08bdGw/L+/W98AAAD///lKrSQAAAAGSURBVAMAeueftVOfPGUAAAAASUVORK5CYII="/>
     
     
@@ -52,50 +53,67 @@
     
     
     
+    
+    
     <text x="101" y="125.6" text-anchor="start" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap</text>
-    <text x="104" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">136</text>
+    <text x="65" y="152.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">136</text>
+    <text x="114" y="150.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">bpm</text>
     <image x="77" y="110" width="20" height="20" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABTUlEQVR4nLSUP0vDQBTA37sciIN/0hYEN8GPoCC4hKaCKH4GqYuDjn4KV6GrOHcWBHs0gyCCIP4ZnMTVRY1OYpLnu2KitE1zTdMfXN695OWXcO84CQUjoWDGK3yr1eoctglgieMTjwsMgkPb8571c99xFkPLOgDEVU4XEOAaiI5tpU5iB8aT12p1H4U46v4iEX1aRLuREJOcNnhM9KnZKynVSIQfjlMJpXzhqYA8EAWEWCm1Wn5HEFjWSm5Z57dQCqJliCV8mYcRiQDm/oREDzA694lwqly+4nW4gZxwUy65KXeJEJvNEKKorhcXhudLhuFOnCSNsNvtW275Bku/wRSuRaKtac977BFqZpU6Z+mmkVTLuFa/8/92z1YxkqbI+gozpQNkqcJUaYZMg5DBu+uu8WFx+ls8UGYk1Piuu67jjFJnWbVGwmEo/ID9AQAA//8Y4uu4AAAABklEQVQDAK9Rjgv8xkr3AAAAAElFTkSuQmCC"/>
     <text x="237" y="125.6" text-anchor="start" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Max</text>
-    <text x="240" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">150</text>
+    <text x="201" y="152.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">150</text>
+    <text x="250" y="150.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">bpm</text>
     <image x="213" y="110" width="20" height="20" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABTUlEQVR4nLSUP0vDQBTA37sciIN/0hYEN8GPoCC4hKaCKH4GqYuDjn4KV6GrOHcWBHs0gyCCIP4ZnMTVRY1OYpLnu2KitE1zTdMfXN695OWXcO84CQUjoWDGK3yr1eoctglgieMTjwsMgkPb8571c99xFkPLOgDEVU4XEOAaiI5tpU5iB8aT12p1H4U46v4iEX1aRLuREJOcNnhM9KnZKynVSIQfjlMJpXzhqYA8EAWEWCm1Wn5HEFjWSm5Z57dQCqJliCV8mYcRiQDm/oREDzA694lwqly+4nW4gZxwUy65KXeJEJvNEKKorhcXhudLhuFOnCSNsNvtW275Bku/wRSuRaKtac977BFqZpU6Z+mmkVTLuFa/8/92z1YxkqbI+gozpQNkqcJUaYZMg5DBu+uu8WFx+ls8UGYk1Piuu67jjFJnWbVGwmEo/ID9AQAA//8Y4uu4AAAABklEQVQDAK9Rjgv8xkr3AAAAAElFTkSuQmCC"/>
     <text x="373" y="125.6" text-anchor="start" font-size="16" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Avg</text>
-    <text x="376" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">141</text>
+    <text x="337" y="152.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">141</text>
+    <text x="386" y="150.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">bpm</text>
     <image x="349" y="110" width="20" height="20" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABTUlEQVR4nLSUP0vDQBTA37sciIN/0hYEN8GPoCC4hKaCKH4GqYuDjn4KV6GrOHcWBHs0gyCCIP4ZnMTVRY1OYpLnu2KitE1zTdMfXN695OWXcO84CQUjoWDGK3yr1eoctglgieMTjwsMgkPb8571c99xFkPLOgDEVU4XEOAaiI5tpU5iB8aT12p1H4U46v4iEX1aRLuREJOcNnhM9KnZKynVSIQfjlMJpXzhqYA8EAWEWCm1Wn5HEFjWSm5Z57dQCqJliCV8mYcRiQDm/oREDzA694lwqly+4nW4gZxwUy65KXeJEJvNEKKorhcXhudLhuFOnCSNsNvtW275Bku/wRSuRaKtac977BFqZpU6Z+mmkVTLuFa/8/92z1YxkqbI+gozpQNkqcJUaYZMg5DBu+uu8WFx+ls8UGYk1Piuu67jjFJnWbVGwmEo/ID9AQAA//8Y4uu4AAAABklEQVQDAK9Rjgv8xkr3AAAAAElFTkSuQmCC"/>
     <text x="77" y="186" text-anchor="start" font-size="20" fill="#60a5fa" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap</text>
-    <text x="81" y="225.3" text-anchor="middle" font-size="38" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'40</text>
+    <text x="22" y="223.9" text-anchor="start" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'40</text>
+    <text x="111" y="221.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">/km</text>
     <image x="47" y="166" width="26" height="26" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAACzklEQVR4nOyW30sUURTHz9mZO1EuFhohS0WwUBT0EhEEarRIYS8RpMnumkpgKP0FgmD1FPQsZmVbrlpbD9GDFFFm0Q/rLXqJ2EhCKJB+KBU7d2ZOZ37s6MY4SxC+5IFl7px7zvdzzr2XO6vCMpkKy2T/KagjW9hBGGkCos2AVOM4CT8R4LRC6o2hVnxbTgPDJo+PyAYE6uWgegi3SQvw9LWUmPgrUHuOakjX+xHxSMkEwTdCyDuJBHHOXlcyTXRLj2hdY0mcLQvqzNHagq4/Z8h2T1yy+CVLof7hllVvSgrKFnYS4imGdrCScMPhtRIVtUOHcX5JUOcFEoWonGTnXrdCeIooOjIpfAchlh6jOsWU5xFhj+d6+CEmDj7aj0YxJrI4QY/K7iKES3uGUjSUg7QPyzrFkvc4oZK7eeW5E1tmZFdgRydyVGXqMu+t+2dNiG2Dzfg9DNJ2neJoypc8rLLfDQsPKEhZ7mwDQ2cNEvGRNM6VdGRImfY3l6CnHCSVpUow9fEihIUnsq3iPmv0eh2sV1GmivE+CIkanQSCH5mUuBIGacqRIlDeQcCtroc+qkIctUfTMTHEj4ILczV9ECdqfHoSXtIDQD5HIbZGyov82Od18stU4NDlZvxivzsHgGjCLRoTdlH22LkZKkyI8UNzW8P8UoD2rN7Nwmd4WE3gbjBiJDncopYcey46785BxWoA+yaZcToyJfxciAILgpdLY/FznFyNHsQCOptJqrf/jMVFGoan7YDi72GW92bOm9sUBKowjARDoot9EcLxoFgC2ugN5kdT+NUH9fWhxSJTTjVItUHJmaS4y4mjvpgFuUxaewGBhvVea0/8ohaqwMdeUMy+IQJhaS3FlTTav6ut2rGgGHuJ7eV1RSM+yP9M6KgOrCJ9N1FkavAkSljCnM5C7GYz6m1Z2cM7uItvloGiP/Qz8S9t5T/DCsi33wAAAP//Vn/WAwAAAAZJREFUAwBP5QxMCeNz+QAAAABJRU5ErkJggg=="/>
     
     <text x="240" y="232.2" text-anchor="middle" font-size="72" fill="#2ee66b" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">5'38</text>
     
+    
     <text x="395" y="186" text-anchor="start" font-size="20" fill="#60a5fa" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Avg</text>
-    <text x="399" y="225.3" text-anchor="middle" font-size="38" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'42</text>
+    <text x="340" y="223.9" text-anchor="start" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'42</text>
+    <text x="429" y="221.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">/km</text>
     <image x="365" y="166" width="26" height="26" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAACzklEQVR4nOyW30sUURTHz9mZO1EuFhohS0WwUBT0EhEEarRIYS8RpMnumkpgKP0FgmD1FPQsZmVbrlpbD9GDFFFm0Q/rLXqJ2EhCKJB+KBU7d2ZOZ37s6MY4SxC+5IFl7px7zvdzzr2XO6vCMpkKy2T/KagjW9hBGGkCos2AVOM4CT8R4LRC6o2hVnxbTgPDJo+PyAYE6uWgegi3SQvw9LWUmPgrUHuOakjX+xHxSMkEwTdCyDuJBHHOXlcyTXRLj2hdY0mcLQvqzNHagq4/Z8h2T1yy+CVLof7hllVvSgrKFnYS4imGdrCScMPhtRIVtUOHcX5JUOcFEoWonGTnXrdCeIooOjIpfAchlh6jOsWU5xFhj+d6+CEmDj7aj0YxJrI4QY/K7iKES3uGUjSUg7QPyzrFkvc4oZK7eeW5E1tmZFdgRydyVGXqMu+t+2dNiG2Dzfg9DNJ2neJoypc8rLLfDQsPKEhZ7mwDQ2cNEvGRNM6VdGRImfY3l6CnHCSVpUow9fEihIUnsq3iPmv0eh2sV1GmivE+CIkanQSCH5mUuBIGacqRIlDeQcCtroc+qkIctUfTMTHEj4ILczV9ECdqfHoSXtIDQD5HIbZGyov82Od18stU4NDlZvxivzsHgGjCLRoTdlH22LkZKkyI8UNzW8P8UoD2rN7Nwmd4WE3gbjBiJDncopYcey46785BxWoA+yaZcToyJfxciAILgpdLY/FznFyNHsQCOptJqrf/jMVFGoan7YDi72GW92bOm9sUBKowjARDoot9EcLxoFgC2ugN5kdT+NUH9fWhxSJTTjVItUHJmaS4y4mjvpgFuUxaewGBhvVea0/8ohaqwMdeUMy+IQJhaS3FlTTav6ut2rGgGHuJ7eV1RSM+yP9M6KgOrCJ9N1FkavAkSljCnM5C7GYz6m1Z2cM7uItvloGiP/Qz8S9t5T/DCsi33wAAAP//Vn/WAwAAAAZJREFUAwBP5QxMCeNz+QAAAABJRU5ErkJggg=="/>
     <text x="77" y="304" text-anchor="start" font-size="20" fill="#22c55e" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap</text>
     <text x="81" y="339.9" text-anchor="middle" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">01:31</text>
+    
     <image x="47" y="284" width="26" height="26" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAADhUlEQVR4nLxWWWgTYRCe+bOrVd9UrEer2bYKgqJ4oWkUFQ8UfFHQKjYeTx5Pgg8Kin0SFBQVvJ7UtF5PgogH3tiNVqoWREVoN/Es1IJP0mvzj/NvNiVNd5sNgkPIP5l/5vtmZuf/Nxr8J9GCOBnmtiVEcqlAFLl2yUYS9OhLpCFRCCMQEQDdYpLR+Va28RbsZbW0EIKAYPKEgGgQvWPDxwHiAaEIMV7WrkOJt93IdVYkfiffJ5yoXY0SzhHC6VR1/ZnARBNf7ygfZtv7hIT5HDwXAUcoO1fThQRv2NZkU9/Jb9EbP8NmbQ3bGhAxxA6/rGh8XGGip0u1iuHl+4nwMDuNzIDnBDhdQ1elPxCSpyAtDjgkoAYFalLR+M0hicoSsUk60UPOfrqbPSeOd3l9RwJ+OIESypBwDiOsySahyJlITePuVLT+Qi6m59TpklT5091s27kdG63F8UZGw7AZiyl7Mho/pNYpjbFlAuk6J+JMnkR6y8/mQj7moIoqzNgeXs66PWm2Kb3q6+Jrv9VPIxFbwKRNSrdDOO/rwitvlD6xefPYkm79PqPNzZDBrlQkfjEXd8B4l5vbKrn6E24XuvtQ1GRJMmlR/3nRJE3I6j/nXe/sQ9ykYjJtpROGuWWKL5EGcge3uCSzQ/u/VV9pg4CifBHooEOEOApB2+5LxC5VTjVcfXJR5XkoUkRp53l+pmkXo8qXiPtf5a6fAOskFCmtU+/1cDUWZJj8iXiGw6722QtIptHO6mkJaS8fPgIf3ayNXPuA8eYet/P3GEKc4AlC9itCLZXVwZtpvJpl/nT4EvExaWGHGazO8sJwJ9AAP6E6gQlrTiYRfJu7lTcM1AJOZTCyoik2DYqUyWZSHXLdQRLwzpcIUbb0U9p0VJUIQYWr0VAe78ci9Ceyen4855obHUfADYYZOxOIjEkqTOscR611fhI9S0aMxlyXQSDGq82lkNY/8MaYDAg1g5A7rcjV914cYXPLbD6cl9h/tsvawfrMtur6jiGJlKiLku/6e7w73AnlyVavc75iHpEOD0KAOtiwgkd5OW+vx/73BfQQyJXJaMOLfEzftpQltlYNk+JG9qIsKPwS7BWy5nukodVre+j+c++NRNtBzvgIuNPk4dTLJHVWdeWxoW6TQFMVfrq9ROpUqWE6zNfHNClQCpKtdoiSoku3UssudxfCKOrPyb/IXwAAAP//5emWSAAAAAZJREFUAwDDwWu670o+DwAAAABJRU5ErkJggg=="/>
     
     <text x="240" y="338" text-anchor="middle" font-size="60" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">25:00</text>
     
     
-    <text x="399" y="339.9" text-anchor="middle" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
+    
+    <text x="350" y="339.9" text-anchor="start" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
+    <text x="418" y="337.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">spm</text>
     <image x="386" y="284" width="26" height="26" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAByElEQVR4nNyWzSttURjGn3edwz263brdurrpTnzlY589IsWErSSZoRjKPyCKIVMT/wNDQjEQk3MM5Ksk52yO8pHCiAFJ4mxeryPKsbbYbWfgqd3a63nf9f5aa+212kFkSEFkSBkDqfeCJTuLv8xYtBRfCSq3o23Zyds9yUiE7chk0e7sD/gNMhORCgUeA1HuY59ALaGbnBH4DYJDPVL8VYyAjnA80gI/QUyo0qdTF/wEITUBnctN/4+WcuAbiHGq5chy/j6/zoMHac8REValqdbFVED9lWb/uW8mFqrZ4W4ZsxE3MAyyHO04nYkAjcNNWTh+fjXsBYvvOCKQdukOmTavgKPBD4PiZXXL0kyn+8wcixVbKZCcs3+E+wnZzNBLAlGFscW9HwY96vInOhm89gpE6H+pCe6TPfujKdiIz4AO861z2zirkVm0StkBBLhyK1w//0RkUpxaLo2oQOvCg+QOzMt2kifaIPN63KyvTLc93d4BJ5nrFmPQkc5/9/Z2LabUlVuMFM34BkqU1+7KEr2FMV9chZJT8AuUqkkYTffuFHUcFDZcwE/QbRYNMjAvR+Benk0obt42rDm3fE9fnRd9v5+T7wd6AAAA//+/Ri3dAAAABklEQVQDAJv3iKROSR0sAAAAAElFTkSuQmCC"/>
     <text x="113" y="376.6" text-anchor="start" font-size="16" fill="#f59e0b" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Lap</text>
-    <text x="116" y="403.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">0.33</text>
+    <text x="74" y="403.4" text-anchor="start" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">0.33</text>
+    <text x="138" y="401.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">km</text>
     <image x="89" y="361" width="20" height="20" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAA1klEQVR4nOyTPxLBUBCHf0viX/SuoFJpVG7gDEinULqCE9AlGpWLqDQKKoVRGl2SESTrRZXMRBJPOr5mZ2dnv3k7b1dBzhTCiW3U2papDfAFESGDlgSY7qLUhCRKJCN4QXiwurdNNaWVTW3o6MnCjDBjq9nOCKkvzGaziuz3aAw3FyETbar69fiuXsCHiE/rik2Y5CZ8SZmnjlHtxNXiR2Z/LtrOSECM3hJhnUmokDcrD287SCC1Nn/hrwsjl0LgU3D9d0+9QBIKJ7xC3XXKjUrfPUCSJwAAAP//rFFr2gAAAAZJREFUAwCy5T2UM7rg1wAAAABJRU5ErkJggg=="/>
     
     <text x="240" y="403.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">5</text>
+    
     <image x="230" y="361" width="20" height="20" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACKklEQVR4nKyUPWgUURDHZ94murtPLBREo6BcIWol2Fho/GgEjRZGKw/xYkRECxsLIYWVvaiFcLkViSBGbAKC+EVIERuJ9jaBVCKImt09vds3/nc91+P2JTnCDSyzb2fmN/Nm570+6rH0UY9lWaA8JScK/WMkdArLATyfmGXOo/gFV6hui2Hbx3DcH2CS60JcJuYtllQfOZGT/qV4Ia662xPlHF03EgbWChcDvZlEZoRUCdqI0DvFZgqpF0R4ENUOI8le4/CHsLb2ohF1j0UeWrcsVdoQGnqLgBJAj3UzusqX6Xuby6Q8oLGwX6eQMpF6Al+NxLmDagdGyq8y026YX+tSeKED9rdH+OaYZAw+X4iV7rTnQJmg9djOELI1dCM8w0eoSRZJe2ZYTTPzJps933LccIdQfj/QU7bK/ok3Wp+H2rGU/X+FRp3OtPAz6lJ+BWt2Ldb017DmXykAIVk/8Ecj6lIS4xzH3G1Eq/YVKySeTrUhdbBLHgmr/a3X+QJQkcmAGOhheUS6O6IcyGJY3hSA3kj8Ph1imLdGTf/uSiz07XZ2ikQ+e5V4tgDE/Iky5jzm6wdWFQQ8T0ekUFRALo7mffjcxCoWxWfT2JzTGRCPu+cMOxOt8N84EXfwvDSO8tHnPWzkGrJvw25+Oio54VXqM+3x1sshDtzDiTi3YDxEdplUJrnRmklaEZiDq+4gTkVZmHeiym/Qs6jwlR6N5paKWRa4Gun5jf0HAAD//x4ARiUAAAAGSURBVAMA/wnZAUBLGNAAAAAASUVORK5CYII="/>
     
     <text x="364" y="403.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">2%</text>
+    
     <image x="354" y="361" width="20" height="20" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAA50lEQVR4nMyUvQ7BUBiG3+/4CZVYTCajRWI1m+1uwC24ABdhox0wMEgYDVZTL0a0pynh+Awkflr9OUOfqU1PnvT5zsnJQzN5aCb7QgEN+JNiS5vQNY3BRRT2z/fEyWqFonSMMUADKBxTCd2ZUZcO1izrfH6LneyZpS7OsH/JYgudaWV4g9iBqB60JlIyz6vsOhWLgD7/Wejav0JvUmrIk9gQoY0IhCbzkehdRc7mxEiyQKFSIJaN+HHLgTXE4CtZzVGVlrHgWfWQgDch72Lb9bHkeTWRkFeyNMt9InVII3tA0Ez278M7AAAA//+62KaeAAAABklEQVQDAEifN0mBir1xAAAAAElFTkSuQmCC"/>
     
-    <text x="184" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">5.33</text>
+    <text x="137" y="461.8" text-anchor="start" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">5.33</text>
+    <text x="211" y="459.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">km</text>
     <image x="174" y="415" width="20" height="20" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAA1klEQVR4nOyTPxLBUBCHf0viX/SuoFJpVG7gDEinULqCE9AlGpWLqDQKKoVRGl2SESTrRZXMRBJPOr5mZ2dnv3k7b1dBzhTCiW3U2papDfAFESGDlgSY7qLUhCRKJCN4QXiwurdNNaWVTW3o6MnCjDBjq9nOCKkvzGaziuz3aAw3FyETbar69fiuXsCHiE/rik2Y5CZ8SZmnjlHtxNXiR2Z/LtrOSECM3hJhnUmokDcrD287SCC1Nn/hrwsjl0LgU3D9d0+9QBIKJ7xC3XXKjUrfPUCSJwAAAP//rFFr2gAAAAZJREFUAwCy5T2UM7rg1wAAAABJRU5ErkJggg=="/>
     
     
     
     
-    <text x="298" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">106</text>
+    
+    <text x="265" y="461.8" text-anchor="start" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">106</text>
+    <text x="322" y="459.4" text-anchor="start" font-size="16" fill="#9aa4b2" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">m</text>
     <image x="288" y="415" width="20" height="20" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABlklEQVR4nKxUPU8CQRCdXVeBPQoTaxPRQtECO0Onf8IW8SP6F4xGbTQ2FtoRAphYWFrbqJW9idHGiH/ADlbQux1nz+ObI97pS+7rzd2bN7M3K+CfISAEEIGpc7kHCI7MqkPG6M4Dg4DAA+BqXBaAsRWPKZHoWkOUQ0B0irmesqooc42nwCUjYwkyc01+Zqg+U/0rJZhqykNIVArWkxGMr1bn2vlQi+LBIZe6mxzYw3p+JOkX40wfmaOb9y25VoxOOsgfBNrpyPrnY3sMcyDZJqi+ifwEbRgyqxm3ubjA21ZrqHcpNSxvzGr8WrBStDL09qJXxLx6kzuusx/hS+IWVElu9fu2JwuWYLSK1gsFxlok2oLZKRvFMrne97iKFGqCZeB9oEOF8qRDzE3LxBcOX1H63TYuXrWt04EOVSGWRsbvIQA4c5Zi2dpdj0PTHw28BAGhNS/iGUR6BE3jacCnIShoFJUlt5uP5vSRjyY0588UjEAYINa51snYRq3s/l+a8Vm6HJtRDwstuJmqcujNwQ9/2Rz64hsAAP//uDPpzwAAAAZJREFUAwDdiYaroGVviAAAAABJRU5ErkJggg=="/>
     
     

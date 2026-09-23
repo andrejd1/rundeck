@@ -25,6 +25,7 @@ export const COLORS = {
   inside: 0x2ee66b,
   above: 0xef4444,
   graphEmpty: 0x1a1a1a,
+  unit: 0x9aa4b2, // units after values: quieter than the value itself
 }
 
 const label = (x, y, w, color, alignH = align.CENTER_H, size = 22) => ({
@@ -98,11 +99,11 @@ export const ROW_GEOMETRY = {
     2: {
       r1l: {
         label: label(56, 121, 92, COLORS.value, align.RIGHT),
-        value: value(154, 114, 76, 34, align.LEFT),
+        value: { ...value(154, 114, 76, 34, align.LEFT), unitPad: px(8) },
       },
       r1r: {
         label: label(332, 121, 92, COLORS.value, align.LEFT),
-        value: value(250, 114, 76, 34, align.RIGHT),
+        value: { ...value(250, 114, 76, 34, align.RIGHT), unitPad: px(8) },
       },
     },
     3: {
@@ -148,11 +149,11 @@ export const ROW_GEOMETRY = {
     2: {
       r4l: {
         label: label(56, 372, 92, COLORS.value, align.RIGHT),
-        value: value(154, 365, 76, 34, align.LEFT),
+        value: { ...value(154, 365, 76, 34, align.LEFT), unitPad: px(8) },
       },
       r4r: {
         label: label(332, 372, 92, COLORS.value, align.LEFT),
-        value: value(250, 365, 76, 34, align.RIGHT),
+        value: { ...value(250, 365, 76, 34, align.RIGHT), unitPad: px(8) },
       },
     },
     3: {
@@ -187,6 +188,11 @@ export const ROW_DIVIDERS = {
     3: [line(177, 363, 2, 42), line(303, 363, 2, 42)],
   },
 }
+
+// Units after values ("7.14 km"): a fraction of the value size, never tiny.
+// Value boxes with a label right beside them (the inline two-column rows)
+// carry `unitPad`: room kept free between the unit and that label/divider.
+export const UNIT = { ratio: 0.42, minSize: px(16), gap: px(4) }
 
 // Icon-mode labels: icon square next to the qualifier text ("Avg", "Lap").
 export const ICON = { maxSize: px(26), gap: px(4) }

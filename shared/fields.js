@@ -88,12 +88,18 @@ const pace = (mps, ctx) => paceStr(mps, ctx.unit)
 const avgSpeed = (ctx) =>
   ctx.s.avg_speed != null ? ctx.s.avg_speed : ctx.stats.avgSpeed()
 const pad2 = (n) => (n < 10 ? `0${n}` : `${n}`)
+const imperial = (c) => c.unit === "min_per_mile"
+// units follow the pace-unit setting (km or mile world)
+const PACE = (c) => (imperial(c) ? "/mi" : "/km")
+const DIST = (c) => (imperial(c) ? "mi" : "km")
+const ALT = (c) => (imperial(c) ? "ft" : "m")
 
 /**
  * Field catalog. `label` fits every slot (<= 9 chars), `short` is the
  * compact label (<= 5 chars), `icon` + `qual` the icon-mode label (icon file
  * in assets/common.r/icons, qualifier text next to it); `needs` names the
  * extra native channels the field polls (battery: only what is on screen);
+ * `unit` is the unit drawn small after the value (string or ctx => string);
  * `native` marks a value the watch draws itself (see below).
  */
 export const FIELDS = {
@@ -106,6 +112,7 @@ export const FIELDS = {
     value: () => "",
   },
   hr: {
+    unit: "bpm",
     short: "HR",
     icon: "heart",
     qual: "",
@@ -125,6 +132,7 @@ export const FIELDS = {
     },
   },
   avg_hr: {
+    unit: "bpm",
     short: "AvgHR",
     icon: "heart",
     qual: "Avg",
@@ -133,6 +141,7 @@ export const FIELDS = {
     value: (c) => intStr(c.stats.avgHr.value),
   },
   lap_hr: {
+    unit: "bpm",
     short: "LapHR",
     icon: "heart",
     qual: "Lap",
@@ -141,6 +150,7 @@ export const FIELDS = {
     value: (c) => intStr(c.stats.lapHr()),
   },
   max_hr: {
+    unit: "bpm",
     short: "MaxHR",
     icon: "heart",
     qual: "Max",
@@ -149,6 +159,7 @@ export const FIELDS = {
     value: (c) => intStr(c.stats.maxHr),
   },
   pace: {
+    unit: PACE,
     short: "Pace",
     icon: "gauge",
     qual: "",
@@ -157,6 +168,7 @@ export const FIELDS = {
     value: (c) => pace(c.s.speed, c),
   },
   avg_pace: {
+    unit: PACE,
     short: "AvgP",
     icon: "gauge",
     qual: "Avg",
@@ -165,6 +177,7 @@ export const FIELDS = {
     value: (c) => pace(avgSpeed(c), c),
   },
   lap_pace: {
+    unit: PACE,
     short: "LapP",
     icon: "gauge",
     qual: "Lap",
@@ -173,6 +186,7 @@ export const FIELDS = {
     value: (c) => pace(c.stats.lapSpeed(), c),
   },
   last_lap_pace: {
+    unit: PACE,
     short: "LastP",
     icon: "gauge",
     qual: "Last",
@@ -184,6 +198,7 @@ export const FIELDS = {
     },
   },
   speed: {
+    unit: (c) => (c.unit === "min_per_mile" ? "mph" : "km/h"),
     short: "Spd",
     icon: "gauge",
     qual: "Spd",
@@ -197,6 +212,7 @@ export const FIELDS = {
     },
   },
   power: {
+    unit: "W",
     short: "Pwr",
     icon: "bolt",
     qual: "",
@@ -206,6 +222,7 @@ export const FIELDS = {
     value: (c) => intStr(c.s.power),
   },
   avg_power: {
+    unit: "W",
     short: "AvgW",
     icon: "bolt",
     qual: "Avg",
@@ -215,6 +232,7 @@ export const FIELDS = {
     value: (c) => intStr(c.stats.avgPower.value),
   },
   lap_power: {
+    unit: "W",
     short: "LapW",
     icon: "bolt",
     qual: "Lap",
@@ -248,6 +266,7 @@ export const FIELDS = {
     value: (c) => `${c.now.getHours()}:${pad2(c.now.getMinutes())}`,
   },
   distance: {
+    unit: DIST,
     short: "Dist",
     icon: "flag",
     qual: "",
@@ -256,6 +275,7 @@ export const FIELDS = {
     value: (c) => distanceStr(c.s.distance, c.unit),
   },
   lap_distance: {
+    unit: DIST,
     short: "LapD",
     icon: "flag",
     qual: "Lap",
@@ -280,6 +300,7 @@ export const FIELDS = {
     value: (c) => gradeStr(c.stats.grade),
   },
   ascent: {
+    unit: ALT,
     short: "Asc",
     icon: "ascent",
     qual: "",
@@ -288,6 +309,7 @@ export const FIELDS = {
     value: (c) => ascentStr(c.s.ascent, c.unit),
   },
   altitude: {
+    unit: ALT,
     short: "Alt",
     icon: "altitude",
     qual: "",
@@ -296,6 +318,7 @@ export const FIELDS = {
     value: (c) => ascentStr(c.s.altitude, c.unit),
   },
   cadence: {
+    unit: "spm",
     short: "Cad",
     icon: "feet",
     qual: "",
@@ -304,6 +327,7 @@ export const FIELDS = {
     value: (c) => intStr(c.s.cadence),
   },
   avg_cadence: {
+    unit: "spm",
     short: "AvgC",
     icon: "feet",
     qual: "Avg",
@@ -313,6 +337,7 @@ export const FIELDS = {
     value: (c) => intStr(c.s.avg_cadence),
   },
   calories: {
+    unit: "kcal",
     short: "Cal",
     icon: "flame",
     qual: "",
@@ -598,6 +623,7 @@ export const defaultLayout = () => ({
   slots: { ...DEFAULT_SLOTS },
   cols: { ...DEFAULT_COLS },
   labels: "text",
+  units: "show",
   bar: "auto",
   updated_at: 0,
 })
@@ -616,6 +642,7 @@ export function normalizeLayout(raw) {
     if (row.cols.indexOf(n) >= 0) out.cols[row.id] = n
   }
   if (LABEL_STYLES.indexOf(raw.labels) >= 0) out.labels = raw.labels
+  if (raw.units === "show" || raw.units === "hide") out.units = raw.units
   if (BAR_OPTIONS.indexOf(raw.bar) >= 0) out.bar = raw.bar
   const t = Number(raw.updated_at)
   if (Number.isFinite(t) && t > 0) out.updated_at = t
@@ -639,6 +666,13 @@ export function channelsNeeded(layout, extra = []) {
   if (layout.bar === "power") set.power = true
   for (const n of extra) set[n] = true
   return set
+}
+
+/** The unit shown after a field's value ("" when it has none). */
+export function fieldUnit(fieldId, ctx) {
+  const u = (FIELDS[fieldId] || FIELDS.none).unit
+  if (!u) return ""
+  return typeof u === "function" ? u(ctx) : u
 }
 
 export function fieldValue(fieldId, ctx) {

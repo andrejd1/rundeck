@@ -199,3 +199,10 @@ test("target: heart rate option and separate From / To fields per metric", () =>
   )
   assert.equal(paceInputs.target_pace_low, "4:40") // pace range kept
 })
+
+test("units chips save into the layout", () => {
+  const { tree, store } = render({})
+  assert.ok(selectedChips(tree).includes("Show"))
+  button(tree, "Hide").props.onClick()
+  assert.equal(JSON.parse(store.get("layout_json")).units, "hide")
+})

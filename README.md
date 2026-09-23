@@ -54,6 +54,12 @@ value itself, in its own units) over the slot and adds its own label. GAP, verti
 oscillation and ground contact time are not exposed by Zepp OS at all, so they can't be
 shown.
 
+**Units** (km/mi, /km, m/ft, W, bpm, spm, kcal, km/h/mph) are drawn small after the
+value, placed from the watch's own text measurement (`getTextLayout`, with a width
+estimate as fallback) so the pair never overlaps; value and unit shrink together to fit.
+The big center numbers of three-column rows and the single top HR (which shows its zone)
+stay unit-free; units can be hidden in the phone settings or on the watch.
+
 **Field names** can be full text, short text ("LapHR") or **icons** with a qualifier
 ("♥ Avg"); icons live in `assets/common.r/icons/{20,26}` (`node sim/gen-icons.mjs`).
 
@@ -148,7 +154,7 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 
 ```
 npm install
-npm test              # 100 tests: logic + the real widget/side service against stubs
+npm test              # 103 tests: logic + the real widget/side service against stubs
 npm run preview       # renders sim/out/preview.html
 npm run screenshots   # regenerates docs/ui-preview.png and docs/screenshots/
 ```

@@ -278,6 +278,18 @@ AppSettingsPage({
         (v) => saveLayout({ ...layout, labels: v }),
       ),
       hint("Short text and icons leave more room for the numbers."),
+      label("Units after values"),
+      chips(
+        [
+          { name: "Show", value: "show" },
+          { name: "Hide", value: "hide" },
+        ],
+        layout.units,
+        (v) => saveLayout({ ...layout, units: v }),
+      ),
+      hint(
+        "Small km, W, bpm, m after the numbers. The big center numbers stay unit-free.",
+      ),
       label("Zone bar (middle)"),
       chips(
         BAR_OPTIONS.map((id) => ({ name: BAR_NAMES[id], value: id })),

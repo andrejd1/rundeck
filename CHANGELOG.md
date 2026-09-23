@@ -2,6 +2,9 @@
 
 ## 0.2.0 — customizable screen
 
+- Units after values (km/mi, /km, m/ft, W, bpm, spm, kcal, km/h), following the pace
+  unit; not on the big center numbers; can be hidden (phone and watch).
+
 - Full privacy statement (PRIVACY.md), published at
   https://andrejd1.github.io/rundeck/privacy.html and linked from the settings page and the site.
 

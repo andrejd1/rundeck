@@ -449,3 +449,50 @@ test("heart rate target colors HR and marks the bar", async () => {
     .find((x) => x.type === "FILL_RECT" && x.props.h === 5)
   assert.equal(band.props.visible, true)
 })
+
+test("units: small unit after values, none on the big center numbers", async () => {
+  const w = await bootWidget({ licensed: true, config: cfg({}) })
+  w.run(300, { speed: 3.4, hr: 150 })
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r5l.value), "km") // distance
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r1l.value), "bpm") // lap HR
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r2r.value), "/km") // avg pace
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r2c.value), null) // big pace: none
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r3c.value), null) // big time: none
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r3l.value), null) // lap time has none
+  // value and unit don't overlap
+  const v = w
+    .widgets()
+    .find(
+      (x) =>
+        x.type === "TEXT" &&
+        x.props.visible !== false &&
+        x.props.text === w.textAt(SLOT_GEOMETRY.r5l.value) &&
+        x.props.y === SLOT_GEOMETRY.r5l.value.y,
+    )
+  const u = w
+    .widgets()
+    .find(
+      (x) =>
+        x.type === "TEXT" && x.props.visible !== false && x.props.text === "km",
+    )
+  assert.ok(u.props.x >= v.props.x + v.props.w - 2)
+})
+
+test("units follow miles and can be switched off", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({ pace_unit: "min_per_mile" }),
+  })
+  w.run(60, { speed: 3.4 })
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r5l.value), "mi")
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r5r.value), "ft")
+  const off = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({ units: "hide", updated_at: 2 }),
+    }),
+  })
+  off.run(60, { speed: 3.4 })
+  assert.equal(off.unitAt(SLOT_GEOMETRY.r5l.value), null)
+  assert.equal(off.textAt(SLOT_GEOMETRY.r5l.value), "0.20")
+})

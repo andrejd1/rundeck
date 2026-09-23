@@ -40,6 +40,10 @@ export const text_style = {
 export const sport_data = new Proxy({}, { get: (_, name) => name })
 export const edit_widget_group_type = { SPORTS: "SPORTS" }
 
+// Not every firmware has getTextLayout; the stub leaves it out so the
+// widget's fallback width estimate is what the tests exercise.
+export const getTextLayout = undefined
+
 export function deleteWidget(w) {
   const i = __widgets.indexOf(w)
   if (i >= 0) __widgets.splice(i, 1)
