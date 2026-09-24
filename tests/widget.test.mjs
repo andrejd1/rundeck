@@ -641,3 +641,40 @@ test("units follow miles and can be switched off", async () => {
   assert.equal(off.unitAt(SLOT_GEOMETRY.r5l.value), null)
   assert.equal(off.textAt(SLOT_GEOMETRY.r5l.value), "0.20")
 })
+
+test("out of view: no drawing, only the reads the stats need", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({
+        slots: { r1l: "avg_hr", r4l: "calories" },
+        updated_at: 5,
+      }),
+    }),
+  })
+  w.set({ sport: { ...globalThis.__sim.sport, calories: { calories: "8" } } })
+  w.run(60, { hr: 120 })
+  assert.equal(valueAt(w, "r1l"), "120")
+  const before = JSON.stringify(w.snapshot())
+  const reads = { ...globalThis.__sim.sportReads }
+  w.page.onPause()
+  w.run(60, { hr: 180 })
+  // nothing redrawn while another page is on screen
+  assert.equal(JSON.stringify(w.snapshot()), before)
+  const r = globalThis.__sim.sportReads
+  for (const type of [
+    "pace",
+    "cadence",
+    "avg_pace",
+    "calories",
+    "total_up_altitude",
+  ])
+    assert.equal(r[type] || 0, reads[type] || 0, `${type} read while hidden`)
+  // time and distance keep the lap/average stats running
+  assert.equal(r.duration - reads.duration, 60)
+  assert.equal(r.distance - reads.distance, 60)
+  w.page.onResume()
+  // the hidden minute at 180 bpm counts: (60 x 120 + 60 x 180) / 120
+  assert.equal(valueAt(w, "r1l"), "150")
+  assert.ok(r.pace > reads.pace)
+})

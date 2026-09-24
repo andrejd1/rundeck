@@ -5,7 +5,9 @@
 // Battery: every getSportData call is an IPC into the native workout service.
 // Channels on screen at full rate poll at 1 Hz; slow-moving ones (averages,
 // altitude, ascent) poll every few ticks; power, calories and average cadence
-// only when the layout shows them (`channels`).
+// only when the layout shows them (`channels`). While the page is out of
+// view (`display` false) only what the lap/average stats and the trial need
+// is read: time, distance, HR, power, altitude.
 
 import { getSportData } from "@zos/app-access"
 import { HeartRate } from "@zos/sensor"
@@ -82,14 +84,15 @@ export class LiveMetrics {
     return (this.paceUnit === "min_per_mile" ? 1609.344 : 1000) / secPerUnit
   }
 
-  refresh() {
+  refresh({ display = true } = {}) {
     this.tick += 1
     const every = (n) => this.tick % n === 1
     const s = this.snapshot
 
-    this._query("pace", (d) => {
-      s.speed = this._speedFromPace(d && (d.pace || d.avg_pace))
-    })
+    if (display)
+      this._query("pace", (d) => {
+        s.speed = this._speedFromPace(d && (d.pace || d.avg_pace))
+      })
     this._query("distance", (d) => {
       const km = firstNumber(d, ["distance"])
       if (km != null) s.distance = km * 1000
@@ -100,33 +103,35 @@ export class LiveMetrics {
       const sec = Number.isFinite(raw) ? raw : parseDurationString(raw)
       if (sec != null) s.elapsed = sec
     })
-    this._query("cadence", (d) => {
-      const c = firstNumber(d, ["cadence"])
-      if (c != null) s.cadence = c
-    })
-    if (every(5)) {
-      this._query("avg_pace", (d) => {
-        const v = this._speedFromPace(d && (d.avg_pace || d.pace))
-        if (v != null) s.avg_speed = v
+    if (display)
+      this._query("cadence", (d) => {
+        const c = firstNumber(d, ["cadence"])
+        if (c != null) s.cadence = c
       })
+    if (every(5)) {
+      if (display)
+        this._query("avg_pace", (d) => {
+          const v = this._speedFromPace(d && (d.avg_pace || d.pace))
+          if (v != null) s.avg_speed = v
+        })
       this._query("altitude", (d) => {
         const a = firstNumber(d, ["altitude"])
         if (a != null) s.altitude = a
       })
     }
-    if (every(10)) {
+    if (display && every(10)) {
       this._query("total_up_altitude", (d) => {
         const a = firstNumber(d, ["total_up_altitude"])
         if (a != null) s.ascent = a
       })
     }
-    if (this.channels.calories && every(5)) {
+    if (display && this.channels.calories && every(5)) {
       this._query("calories", (d) => {
         const v = firstNumber(d, ["calories"])
         if (v != null) s.calories = v
       })
     }
-    if (this.channels.avg_cadence && every(5)) {
+    if (display && this.channels.avg_cadence && every(5)) {
       this._query("avg_cadence", (d) => {
         const v = firstNumber(d, ["avg_cadence", "cadence"])
         if (v != null) s.avg_cadence = v

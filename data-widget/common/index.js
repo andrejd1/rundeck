@@ -119,6 +119,7 @@ DataWidget(
       metrics: null,
       stats: null,
       tracker: null,
+      inView: true, // onPause/onResume: drawing only while on screen
       timer: null,
       ticks: 0,
       ui: {},
@@ -179,11 +180,19 @@ DataWidget(
       this.onTick()
     },
 
-    // Back from the on-watch layout editor (or any other page): pick up a
-    // layout edited there.
+    // Back in view (from another data page, the on-watch layout editor or
+    // any other page): pick up a layout edited there and draw at once.
     onResume() {
+      this.state.inView = true
       this.applyLayout(newerLayout(this.state.layout, loadObject(LAYOUT_KEY)))
       this.onTick()
+    },
+
+    // Out of view (another data page, screen off): keep sampling for the
+    // lap/average stats and the trial, but read and draw nothing that only
+    // the screen needs.
+    onPause() {
+      this.state.inView = false
     },
 
     onDestroy() {
@@ -381,7 +390,7 @@ DataWidget(
       const { metrics, stats, trial } = this.state
       if (!metrics) return
       this.state.ticks += 1
-      const s = metrics.refresh()
+      const s = metrics.refresh({ display: this.state.inView })
       const autoLap = stats.update({
         elapsed: s.elapsed,
         distance: s.distance,
@@ -404,7 +413,7 @@ DataWidget(
         now - this.state.lastConfigAttemptAt >= CONFIG_RETRY_SEC
       )
         this.fetchConfig()
-      this.render()
+      if (this.state.inView) this.render()
     },
 
     onLap(lap) {

@@ -2,6 +2,10 @@
 
 ## 0.2.0 — customizable screen
 
+- Battery: while another data page is on screen (or the screen is off) RunDeck draws nothing and
+  reads only what the lap/average stats need (time, distance, HR, power, altitude), so averages
+  still include that time.
+
 - Every round screen size: the HR graph, icons and bottom row scale correctly from 480 down to 360 px
   (icons ship in five pixel sizes, graph bars are placed from the scaled width, the bottom row sits
   clear of the bezel); tests render every layout style at 480, 466, 454, 416, 390 and 360 px.
