@@ -2,9 +2,11 @@
 
 ## 0.2.0 — customizable screen
 
-- Battery: while another data page is on screen (or the screen is off) RunDeck draws nothing and
+- Battery: while another data page is on screen, or the screen is off without the always-on
+  display (raise to wake), RunDeck draws nothing and
   reads only what the lap/average stats need (time, distance, HR, power, altitude), so averages
-  still include that time.
+  still include that time. Raising the wrist redraws at once. With the always-on display it keeps
+  drawing, as the screen may still show it.
 
 - Every round screen size: the HR graph, icons and bottom row scale correctly from 480 down to 360 px
   (icons ship in five pixel sizes, graph bars are placed from the scaled width, the bottom row sits

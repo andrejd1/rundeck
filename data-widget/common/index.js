@@ -26,6 +26,7 @@ import {
 import { BasePage } from "@zeppos/zml/base-page"
 import { getDeviceInfo } from "@zos/device"
 import { KEY_EVENT_CLICK, KEY_SHORTCUT, offKey, onKey } from "@zos/interaction"
+import { Screen } from "@zos/sensor"
 import {
   align,
   createWidget,
@@ -74,6 +75,7 @@ import { resolveHrZones } from "./hr-zones.js"
 import { LiveMetrics } from "./metrics.js"
 
 const TICK_MS = 1000
+const SCREEN_OFF = 2 // Screen.getStatus(): 1 on, 2 off
 const GRAPH_EVERY_TICKS = 5 // HR graph redraw cadence (bars move every 10 s)
 const LAP_NOTICE_SEC = 6
 const LAP_DEBOUNCE_SEC = 2
@@ -120,6 +122,8 @@ DataWidget(
       stats: null,
       tracker: null,
       inView: true, // onPause/onResume: drawing only while on screen
+      screenDark: false, // screen off without the always-on display
+      screen: null,
       timer: null,
       ticks: 0,
       ui: {},
@@ -176,6 +180,7 @@ DataWidget(
       this.buildUi()
       this.applyGeometry()
       this.registerKeys()
+      this.watchScreen()
       this.state.timer = setInterval(() => this.onTick(), TICK_MS)
       this.onTick()
     },
@@ -188,11 +193,37 @@ DataWidget(
       this.onTick()
     },
 
-    // Out of view (another data page, screen off): keep sampling for the
-    // lap/average stats and the trial, but read and draw nothing that only
-    // the screen needs.
+    // Out of view (another data page): keep sampling for the lap/average
+    // stats and the trial, but read and draw nothing that only the screen
+    // needs.
     onPause() {
       this.state.inView = false
+    },
+
+    // Screen off with raise-to-wake (no always-on display): nothing is seen,
+    // so it counts as out of view; waking draws fresh values at once. With
+    // the always-on display the screen may still show RunDeck, so it keeps
+    // drawing.
+    watchScreen() {
+      try {
+        const screen = new Screen()
+        const update = () => {
+          const dark = screen.getStatus() === SCREEN_OFF && !screen.getAodMode()
+          const was = this.state.screenDark
+          this.state.screenDark = dark
+          if (was && !dark) this.onTick()
+        }
+        this.state.screen = { screen, update }
+        screen.onChange(update)
+        update()
+      } catch (e) {
+        this.state.screen = null // no screen sensor: always drawn
+      }
+    },
+
+    // on screen: in view (onPause/onResume) and the screen not dark
+    visible() {
+      return this.state.inView && !this.state.screenDark
     },
 
     onDestroy() {
@@ -202,6 +233,12 @@ DataWidget(
         /* ignore */
       }
       if (this.state.timer) clearInterval(this.state.timer)
+      if (this.state.screen)
+        try {
+          this.state.screen.screen.offChange(this.state.screen.update)
+        } catch (e) {
+          /* ignore */
+        }
       if (this.state.metrics) this.state.metrics.destroy()
       this.persistTrial()
       const globals = appGlobals()
@@ -390,7 +427,7 @@ DataWidget(
       const { metrics, stats, trial } = this.state
       if (!metrics) return
       this.state.ticks += 1
-      const s = metrics.refresh({ display: this.state.inView })
+      const s = metrics.refresh({ display: this.visible() })
       const autoLap = stats.update({
         elapsed: s.elapsed,
         distance: s.distance,
@@ -413,7 +450,7 @@ DataWidget(
         now - this.state.lastConfigAttemptAt >= CONFIG_RETRY_SEC
       )
         this.fetchConfig()
-      if (this.state.inView) this.render()
+      if (this.visible()) this.render()
     },
 
     onLap(lap) {

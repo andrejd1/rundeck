@@ -678,3 +678,37 @@ test("out of view: no drawing, only the reads the stats need", async () => {
   assert.equal(valueAt(w, "r1l"), "150")
   assert.ok(r.pace > reads.pace)
 })
+
+test("screen off without always-on display: no drawing, fresh on wake", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg(),
+    sim: { screen: { status: 1, aod: false } },
+  })
+  w.run(30, { speed: 3.4 })
+  const before = JSON.stringify(w.snapshot())
+  const paceReads = globalThis.__sim.sportReads.pace
+  globalThis.__sim.setScreen(2) // raise-to-wake: screen goes dark
+  w.run(30, { speed: 3.4 })
+  assert.equal(JSON.stringify(w.snapshot()), before)
+  assert.equal(globalThis.__sim.sportReads.pace, paceReads)
+  // wrist raised: redrawn at once, without waiting for the next tick
+  globalThis.__sim.setScreen(1)
+  assert.notEqual(JSON.stringify(w.snapshot()), before)
+  assert.equal(globalThis.__sim.sportReads.pace, paceReads + 1)
+  assert.equal(w.textAt(SLOT_GEOMETRY.r3c.value), "1:00") // elapsed, fresh
+})
+
+test("screen off with always-on display: keeps drawing", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg(),
+    sim: { screen: { status: 1, aod: true } },
+  })
+  w.run(30, { speed: 3.4 })
+  const before = JSON.stringify(w.snapshot())
+  globalThis.__sim.setScreen(2)
+  w.run(30, { speed: 3.4 })
+  assert.notEqual(JSON.stringify(w.snapshot()), before)
+  assert.equal(w.textAt(SLOT_GEOMETRY.r3c.value), "1:00")
+})
