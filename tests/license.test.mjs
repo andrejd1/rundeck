@@ -40,10 +40,6 @@ test("activate: error mapping", async () => {
     "invalid_key",
   )
   assert.equal(
-    (await activateLicense(reply(403, {}), { key: "K" })).error,
-    "limit",
-  )
-  assert.equal(
     (await activateLicense(reply(500, {}), { key: "K" })).error,
     "server",
   )
@@ -96,4 +92,64 @@ test("deactivate reports success", async () => {
     await deactivateLicense(reply(204, null), { key: "K", activationId: "a" }),
     { ok: true },
   )
+})
+
+// Polar answers 403 on /activate both for "limit reached" and for keys whose
+// benefit has no activation limit ("does not require activation")
+const polar403 = (validateBody, validateStatus = 200) => {
+  const calls = []
+  const http = async (url, body) => {
+    calls.push({ url, body })
+    if (/activate$/.test(url))
+      return {
+        status: 403,
+        body: { detail: "License key does not require activation." },
+      }
+    return { status: validateStatus, body: validateBody }
+  }
+  return { http, calls }
+}
+
+test("activate: a key without activation limit unlocks via validate", async () => {
+  const { http, calls } = polar403({
+    status: "granted",
+    limit_activations: null,
+  })
+  const r = await activateLicense(http, { key: "k1" })
+  assert.deepEqual(r, { ok: true, activationId: null, status: "granted" })
+  assert.match(calls[1].url, /\/validate$/)
+  assert.equal(calls[1].body.key, "K1")
+  assert.equal("activation_id" in calls[1].body, false)
+})
+
+test("activate: limit reached stays refused", async () => {
+  const { http } = polar403({ status: "granted", limit_activations: 1 })
+  const r = await activateLicense(http, { key: "k1" })
+  assert.equal(r.ok, false)
+  assert.equal(r.error, "limit")
+})
+
+test("activate: 403 for a revoked or unknown key", async () => {
+  assert.equal(
+    (await activateLicense(polar403({ status: "revoked" }).http, { key: "k" }))
+      .error,
+    "revoked",
+  )
+  assert.equal(
+    (await activateLicense(polar403({}, 404).http, { key: "k" })).error,
+    "invalid_key",
+  )
+})
+
+test("validate without an activation id (no-limit keys)", async () => {
+  const calls = []
+  const r = await validateLicense(
+    async (url, body) => {
+      calls.push(body)
+      return { status: 200, body: { status: "granted" } }
+    },
+    { key: "K", activationId: null },
+  )
+  assert.equal(r.ok, true)
+  assert.equal("activation_id" in calls[0], false)
 })

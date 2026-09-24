@@ -58,6 +58,11 @@ function errorFor(status, body) {
  * Activate a key for one device. Returns
  * {ok:true, activationId, status} or {ok:false, error, message}
  * (error: invalid_key | limit | revoked | server | network).
+ *
+ * Polar refuses activation (403) both when the activation limit is reached
+ * and when the key has no activation limit at all ("does not require
+ * activation"). A validate call tells them apart: a granted key without a
+ * limit is unlocked as is (activationId null).
  */
 export async function activateLicense(
   http,
@@ -77,6 +82,7 @@ export async function activateLicense(
   }
   const body = parseBody(resp && resp.body)
   const status = resp && (resp.status || resp.statusCode)
+  if (status === 403) return activationRefused(http, { key: k, orgId, api })
   if (status !== 200 && status !== 201)
     return { ok: false, ...errorFor(status, body) }
   const lk = body && body.license_key
@@ -92,6 +98,23 @@ export async function activateLicense(
   return { ok: true, activationId: body.id, status: keyStatus || "granted" }
 }
 
+async function activationRefused(http, { key, orgId, api }) {
+  let resp
+  try {
+    resp = await http(`${api}/validate`, { key, organization_id: orgId })
+  } catch (e) {
+    return { ok: false, error: "network", message: "no connection, try again" }
+  }
+  const body = parseBody(resp && resp.body)
+  const status = resp && (resp.status || resp.statusCode)
+  if (status !== 200) return { ok: false, ...errorFor(status, body) }
+  if (body && body.status && body.status !== "granted")
+    return { ok: false, error: "revoked", message: `key is ${body.status}` }
+  if (body && body.limit_activations != null)
+    return { ok: false, ...errorFor(403, body) } // limit really reached
+  return { ok: true, activationId: null, status: "granted" }
+}
+
 /**
  * Validate an activated key. Returns {ok:true} while granted,
  * {ok:false, error} otherwise; error "network"/"server" means "unknown",
@@ -103,11 +126,10 @@ export async function validateLicense(
 ) {
   let resp
   try {
-    resp = await http(`${api}/validate`, {
-      key: normalizeKey(key),
-      organization_id: orgId,
-      activation_id: activationId,
-    })
+    const req = { key: normalizeKey(key), organization_id: orgId }
+    // keys without an activation limit are validated without an activation
+    if (activationId) req.activation_id = activationId
+    resp = await http(`${api}/validate`, req)
   } catch (e) {
     return { ok: false, error: "network", message: "no connection, try again" }
   }

@@ -2,6 +2,8 @@
 
 ## 0.2.0 — customizable screen
 
+- License keys without an activation limit (Polar refuses to activate them with 403) unlock via
+  validation instead of being reported as "already active on another watch".
 - License key: activated once even when the settings page saves it twice (a second activation
   in flight was refused by Polar and overwrote the unlock); a key that doesn't unlock shows why in
   red ("Key not activated: ...") until it changes, instead of the reason vanishing behind the trial

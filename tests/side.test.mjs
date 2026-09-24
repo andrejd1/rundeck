@@ -205,3 +205,24 @@ test("the settings page saving the key twice activates it once", async () => {
   assert.equal(JSON.parse(store.get("license_state")).licensed, true)
   assert.match(store.get("license_status_text"), /Unlocked/)
 })
+
+test("a key without activation limit unlocks, and clearing it locks", async () => {
+  store.clear()
+  const pushes = []
+  svc.call = (msg) => pushes.push(msg)
+  const calls = polar((url) =>
+    /activate$/.test(url)
+      ? {
+          status: 403,
+          body: { detail: "License key does not require activation." },
+        }
+      : { status: 200, body: { status: "granted", limit_activations: null } },
+  )
+  await svc.onSettingsChange({ key: "license_key", newValue: "9AC0-694B" })
+  assert.match(store.get("license_status_text"), /^Unlocked/)
+  assert.equal(JSON.parse(store.get("license_state")).activation_id, null)
+  assert.equal(pushes.at(-1).params.licensed, true)
+  await svc.onSettingsChange({ key: "license_key", newValue: "" })
+  assert.equal((await getConfig({})).licensed, false)
+  assert.equal(calls.filter((c) => /deactivate$/.test(c.url)).length, 0)
+})

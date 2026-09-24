@@ -209,12 +209,14 @@ AppSideService(
       const key = normalizeKey(value)
       const prev = readLicense()
       if (prev && prev.key === key && prev.licensed) return
-      if (prev && prev.activation_id && prev.key !== key) {
-        // key removed or replaced: free the old activation slot
-        await deactivateLicense(this.http.bind(this), {
-          key: prev.key,
-          activationId: prev.activation_id,
-        })
+      if (prev && prev.key !== key) {
+        // key removed or replaced: free the old activation slot (keys
+        // without an activation limit have none)
+        if (prev.activation_id)
+          await deactivateLicense(this.http.bind(this), {
+            key: prev.key,
+            activationId: prev.activation_id,
+          })
         writeLicense(null)
       }
       if (!key) {
