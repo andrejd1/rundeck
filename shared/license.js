@@ -38,13 +38,15 @@ function parseBody(body) {
 }
 
 function errorFor(status, body) {
-  if (status === 404) return { error: "invalid_key", message: "Unknown key" }
+  if (status === 404)
+    return { error: "invalid_key", message: "unknown key, check for typos" }
   if (status === 403)
     return {
       error: "limit",
-      message: "This key is already active on the maximum number of watches",
+      message:
+        "it is already active on another watch. Clear the key in RunDeck's settings for that watch first",
     }
-  if (status === 422) return { error: "invalid_key", message: "Invalid key" }
+  if (status === 422) return { error: "invalid_key", message: "invalid key" }
   const detail = body && (body.detail || body.error)
   return {
     error: "server",
@@ -71,7 +73,7 @@ export async function activateLicense(
       label: String(label || "RunDeck").slice(0, 60),
     })
   } catch (e) {
-    return { ok: false, error: "network", message: "No connection" }
+    return { ok: false, error: "network", message: "no connection, try again" }
   }
   const body = parseBody(resp && resp.body)
   const status = resp && (resp.status || resp.statusCode)
@@ -80,9 +82,13 @@ export async function activateLicense(
   const lk = body && body.license_key
   const keyStatus = lk && lk.status
   if (keyStatus && keyStatus !== "granted")
-    return { ok: false, error: "revoked", message: `Key is ${keyStatus}` }
+    return { ok: false, error: "revoked", message: `key is ${keyStatus}` }
   if (!body || !body.id)
-    return { ok: false, error: "server", message: "Unexpected Polar reply" }
+    return {
+      ok: false,
+      error: "server",
+      message: "unexpected reply from Polar",
+    }
   return { ok: true, activationId: body.id, status: keyStatus || "granted" }
 }
 
@@ -103,13 +109,13 @@ export async function validateLicense(
       activation_id: activationId,
     })
   } catch (e) {
-    return { ok: false, error: "network", message: "No connection" }
+    return { ok: false, error: "network", message: "no connection, try again" }
   }
   const body = parseBody(resp && resp.body)
   const status = resp && (resp.status || resp.statusCode)
   if (status !== 200) return { ok: false, ...errorFor(status, body) }
   if (body && body.status && body.status !== "granted")
-    return { ok: false, error: "revoked", message: `Key is ${body.status}` }
+    return { ok: false, error: "revoked", message: `key is ${body.status}` }
   return { ok: true }
 }
 

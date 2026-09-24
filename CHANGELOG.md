@@ -2,6 +2,11 @@
 
 ## 0.2.0 — customizable screen
 
+- License key: activated once even when the settings page saves it twice (a second activation
+  in flight was refused by Polar and overwrote the unlock); a key that doesn't unlock shows why in
+  red ("Key not activated: ...") until it changes, instead of the reason vanishing behind the trial
+  line.
+
 - Battery: while another data page is on screen, or the screen is off without the always-on
   display (raise to wake), RunDeck draws nothing and
   reads only what the lap/average stats need (time, distance, HR, power, altitude), so averages

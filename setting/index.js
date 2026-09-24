@@ -154,7 +154,9 @@ AppSettingsPage({
       help ? hint(help) : null,
     ]
     // free text: saved value shown above the input, input pre-filled too
-    const input = (title, key, placeholder, shown, help) => [
+    // `raw`: saved only through settingsKey, as typed (the license key: a
+    // second trimmed write would reach the phone service as a second change)
+    const input = (title, key, placeholder, shown, help, raw) => [
       label(
         title,
         get(key) ? `Saved: ${shown ? shown(get(key)) : get(key)}` : "Not set",
@@ -164,7 +166,7 @@ AppSettingsPage({
         placeholder,
         value: get(key),
         settingsKey: key,
-        onChange: (v) => put(key, String(v).trim()),
+        onChange: raw ? undefined : (v) => put(key, String(v).trim()),
         subStyle: {
           border: `1px solid ${C.line}`,
           borderRadius: "8px",
@@ -207,6 +209,8 @@ AppSettingsPage({
     const targetMetric = get("target_metric", "pace")
     const hrMethod = get("hr_zone_method", "device")
     const licensed = get("license_status_text").indexOf("Unlocked") === 0
+    const keyFailed =
+      get("license_status_text").indexOf("Key not activated") === 0
     const masked = (k) =>
       k.length > 8 ? `${k.slice(0, 4)}...${k.slice(-4)}` : k
 
@@ -320,7 +324,7 @@ AppSettingsPage({
     return View({ style: { padding: "12px", background: C.page } }, [
       card("RunDeck", [
         para(get("license_status_text", "Trial: 5 free runs"), {
-          color: licensed ? C.good : C.text,
+          color: licensed ? C.good : keyFailed ? C.accent : C.text,
           fontWeight: "bold",
         }),
         ...input(
@@ -329,6 +333,7 @@ AppSettingsPage({
           "Paste your key",
           masked,
           "From your purchase e-mail. Clear it to move RunDeck to another watch.",
+          true,
         ),
         licensed
           ? null
