@@ -55,7 +55,8 @@ function setItem(key, value) {
   }
 }
 
-// {key, activation_id, licensed, checked_at}
+// {key, activation_id, licensed, checked_at}, or for a key that didn't
+// unlock: {key, licensed: false, message}
 function readLicense() {
   try {
     const raw = getItem("license_state")
@@ -75,23 +76,34 @@ function trialUsed() {
   return Number.isFinite(n) && n > 0 ? n : 0
 }
 
-// Status line the settings page shows under the key field.
-function refreshStatusText(message) {
+// Status line the settings page shows above the key field. A saved key that
+// didn't unlock keeps its reason there until the key changes.
+function refreshStatusText() {
   const lic = readLicense()
-  let text
-  if (lic && lic.licensed) text = "Unlocked - thank you for supporting RunDeck!"
-  else {
-    const left = Math.max(0, TRIAL_RUNS - trialUsed())
-    text = left
-      ? `Trial: ${left} of ${TRIAL_RUNS} runs left`
-      : "Trial over - enter your key to unlock the full screen"
+  if (lic && lic.licensed) {
+    setItem(
+      "license_status_text",
+      "Unlocked - thank you for supporting RunDeck!",
+    )
+    return
   }
-  setItem("license_status_text", message ? `${message}. ${text}` : text)
+  const left = Math.max(0, TRIAL_RUNS - trialUsed())
+  const trial = left
+    ? `Trial: ${left} of ${TRIAL_RUNS} runs left`
+    : "Trial over - enter your key to unlock the full screen"
+  setItem(
+    "license_status_text",
+    lic && lic.key && lic.message
+      ? `Key not activated: ${lic.message}. ${trial}`
+      : trial,
+  )
 }
 
 AppSideService(
   BaseSideService({
-    onInit() {},
+    onInit() {
+      this.licenseQueue = Promise.resolve()
+    },
 
     onRun() {
       refreshStatusText()
@@ -128,7 +140,15 @@ AppSideService(
 
     async onSettingsChange({ key, newValue }) {
       if (key === "license_key") {
-        await this.onLicenseKeyChange(newValue)
+        // one key change at a time: the settings page can save the same key
+        // twice in a row, and a second activation in flight would be refused
+        // by Polar (activation limit) and overwrite the first one's unlock
+        const run = () => this.onLicenseKeyChange(newValue)
+        this.licenseQueue = (this.licenseQueue || Promise.resolve()).then(
+          run,
+          run,
+        )
+        await this.licenseQueue
         return
       }
       if (CONFIG_KEYS.indexOf(key) >= 0) this.push()
@@ -217,8 +237,8 @@ AppSideService(
         })
         refreshStatusText()
       } else {
-        writeLicense(null)
-        refreshStatusText(result.message)
+        writeLicense({ key, licensed: false, message: result.message })
+        refreshStatusText()
       }
       this.push()
     },
@@ -236,7 +256,8 @@ AppSideService(
         checked_at: result.ok || !licensed ? Date.now() : lic.checked_at,
       })
       if (!licensed) {
-        refreshStatusText(result.message)
+        writeLicense({ ...lic, licensed: false, message: result.message })
+        refreshStatusText()
         this.push()
       }
     },

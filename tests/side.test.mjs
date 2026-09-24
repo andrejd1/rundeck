@@ -73,8 +73,23 @@ test("a rejected key explains why and stays locked", async () => {
   svc.call = () => {}
   polar(() => ({ status: 403, body: {} }))
   await svc.onSettingsChange({ key: "license_key", newValue: "used-key" })
-  assert.equal(store.get("license_state"), "")
-  assert.match(store.get("license_status_text"), /maximum number of watches/)
+  const lic = JSON.parse(store.get("license_state"))
+  assert.equal(lic.licensed, false)
+  assert.match(
+    store.get("license_status_text"),
+    /^Key not activated: it is already active on another watch.*Trial: 5 of 5 runs left$/,
+  )
+  // the reason survives later status refreshes (a trial report from the watch)
+  svc.onCall({ method: MSG.TRIAL_REPORT, params: { trial_used: 1 } })
+  assert.match(store.get("license_status_text"), /^Key not activated: .*4 of 5/)
+  // the same key again is retried, not skipped
+  const calls = polar(() => ({
+    status: 200,
+    body: { id: "act_2", license_key: { status: "granted" } },
+  }))
+  await svc.onSettingsChange({ key: "license_key", newValue: "used-key" })
+  assert.equal(calls.length, 1)
+  assert.match(store.get("license_status_text"), /^Unlocked/)
 })
 
 test("clearing the key frees the activation", async () => {
@@ -156,4 +171,37 @@ test("watch layout edits are kept only when newer", () => {
   const saved = JSON.parse(store.get("layout_json"))
   assert.equal(saved.slots.r2c, "power")
   assert.equal(saved.updated_at, 200)
+})
+
+// Polar with an activation limit of 1: the first activation of a key wins,
+// every later one is refused with 403
+function polarLimit1() {
+  const active = new Set()
+  return polar(async (url, body) => {
+    await new Promise((r) => setTimeout(r, 5)) // network latency
+    if (/activate$/.test(url)) {
+      if (active.has(body.key)) return { status: 403, body: {} }
+      active.add(body.key)
+      return {
+        status: 200,
+        body: { id: `act_${active.size}`, license_key: { status: "granted" } },
+      }
+    }
+    return { status: 200, body: {} }
+  })
+}
+
+test("the settings page saving the key twice activates it once", async () => {
+  store.clear()
+  svc.call = () => {}
+  const calls = polarLimit1()
+  // TextInput writes the raw paste (settingsKey) and the trimmed value
+  // (onChange): two change events while the first activation is in flight
+  await Promise.all([
+    svc.onSettingsChange({ key: "license_key", newValue: "abcd-1234 \n" }),
+    svc.onSettingsChange({ key: "license_key", newValue: "abcd-1234" }),
+  ])
+  assert.equal(calls.filter((c) => /activate$/.test(c.url)).length, 1)
+  assert.equal(JSON.parse(store.get("license_state")).licensed, true)
+  assert.match(store.get("license_status_text"), /Unlocked/)
 })

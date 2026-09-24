@@ -22,3 +22,31 @@ export class Workout {
     return {}
   }
 }
+
+// Screen: status 1 on / 2 off and the AOD setting from __sim.screen; tests
+// flip it with __sim.setScreen(status), which fires the change callbacks.
+export class Screen {
+  constructor() {
+    const s = sim()
+    s.screen = s.screen || { status: 1, aod: false }
+    s.screenListeners = s.screenListeners || []
+    s.setScreen = (status) => {
+      s.screen.status = status
+      for (const cb of s.screenListeners.slice()) cb(status)
+    }
+  }
+  getStatus() {
+    return sim().screen.status
+  }
+  getAodMode() {
+    return sim().screen.aod
+  }
+  onChange(cb) {
+    sim().screenListeners.push(cb)
+  }
+  offChange(cb) {
+    const l = sim().screenListeners
+    const i = l.indexOf(cb)
+    if (i >= 0) l.splice(i, 1)
+  }
+}

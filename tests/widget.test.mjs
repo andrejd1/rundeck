@@ -596,12 +596,12 @@ test("a unit is shown only when it fits beside the full-size value", async () =>
     const right = box.value.x + box.value.w - (box.value.unitPad || 0)
     assert.ok(u.props.x + u.props.w - 4 <= right, `${id}: ${unit} overflows`)
   }
-  assert.ok(shown >= 3)
+  assert.ok(shown >= 2)
   // 1 km: "1.08 km" fits in the bottom row; 12'30 /km doesn't
   assert.equal(w.unitAt(UNIT_GEOMETRY.r5l.value), "km")
   assert.equal(w.unitAt(UNIT_GEOMETRY.r5r.value), null)
   assert.equal(w.unitAt(UNIT_GEOMETRY.r2r.value), null) // narrow side column
-  assert.equal(w.unitAt(UNIT_GEOMETRY.r3r.value), "m") // "22 m"
+  assert.equal(w.unitAt(UNIT_GEOMETRY.r3r.value), null) // ascent: no "m"
 })
 
 test("a unit that stopped fitting stays off (no flicker)", async () => {
@@ -630,7 +630,7 @@ test("units follow miles and can be switched off", async () => {
   })
   w.run(60, { speed: 3.4 })
   assert.equal(w.unitAt(SLOT_GEOMETRY.r5l.value), "mi")
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r5r.value), "ft")
+  assert.equal(w.unitAt(SLOT_GEOMETRY.r5r.value), null) // ascent: no "ft"
   const off = await bootWidget({
     licensed: true,
     config: cfg({
@@ -640,4 +640,75 @@ test("units follow miles and can be switched off", async () => {
   off.run(60, { speed: 3.4 })
   assert.equal(off.unitAt(SLOT_GEOMETRY.r5l.value), null)
   assert.equal(off.textAt(SLOT_GEOMETRY.r5l.value), "0.20")
+})
+
+test("out of view: no drawing, only the reads the stats need", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({
+        slots: { r1l: "avg_hr", r4l: "calories" },
+        updated_at: 5,
+      }),
+    }),
+  })
+  w.set({ sport: { ...globalThis.__sim.sport, calories: { calories: "8" } } })
+  w.run(60, { hr: 120 })
+  assert.equal(valueAt(w, "r1l"), "120")
+  const before = JSON.stringify(w.snapshot())
+  const reads = { ...globalThis.__sim.sportReads }
+  w.page.onPause()
+  w.run(60, { hr: 180 })
+  // nothing redrawn while another page is on screen
+  assert.equal(JSON.stringify(w.snapshot()), before)
+  const r = globalThis.__sim.sportReads
+  for (const type of [
+    "pace",
+    "cadence",
+    "avg_pace",
+    "calories",
+    "total_up_altitude",
+  ])
+    assert.equal(r[type] || 0, reads[type] || 0, `${type} read while hidden`)
+  // time and distance keep the lap/average stats running
+  assert.equal(r.duration - reads.duration, 60)
+  assert.equal(r.distance - reads.distance, 60)
+  w.page.onResume()
+  // the hidden minute at 180 bpm counts: (60 x 120 + 60 x 180) / 120
+  assert.equal(valueAt(w, "r1l"), "150")
+  assert.ok(r.pace > reads.pace)
+})
+
+test("screen off without always-on display: no drawing, fresh on wake", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg(),
+    sim: { screen: { status: 1, aod: false } },
+  })
+  w.run(30, { speed: 3.4 })
+  const before = JSON.stringify(w.snapshot())
+  const paceReads = globalThis.__sim.sportReads.pace
+  globalThis.__sim.setScreen(2) // raise-to-wake: screen goes dark
+  w.run(30, { speed: 3.4 })
+  assert.equal(JSON.stringify(w.snapshot()), before)
+  assert.equal(globalThis.__sim.sportReads.pace, paceReads)
+  // wrist raised: redrawn at once, without waiting for the next tick
+  globalThis.__sim.setScreen(1)
+  assert.notEqual(JSON.stringify(w.snapshot()), before)
+  assert.equal(globalThis.__sim.sportReads.pace, paceReads + 1)
+  assert.equal(w.textAt(SLOT_GEOMETRY.r3c.value), "1:00") // elapsed, fresh
+})
+
+test("screen off with always-on display: keeps drawing", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg(),
+    sim: { screen: { status: 1, aod: true } },
+  })
+  w.run(30, { speed: 3.4 })
+  const before = JSON.stringify(w.snapshot())
+  globalThis.__sim.setScreen(2)
+  w.run(30, { speed: 3.4 })
+  assert.notEqual(JSON.stringify(w.snapshot()), before)
+  assert.equal(w.textAt(SLOT_GEOMETRY.r3c.value), "1:00")
 })

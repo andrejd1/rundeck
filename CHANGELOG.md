@@ -2,11 +2,23 @@
 
 ## 0.2.0 — customizable screen
 
+- License key: activated once even when the settings page saves it twice (a second activation
+  in flight was refused by Polar and overwrote the unlock); a key that doesn't unlock shows why in
+  red ("Key not activated: ...") until it changes, instead of the reason vanishing behind the trial
+  line.
+
+- Battery: while another data page is on screen, or the screen is off without the always-on
+  display (raise to wake), RunDeck draws nothing and
+  reads only what the lap/average stats need (time, distance, HR, power, altitude), so averages
+  still include that time. Raising the wrist redraws at once. With the always-on display it keeps
+  drawing, as the screen may still show it.
+
 - Every round screen size: the HR graph, icons and bottom row scale correctly from 480 down to 360 px
   (icons ship in five pixel sizes, graph bars are placed from the scaled width, the bottom row sits
   clear of the bezel); tests render every layout style at 480, 466, 454, 416, 390 and 360 px.
 
-- Units after values (km/mi, /km or /mi, m/ft, W; none on heart rate, cadence, calories or speed), following the pace
+- Units after values (km/mi, /km or /mi, W; m/ft on altitude; none on heart rate, cadence, calories,
+  speed or ascent, as the watch-drawn descent can't carry one), following the pace
   unit; never shrink the value (a unit that doesn't fit beside it is left off, and stays off for
   the run); not on the big center numbers; can be hidden (phone and watch).
 

@@ -98,4 +98,7 @@ test("units: short ones and the pace suffix only", () => {
   assert.equal(fieldUnit("cadence", km), "")
   assert.equal(fieldUnit("calories", km), "")
   assert.equal(fieldUnit("speed", km), "")
+  assert.equal(fieldUnit("altitude", km), "m")
+  assert.equal(fieldUnit("altitude", mi), "ft")
+  assert.equal(fieldUnit("ascent", km), "") // matches the native descent
 })

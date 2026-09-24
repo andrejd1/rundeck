@@ -54,7 +54,8 @@ value itself, in its own units) over the slot and adds its own label. GAP, verti
 oscillation and ground contact time are not exposed by Zepp OS at all, so they can't be
 shown.
 
-**Units** (km/mi, m/ft, W and the pace suffix /km or /mi) are drawn small after the
+**Units** (km/mi, m/ft on altitude, W and the pace suffix /km or /mi; none on ascent,
+since the watch-drawn descent can't get one) are drawn small after the
 value, placed from the watch's own text measurement (`getTextLayout`, with a width
 estimate as fallback). A unit never costs the value any size: the value keeps the size
 it has with units hidden, and the unit is shown only if it fits beside it. Once a unit
