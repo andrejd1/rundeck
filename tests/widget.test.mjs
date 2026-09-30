@@ -637,7 +637,10 @@ test("every HR field names its zone, Z1 to Z5", async () => {
     }),
     sim: { hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] } },
   })
-  w.run(3, { hr: 83 }) // below zone 1 still reads Z1
+  w.run(3, { hr: 70 }) // below zone 1 (90): no zone to name
+  assert.equal(w.textAt(RG.r1[3].r1c.label), "HR")
+  assert.ok(!w.textAt(HEADER_SUFFIX))
+  w.run(3, { hr: 95 })
   assert.equal(w.textAt(RG.r1[3].r1c.label), "HR Z1")
   w.run(3, { hr: 150 })
   assert.equal(w.textAt(RG.r1[3].r1c.label), "HR Z4")

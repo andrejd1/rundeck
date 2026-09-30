@@ -39,6 +39,7 @@ test("the HR zone places the native heart rate in the zones", () => {
   const ctx = (hr) => ({ s: { hr }, hrZones: [100, 120, 140, 160, 180, 200] })
   assert.equal(fieldValue("hr_zone", ctx(150)), "Z3")
   assert.equal(fieldValue("hr_zone", ctx(null)), "--")
+  assert.equal(fieldValue("hr_zone", ctx(70)), "--") // below zone 1
   assert.equal(fieldValue("bogus", ctx(150)), "")
 })
 
