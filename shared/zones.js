@@ -101,13 +101,13 @@ export function zonePosition(value, bounds) {
 }
 
 /**
- * Heart rate zone 1-5 for display, null without a reading. Below zone 1
- * (warming up, standing) still reads Z1: the screen always names a zone.
+ * Heart rate zone 1-5 for display; null without a reading or below zone 1
+ * (warming up, standing), where there is no zone to name.
  */
 export function hrZoneOf(hr, bounds) {
   if (!(hr > 0)) return null
   const p = zonePosition(hr, bounds)
-  return p ? Math.max(1, p.zone) : null
+  return p && p.zone >= 1 ? p.zone : null
 }
 
 export function zoneColor(zone) {

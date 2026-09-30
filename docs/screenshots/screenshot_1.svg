@@ -73,7 +73,7 @@
     
     
     
-    <text x="330" y="90.8" text-anchor="start" font-size="28" fill="#3b82f6" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Z1</text>
+    
     <rect x="26" y="258" width="83" height="14" rx="7" fill="#3b82f6"/>
     <rect x="112" y="258" width="83" height="14" rx="7" fill="#14b8a6"/>
     <rect x="198" y="258" width="83" height="14" rx="7" fill="#22c55e"/>

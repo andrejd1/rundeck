@@ -34,7 +34,7 @@
 - Watch-drawn values get room past their estimated width, so short values like lap
   distance no longer crop or scroll round.
 - Every HR field names its zone in the label ("HR Z3", zone-colored), not only a top-row
-  one; below zone 1 reads Z1, so the screen always shows Z1-Z5. The HR zone field and the
+  one; below zone 1 no zone is shown (plain "HR", no suffix). The HR zone field and the
   top-row suffix follow the same rule.
 
 ## 0.2.0 — customizable screen
