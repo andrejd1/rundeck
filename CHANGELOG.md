@@ -22,6 +22,13 @@
   missed screen-on event no longer leaves the screen frozen. With the always-on display it
   keeps drawing. Only HR, the trial clock, and pace/power when a target or the zone bar
   uses them are read.
+- 23 more watch values from the SDK's sport_data types: avg/lap % max HR; avg, lap and
+  last-lap speed; max and last-lap power, 3/10/30 s power, W/kg, work; average lap time;
+  last-lap distance; lap and average grade; last-lap ascent/descent; min altitude; lap and
+  last-lap cadence; lap stride length; sunrise. Plus VO2 max from the watch's user status.
+- The watch's own HR zones: app.json now targets API 4.2, where
+  Workout.getUserHrZoneSettings lives (3.6 stays the minimum; older watches still fall back
+  to 220 - age).
 
 - Every round screen size: the HR graph, icons and bottom row scale correctly from 480 down to 360 px
   (icons ship in five pixel sizes, graph bars are placed from the scaled width, the bottom row sits

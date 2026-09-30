@@ -44,19 +44,32 @@ The screen is a top row plus five rows and the zone bar. Each row has a **column
 (top row: 1–2, rows 1 and 4: 2–3, the big-number rows 2 and 3: 1–3, bottom row: 1–2; the
 limits keep text readable on the round screen). HR as the single top value gets the
 watch's HR chart and a zone suffix; in a two-column top row the zone moves into its label
-("HR Z3", zone-colored). Any of 43 fields can go in any spot — HR, HR zone,
-avg/lap/last-lap HR, pace, avg/lap/last-lap pace, speed, power, avg/lap power, workout
-time, lap/last-lap time, clock, distance, lap distance, lap number, grade, ascent,
-altitude, cadence, avg cadence, calories, descent, lap ascent/descent, max altitude,
-vertical speed, max speed, stride length (current/avg), steps, % max HR, % HR reserve,
-aerobic/anaerobic training effect, training load, temperature, sunset, or empty.
+("HR Z3", zone-colored). Any of 66 fields can go in any spot:
+
+- **Heart rate:** HR, HR zone, avg / lap / last-lap HR, % max HR (current / avg / lap),
+  % HR reserve
+- **Pace and speed:** pace, avg / lap / last-lap pace, speed, avg / lap / last-lap / max speed
+- **Power** (paired power meter): power, avg / lap / last-lap / max power, 3 s / 10 s /
+  30 s average, W/kg, work (kJ)
+- **Time:** workout time, lap / last-lap / average lap time, clock, sunrise, sunset
+- **Distance and terrain:** distance, lap / last-lap distance, lap number, grade (current /
+  lap / avg), ascent, descent, lap / last-lap ascent and descent, altitude (current / max /
+  min), vertical speed
+- **Running form:** cadence (current / avg / lap / last lap), stride length (current / avg /
+  lap), steps
+- **Body:** calories, aerobic / anaerobic training effect, training load, VO2 max,
+  temperature, or empty
 
 Each value is a `SPORT_DATA` widget the watch draws in its own format, sized for the
 field's widest typical value (`sample` in `shared/fields.js`) and placed by the slot's
 alignment; RunDeck adds the label. Lap values follow the watch's own laps and its
-auto-lap setting. There is no max HR field (the watch offers none to extensions), and GAP,
-vertical oscillation and ground contact time are not exposed by Zepp OS at all. Units
-are the watch's to draw, so RunDeck adds none.
+auto-lap setting. VO2 max is the value the watch keeps for the user
+(`Workout.getStatus`, read once when the screen opens). The SDK's `sport_data` types were
+the source for the catalog; left out are the ones for other sports (swim, ski, golf,
+rowing, diving), the other charts (pace, altitude, cadence), barometric pressure and
+min/max temperature. There is no max HR value for extensions, and GAP, vertical
+oscillation and ground contact time are not exposed by Zepp OS at all. Units are the
+watch's to draw, so RunDeck adds none.
 
 **Field names** can be full text, short text ("LapHR") or **icons** with a qualifier
 ("♥ Avg"); icons live in `assets/common.r/icons/<size>` in 16, 18, 20, 23 and 26 px, since the watch
@@ -83,7 +96,8 @@ sensor only exposes status, history, HR zone settings and route navigation), so 
 cannot follow workout steps.
 
 **HR zones** default to **the watch's own zones** (`Workout.getUserHrZoneSettings`, Zepp OS
-4.2+). Older firmware falls back to 220 − age from the Zepp profile (`data:user.info`), then
+4.2+; `app.json` targets API 4.2 so the call is available, while 3.6 stays the minimum to
+install). Older firmware falls back to 220 − age from the Zepp profile (`data:user.info`), then
 max HR 190. Max HR %, threshold HR (Friel) or custom bounds can be picked instead.
 
 **Laps** are the watch's: the lap key and auto-lap (set on the watch) work as in any native

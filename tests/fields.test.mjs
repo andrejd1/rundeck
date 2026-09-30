@@ -12,17 +12,19 @@ import {
   SLOT_IDS,
 } from "../shared/fields.js"
 
-test("every field is the watch's own value, except the HR zone", () => {
+test("every field is the watch's own value, except HR zone and VO2 max", () => {
+  assert.deepEqual(Object.keys(FIELDS).sort(), [...FIELD_IDS].sort())
   for (const id of FIELD_IDS) {
     const f = FIELDS[id]
     assert.ok(FIELD_NAMES[id], `name for ${id}`)
-    assert.ok(f.label.length <= 9, `short label for ${id}`)
+    assert.ok(f.label.length <= 9, `label for ${id}`)
+    assert.ok(f.short.length <= 5, `short label for ${id}`)
     if (id === "none") continue
-    if (id === "hr_zone") {
+    if (id === "hr_zone" || id === "vo2max") {
       assert.equal(f.native, undefined)
       continue
     }
-    assert.match(f.native, /^[A-Z_]+$/, id)
+    assert.match(f.native, /^[A-Z0-9_]+$/, id)
     assert.ok(f.sample, `sample for ${id}`)
     assert.equal(f.value, undefined, `${id} is drawn by the watch`)
     assert.equal(fieldValue(id, {}), "")
@@ -37,6 +39,11 @@ test("the HR zone places the native heart rate in the zones", () => {
   assert.equal(fieldValue("hr_zone", ctx(150)), "Z3")
   assert.equal(fieldValue("hr_zone", ctx(null)), "--")
   assert.equal(fieldValue("bogus", ctx(150)), "")
+})
+
+test("VO2 max is the watch's user status value", () => {
+  assert.equal(fieldValue("vo2max", { vo2max: 52.4 }), "52")
+  assert.equal(fieldValue("vo2max", { vo2max: null }), "--")
 })
 
 test("default layout fills every slot", () => {

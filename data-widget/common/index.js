@@ -70,7 +70,7 @@ import {
   zoneColor,
   zonePosition,
 } from "../../shared/zones.js"
-import { resolveHrZones } from "./hr-zones.js"
+import { readVo2Max, resolveHrZones } from "./hr-zones.js"
 import { LiveMetrics } from "./metrics.js"
 
 const TICK_MS = 1000
@@ -144,6 +144,7 @@ DataWidget(
         loadObject(LAYOUT_KEY),
       )
       this.state.hrZones = resolveHrZones(this.state.config)
+      this.state.vo2max = readVo2Max()
       const lic = loadObject(LICENSE_KEY)
       this.state.licensed = !!(lic && lic.licensed)
       this.state.trial = new TrialSession(
@@ -711,7 +712,7 @@ DataWidget(
       if (!ui.slots || !metrics) return
       const s = metrics.snapshot
       const locked = mode === "locked"
-      const ctx = { s, hrZones: this.state.hrZones }
+      const ctx = { s, hrZones: this.state.hrZones, vo2max: this.state.vo2max }
 
       // target: colors every slot that shows the target's live metric
       const t = cfg.target

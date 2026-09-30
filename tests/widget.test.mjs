@@ -543,3 +543,31 @@ test("only what colors the screen is read: pace and power on demand", async () =
   paced.run(5)
   assert.ok(globalThis.__sim.sportReads.pace > 0)
 })
+
+test("VO2 max comes from the watch's user status", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({ slots: { r4r: "vo2max" }, updated_at: 2 }),
+    }),
+    sim: { workoutStatus: { vo2Max: 53.2 } },
+  })
+  w.run(2)
+  assert.equal(w.textAt(SLOT_GEOMETRY.r4r.value), "53")
+  assert.equal(w.typeAt(SLOT_GEOMETRY.r4r.value), null)
+})
+
+test("new native fields reach their slot", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({
+        slots: { r4l: "power_3s", r4r: "last_lap_distance" },
+        updated_at: 2,
+      }),
+    }),
+  })
+  w.run(2)
+  assert.equal(w.typeAt(SLOT_GEOMETRY.r4l.value), "DEVICE_3S_AVG_POWER")
+  assert.equal(w.typeAt(SLOT_GEOMETRY.r4r.value), "DISTANCE_PREV_SECTION")
+})

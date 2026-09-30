@@ -21,7 +21,7 @@
   "runtime": {
     "apiVersion": {
       "compatible": "3.6",
-      "target": "3.6",
+      "target": "4.2",
       "minVersion": "3.6"
     }
   },
