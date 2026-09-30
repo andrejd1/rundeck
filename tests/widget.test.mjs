@@ -410,7 +410,13 @@ test("native values sit by their box's alignment", async () => {
   const box = SLOT_GEOMETRY.r1r.value // right-aligned beside its label
   const n = w.nativeAt(box)
   assert.equal(n.props.x + n.props.w, box.x + box.w)
-  assert.ok(n.props.w < box.w)
+  // every value keeps inside its slot, with room past its sample's width
+  for (const [id, g] of Object.entries(SLOT_GEOMETRY)) {
+    const d = w.nativeAt(g.value)
+    assert.ok(d, id)
+    assert.ok(d.props.x >= g.value.x, id)
+    assert.ok(d.props.x + d.props.w <= g.value.x + g.value.w, id)
+  }
   const left = w.nativeAt(SLOT_GEOMETRY.r1l.value)
   assert.equal(left.props.x, SLOT_GEOMETRY.r1l.value.x)
 })
@@ -599,4 +605,41 @@ test("a type the firmware doesn't know is never handed to the watch", async () =
       .filter((x) => x.type === "SPORT_DATA")
       .every((x) => x.props.default_type != null),
   )
+})
+
+test("workout time is sized like lap time until the hour digit appears", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({
+        cols: { header: 2 },
+        slots: { headerl: "lap_time", headerr: "elapsed" },
+        updated_at: 2,
+      }),
+    }),
+  })
+  w.run(3)
+  const size = (id) => w.nativeAt(RG.header[2][id].value).props.text_size
+  assert.equal(size("headerr"), size("headerl"))
+  w.run(3600)
+  assert.ok(size("headerr") < size("headerl"))
+})
+
+test("every HR field names its zone, Z1 to Z5", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({
+        cols: { r1: 3 },
+        slots: { r1c: "hr" },
+        updated_at: 2,
+      }),
+    }),
+    sim: { hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] } },
+  })
+  w.run(3, { hr: 83 }) // below zone 1 still reads Z1
+  assert.equal(w.textAt(RG.r1[3].r1c.label), "HR Z1")
+  w.run(3, { hr: 150 })
+  assert.equal(w.textAt(RG.r1[3].r1c.label), "HR Z4")
+  assert.equal(w.textAt(HEADER_SUFFIX), "Z4")
 })

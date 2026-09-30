@@ -114,7 +114,7 @@ function renderWidget(w) {
           .join(" ")
         return `<polyline points="${pts}" fill="none" stroke="#ef4444" stroke-width="3"/>`
       }
-      const sample = nativeText(p.default_type)
+      const sample = p.preview || nativeText(p.default_type)
       const size = p.text_size || 30
       return `<text x="${p.x + p.w / 2}" y="${p.y + p.h / 2 + size * 0.35}" text-anchor="middle" font-size="${size}" fill="${hex(p.text_color)}" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">${esc(sample)}</text>`
     }

@@ -1,11 +1,6 @@
 # Changelog
 
-## 0.2.0 — customizable screen
-
-- License key: activated once even when the settings page saves it twice (a second activation
-  in flight was refused by Polar and overwrote the unlock); a key that doesn't unlock shows why in
-  red ("Key not activated: ...") until it changes, instead of the reason vanishing behind the trial
-  line.
+## 0.3.0 — the watch's own numbers
 
 - Every value is the watch's own. Each slot's number is a SPORT_DATA widget the watch draws
   and updates itself, so the screen matches the native workout and the saved activity
@@ -34,6 +29,20 @@
 - Crash guards: watch-drawn values are no longer deleted and recreated each time the page
   comes back into view, a type the firmware doesn't know is never handed to the watch, and
   VO2 max is read only when a slot shows it.
+- Workout time is sized like the lap time next to it; it only gets smaller once it passes an
+  hour and needs the extra digit.
+- Watch-drawn values get room past their estimated width, so short values like lap
+  distance no longer crop or scroll round.
+- Every HR field names its zone in the label ("HR Z3", zone-colored), not only a top-row
+  one; below zone 1 reads Z1, so the screen always shows Z1-Z5. The HR zone field and the
+  top-row suffix follow the same rule.
+
+## 0.2.0 — customizable screen
+
+- License key: activated once even when the settings page saves it twice (a second activation
+  in flight was refused by Polar and overwrote the unlock); a key that doesn't unlock shows why in
+  red ("Key not activated: ...") until it changes, instead of the reason vanishing behind the trial
+  line.
 
 - Every round screen size: the HR graph, icons and bottom row scale correctly from 480 down to 360 px
   (icons ship in five pixel sizes, graph bars are placed from the scaled width, the bottom row sits

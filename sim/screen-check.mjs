@@ -41,7 +41,7 @@ export function extent(w) {
   if (w.type === "SPORT_DATA") {
     if (p.default_type === "CHART_HR")
       return { x0: p.x, x1: p.x + p.w, y0: p.y, y1: p.y + p.h }
-    const text = nativeText(p.default_type)
+    const text = p.preview || nativeText(p.default_type)
     return extent({
       type: "TEXT",
       props: { ...p, text, align_h: "center_h", align_v: "center_v" },

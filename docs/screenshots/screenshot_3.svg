@@ -83,7 +83,7 @@
     <rect x="163" y="250" width="8" height="30" rx="4" fill="#ffffff"/>
     
     
-    <text x="240.5" y="100.6" text-anchor="middle" font-size="56" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
+    <text x="240.5" y="100.6" text-anchor="middle" font-size="56" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">132</text>
     <text x="104.5" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">161</text>
     <text x="240" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">84%</text>
     <text x="376.5" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
@@ -91,13 +91,13 @@
     <text x="240" y="229.4" text-anchor="middle" font-size="64" fill="#2ee66b" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">5'38"</text>
     <text x="399" y="225.3" text-anchor="middle" font-size="38" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">4'49"</text>
     <text x="81" y="339.9" text-anchor="middle" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">04:21</text>
-    <text x="240" y="333.1" text-anchor="middle" font-size="46" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">1:52:13</text>
+    <text x="240" y="338" text-anchor="middle" font-size="60" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">25:00</text>
     <text x="399" y="339.9" text-anchor="middle" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
     <text x="116" y="403.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">0.34</text>
-    <text x="240" y="403.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">19</text>
+    <text x="240.5" y="403.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">19</text>
     <text x="364" y="403.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">-3%</text>
-    <text x="188.5" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">18.34</text>
-    <text x="292" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">115</text>
+    <text x="188" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">18.34</text>
+    <text x="292.5" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">115</text>
   </g>
   <circle cx="240" cy="240" r="238" fill="none" stroke="#333" stroke-width="3"/>
 </svg>

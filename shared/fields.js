@@ -5,7 +5,7 @@
 // Platform-free: the one RunDeck-drawn value (HR zone) takes a context
 // built by the data widget ({s: live snapshot, hrZones}).
 
-import { zonePosition } from "./zones.js"
+import { hrZoneOf } from "./zones.js"
 
 export const LAYOUT_VERSION = 1
 
@@ -106,8 +106,8 @@ export const FIELDS = {
     group: "hr",
     sample: "Z0",
     value: (c) => {
-      const p = zonePosition(c.s.hr, c.hrZones)
-      return p && p.zone > 0 ? `Z${p.zone}` : "--"
+      const z = hrZoneOf(c.s.hr, c.hrZones)
+      return z ? `Z${z}` : "--"
     },
   },
   hr: {
@@ -225,7 +225,9 @@ export const FIELDS = {
     label: "Time",
     group: "time",
     native: "DURATION_NET",
-    sample: "0:00:00",
+    // the hour digit appears only after an hour: sized like the lap time
+    // until then, smaller only once the longer value needs the room
+    sample: (s) => (s && s.elapsed >= 3600 ? "0:00:00" : "00:00"),
   },
   lap_time: {
     short: "LapT",
