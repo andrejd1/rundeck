@@ -7,19 +7,21 @@
   red ("Key not activated: ...") until it changes, instead of the reason vanishing behind the trial
   line.
 
+- Every value is the watch's own. Each slot's number is a SPORT_DATA widget the watch draws
+  and updates itself, so the screen matches the native workout and the saved activity
+  exactly (distance, lap pace, lap distance, averages) and keeps updating while RunDeck's
+  code is suspended (screen off, another data page). RunDeck computes nothing any more: its
+  own laps, averages, max HR, grade and HR history are gone. Lap fields follow the watch's
+  laps and auto-lap setting; the lap key is left entirely to the watch. The HR graph is the
+  watch's HR chart. New fields: last-lap HR and last-lap time; "Lap count" is now the
+  watch's lap number. Max HR is dropped (the watch offers no such value to extensions).
+- The watch draws values in its own format, so RunDeck no longer adds units after them; the
+  units and auto-lap settings are gone. Target colors apply to the watch-drawn value.
 - Battery: while another data page is on screen, or the screen is off without the always-on
-  display (raise to wake), RunDeck draws nothing but keeps reading every value, so nothing is
-  stale when it is back. Raising the wrist redraws at once, reading the slow channels (average
-  pace, ascent) right away too; a missed screen-on event no longer leaves the screen frozen. With
-  the always-on display it keeps drawing, as the screen may still show it.
-
-- Auto-laps after the watch suspended the page: when the distance jumped past several lap marks
-  at once, each catch-up lap closed in 1 s (a "Lap 18  0'01  00:01" notice) and the lap pace read
-  nonsense until the next lap. Every crossed lap now closes at its own distance with the time
-  interpolated across the gap.
-
-- Lap notice: the row it covers hides its dividers and native values (steps, stride, ...) too;
-  the watch drew those through the notice.
+  display (raise to wake), RunDeck draws nothing; raising the wrist redraws at once, and a
+  missed screen-on event no longer leaves the screen frozen. With the always-on display it
+  keeps drawing. Only HR, the trial clock, and pace/power when a target or the zone bar
+  uses them are read.
 
 - Every round screen size: the HR graph, icons and bottom row scale correctly from 480 down to 360 px
   (icons ship in five pixel sizes, graph bars are placed from the scaled width, the bottom row sits

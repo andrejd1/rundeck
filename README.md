@@ -1,12 +1,15 @@
 # RunDeck — one-screen running dashboard for Amazfit (Zepp OS)
 
 A **Zepp OS Workout Extension** that pins a dense, glanceable data screen inside the native
-Amazfit running workout: HR with a live zone-colored history graph, lap vs average HR and
+Amazfit running workout: HR with the watch's HR chart, lap vs average HR and
 pace around a big center pace (or power), a five-zone bar, elapsed time, cadence, lap
 distance, grade, distance and total ascent — all on one page.
 
-The native workout keeps GPS, recording, laps and the activity file; RunDeck only reads
-native data and renders it.
+The native workout keeps GPS, recording, laps and the activity file. **Every number on the
+screen is the watch's own**: each value is a `SPORT_DATA` widget the watch draws and updates
+itself, so it always matches the native workout and the saved activity, and keeps updating
+while RunDeck's code is suspended (screen off, another data page). RunDeck computes nothing;
+it lays out the labels and colors the screen.
 
 ![RunDeck screens](docs/ui-preview.png)
 
@@ -17,52 +20,43 @@ regenerates them).
 ## The screen
 
 ```
-        [HR graph, last 6 min]  106 Z1
+        [watch HR chart]  106 Z1
       Lap HR 105   │   117 Avg HR
  Lap Pace        5'38         Avg Pace       <- center: pace or power, colored vs target
    4'52                         4'42
  ▬▬▬▬▬▬▬▮▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬           <- zone bar: HR, pace or power zones
  Lap Time        33:34        Cadence
    00:43                         178
-      Lap Dist 0.14  │  -3% Grade           <- also where lap / trial notices flash
+      Lap Dist 0.14  │  -3% Grade           <- also where the trial notice shows
         Distance 7.14   Ascent 115
 ```
 
-| Field | Source |
+| What | Source |
 |---|---|
-| HR | HeartRate sensor (`data:user.hd.heart_rate`) |
-| Pace, distance, elapsed, cadence, avg pace, total ascent, altitude | native `getSportData` (`pace`, `distance`, `duration`, `cadence`, `avg_pace`, `total_up_altitude`, `altitude`) |
-| Power | `getSportData("power")` — **not in the documented types**, probed only when power is shown |
-| Lap HR / pace / time / distance, avg HR, HR graph, grade | computed in `shared/stats.js` from the native samples, driven by the native elapsed clock (a paused workout accumulates nothing) |
+| Every value in a slot, the HR chart | drawn by the watch: `SPORT_DATA` widgets (`@zos/ui` `sport_data` types, e.g. `PACE_CUR_AVG` lap pace, `DISTANCE_TOTAL`, `DURATION_NET`) |
+| HR zone (field, top-row suffix), zone bar marker | HeartRate sensor (`data:user.hd.heart_rate`) placed in the HR zones |
+| Target colors, pace/power zone bar marker | native `getSportData` (`pace`; `power` — **not in the documented types**, probed only when a target or the bar uses it) |
+| Trial run counting | native `getSportData("duration")` |
 
 ### Customizing the screen
 
 The screen is a top row plus five rows and the zone bar. Each row has a **column count**
 (top row: 1–2, rows 1 and 4: 2–3, the big-number rows 2 and 3: 1–3, bottom row: 1–2; the
 limits keep text readable on the round screen). HR as the single top value gets the
-6-minute graph and a zone suffix; in a two-column top row the zone moves into its label
-("HR Z3", zone-colored). Any of 41 fields can go in any spot — HR, HR zone,
-avg/lap/max HR, pace, avg/lap/last-lap pace, speed, power, avg/lap power, workout time, lap
-time, clock, distance, lap distance, lap count, grade, ascent, altitude, cadence, avg
-cadence, calories, or empty. Text shrinks to fit its spot.
+watch's HR chart and a zone suffix; in a two-column top row the zone moves into its label
+("HR Z3", zone-colored). Any of 43 fields can go in any spot — HR, HR zone,
+avg/lap/last-lap HR, pace, avg/lap/last-lap pace, speed, power, avg/lap power, workout
+time, lap/last-lap time, clock, distance, lap distance, lap number, grade, ascent,
+altitude, cadence, avg cadence, calories, descent, lap ascent/descent, max altitude,
+vertical speed, max speed, stride length (current/avg), steps, % max HR, % HR reserve,
+aerobic/anaerobic training effect, training load, temperature, sunset, or empty.
 
-**Native-only fields** — descent, lap ascent/descent, max altitude, vertical speed, max
-speed, stride length (current/avg), steps, % max HR, % HR reserve, aerobic/anaerobic
-training effect, training load, temperature, sunset — are values the watch computes but
-does not hand to extensions. RunDeck places a `SPORT_DATA` widget (the watch draws the
-value itself, in its own units) over the slot and adds its own label. GAP, vertical
-oscillation and ground contact time are not exposed by Zepp OS at all, so they can't be
-shown.
-
-**Units** (km/mi, m/ft on altitude, W and the pace suffix /km or /mi; none on ascent,
-since the watch-drawn descent can't get one) are drawn small after the
-value, placed from the watch's own text measurement (`getTextLayout`, with a width
-estimate as fallback). A unit never costs the value any size: the value keeps the size
-it has with units hidden, and the unit is shown only if it fits beside it. Once a unit
-doesn't fit in a slot (say at 10.00 km) it stays off until the layout changes, so it
-doesn't flicker as the value's width changes. The big center numbers of three-column
-rows and the single top HR (which shows its zone) stay unit-free; units can be hidden
-in the phone settings or on the watch.
+Each value is a `SPORT_DATA` widget the watch draws in its own format, sized for the
+field's widest typical value (`sample` in `shared/fields.js`) and placed by the slot's
+alignment; RunDeck adds the label. Lap values follow the watch's own laps and its
+auto-lap setting. There is no max HR field (the watch offers none to extensions), and GAP,
+vertical oscillation and ground contact time are not exposed by Zepp OS at all. Units
+are the watch's to draw, so RunDeck adds none.
 
 **Field names** can be full text, short text ("LapHR") or **icons** with a qualifier
 ("♥ Avg"); icons live in `assets/common.r/icons/<size>` in 16, 18, 20, 23 and 26 px, since the watch
@@ -74,13 +68,11 @@ Two places to edit, one layout:
 - **Watch:** open RunDeck from the watch's app list → tap a slot → tap a field.
 
 Both write the same layout with an `updated_at` stamp; the newer copy wins in both
-directions (watch edits reach the phone on the next sync, `LAYOUT_UPDATE`). Only the native
-channels the layout shows are polled (calories, average cadence and power are skipped when
-nothing displays them).
+directions (watch edits reach the phone on the next sync, `LAYOUT_UPDATE`).
 
-Other settings: pace unit, auto-lap (1 km|mi or off), a **pace, power or heart rate
+Other settings: pace unit (for the target and zones), a **pace, power or heart rate
 target** entered as From / To (one end alone = a single value ± tolerance; each metric
-keeps its own range; every slot showing that live value turns green/blue/red), HR zones,
+keeps its own range; every slot showing that live value is drawn green/blue/red), HR zones,
 threshold pace and FTP.
 
 **Zone bar:** *Auto* (default) follows the target — power zones from FTP / critical power
@@ -94,9 +86,8 @@ cannot follow workout steps.
 4.2+). Older firmware falls back to 220 − age from the Zepp profile (`data:user.info`), then
 max HR 190. Max HR %, threshold HR (Friel) or custom bounds can be picked instead.
 
-**Laps:** the lap key closes a RunDeck lap *and* the native lap. Native auto-laps are not
-visible to extensions, so RunDeck runs its own auto-lap — set the watch's auto-lap to the
-same distance (or off) to keep both in step.
+**Laps** are the watch's: the lap key and auto-lap (set on the watch) work as in any native
+workout, and the lap fields show the native lap values.
 
 ## Trial and license
 
@@ -143,16 +134,16 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 
 | Path | What |
 |---|---|
-| `data-widget/common/index.js` | the screen: tick loop, rendering, lap key, trial/license gating |
+| `data-widget/common/index.js` | the screen: native value widgets, labels, zone bar and target colors, trial/license gating |
 | `data-widget/common/index.r.layout.js` | round layout, designed at 480 px and px()-scaled to every round screen |
-| `data-widget/common/metrics.js` | native data reader with battery-aware polling |
+| `data-widget/common/metrics.js` | reads the few native values RunDeck colors by (HR, pace, power) and the trial clock |
 | `data-widget/common/hr-zones.js` | watch HR zones → age → default fallback chain |
 | `page/index.js` | on-watch layout editor (app list entry) |
 | `shared/fields.js` | field catalog, slots, layout model and merge rule |
 | `app.js` | receives phone pushes (config/license) for the whole mini program |
 | `app-side/index.js` | phone side service: config build, Polar activation, trial mirror |
 | `setting/index.js` | Zepp app settings page |
-| `shared/` | platform-free logic (stats, zones, target, trial, license, config, format) |
+| `shared/` | platform-free logic (fields, zones, target, trial, license, config) |
 | `sim/`, `tests/` | headless Zepp OS stubs, preview renderer, Node tests |
 
 ## Develop

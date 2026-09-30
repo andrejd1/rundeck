@@ -53,7 +53,6 @@ test("defaults with empty settings", () => {
   const cfg = buildConfig(settings({}))
   assert.equal(cfg.hr_zone_source, "device")
   assert.equal(cfg.hr_zones, null)
-  assert.equal(cfg.auto_lap_m, 1000)
   assert.equal(cfg.target, null)
   assert.deepEqual(cfg.layout, DEFAULT_CONFIG.layout)
 })
@@ -70,7 +69,7 @@ test("pace/power zones need thresholds", () => {
   assert.ok(buildConfig(settings({ threshold_pace: "4:30" })).pace_zones)
 })
 
-test("target metric is chosen explicitly; miles auto-lap per mile", () => {
+test("target metric is chosen explicitly", () => {
   const cfg = buildConfig(
     settings({
       target_metric: "power",
@@ -79,8 +78,6 @@ test("target metric is chosen explicitly; miles auto-lap per mile", () => {
     }),
   )
   assert.deepEqual(cfg.target, { metric: "power", min: 250, max: 270 })
-  assert.equal(cfg.auto_lap_m, 1609.344)
-  assert.equal(buildConfig(settings({ auto_lap: "0" })).auto_lap_m, 0)
   assert.equal(
     buildConfig(settings({ target_range: "4:40-4:50" })).target.metric,
     "pace",
@@ -109,7 +106,10 @@ test("layout comes from layout_json, junk falls back to defaults", () => {
 
 test("watch rejects configs of another version", () => {
   assert.deepEqual(normalizeConfig({ v: 1, primary: "power" }), DEFAULT_CONFIG)
-  assert.equal(normalizeConfig({ v: 2, auto_lap_m: 0 }).auto_lap_m, 0)
+  assert.equal(
+    normalizeConfig({ v: 2, pace_unit: "min_per_mile" }).pace_unit,
+    "min_per_mile",
+  )
 })
 
 test("target From / To fields per metric, one-sided value, legacy field", () => {

@@ -114,6 +114,23 @@ export async function bootWidget({
       )
       return inside ? inside.props.text : null
     },
+    // the watch-drawn value (SPORT_DATA widget) inside a layout box, or null
+    nativeAt(slot) {
+      return (
+        __widgets.find(
+          (x) =>
+            x.type === "SPORT_DATA" &&
+            x.props.y === slot.y &&
+            x.props.x >= slot.x &&
+            x.props.x + x.props.w <= slot.x + slot.w,
+        ) || null
+      )
+    },
+    // native type shown in a layout box, or null
+    typeAt(slot) {
+      const n = world.nativeAt(slot)
+      return n ? n.props.default_type : null
+    },
     // unit text drawn after the value in a layout box, or null
     unitAt(slot) {
       const u = __widgets.find(

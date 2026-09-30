@@ -2,18 +2,9 @@
 // places them. The same layout is edited in the phone settings and on the
 // watch (page/), so it carries an `updated_at` stamp and the newer copy wins.
 //
-// Platform-free: formatters take a context built by the data widget
-// ({s: live snapshot, stats: RunStats, unit, hrZones, now: Date}).
+// Platform-free: the one RunDeck-drawn value (HR zone) takes a context
+// built by the data widget ({s: live snapshot, hrZones}).
 
-import {
-  ascentStr,
-  distanceStr,
-  durationStr,
-  gradeStr,
-  intStr,
-  lapTimeStr,
-  paceStr,
-} from "./format.js"
 import { zonePosition } from "./zones.js"
 
 export const LAYOUT_VERSION = 1
@@ -84,28 +75,20 @@ export const SLOT_IDS = SLOTS.map((s) => s.id)
 
 // Label color groups (the layout file maps them to colors).
 // hr: red, pace: blue, time: green, dist: orange, body: teal
-const pace = (mps, ctx) => paceStr(mps, ctx.unit)
-const avgSpeed = (ctx) =>
-  ctx.s.avg_speed != null ? ctx.s.avg_speed : ctx.stats.avgSpeed()
-const pad2 = (n) => (n < 10 ? `0${n}` : `${n}`)
-const imperial = (c) => c.unit === "min_per_mile"
-// Units follow the pace-unit setting (km or mile world). Only short units
-// are shown (km/mi, W) plus the pace suffix /km or /mi; longer ones (bpm,
-// spm, kcal, km/h) cost more digit size than they add. Ascent gets none:
-// descent and lap ascent/descent are drawn by the watch (native), which
-// gives RunDeck no way to place a unit after them, so ascent matches them.
-// Altitude keeps m/ft.
-const PACE = (c) => (imperial(c) ? "/mi" : "/km")
-const DIST = (c) => (imperial(c) ? "mi" : "km")
-const ALT = (c) => (imperial(c) ? "ft" : "m")
+//
+// Every value is the watch's own: `native` is the @zos/ui sport_data type a
+// SPORT_DATA widget draws over the slot, so what RunDeck shows is exactly
+// what the native workout records (lap values follow the watch's own laps
+// and auto-lap setting) and keeps updating while RunDeck's code is
+// suspended. RunDeck draws only the label. `sample` is a widest typical
+// value; it sizes the digits to fit the slot. The one exception is the HR
+// zone: no native field carries it, so it is the native heart rate placed
+// in the user's zones.
 
 /**
  * Field catalog. `label` fits every slot (<= 9 chars), `short` is the
  * compact label (<= 5 chars), `icon` + `qual` the icon-mode label (icon file
- * in assets/common.r/icons, qualifier text next to it); `needs` names the
- * extra native channels the field polls (battery: only what is on screen);
- * `unit` is the unit drawn small after the value (string or ctx => string);
- * `native` marks a value the watch draws itself (see below).
+ * in assets/common.r/icons, qualifier text next to it).
  */
 export const FIELDS = {
   none: {
@@ -114,15 +97,6 @@ export const FIELDS = {
     qual: "",
     label: "",
     group: "body",
-    value: () => "",
-  },
-  hr: {
-    short: "HR",
-    icon: "heart",
-    qual: "",
-    label: "HR",
-    group: "hr",
-    value: (c) => intStr(c.s.hr),
   },
   hr_zone: {
     short: "Zone",
@@ -130,10 +104,20 @@ export const FIELDS = {
     qual: "",
     label: "HR Zone",
     group: "hr",
+    sample: "Z0",
     value: (c) => {
       const p = zonePosition(c.s.hr, c.hrZones)
       return p && p.zone > 0 ? `Z${p.zone}` : "--"
     },
+  },
+  hr: {
+    short: "HR",
+    icon: "heart",
+    qual: "",
+    label: "HR",
+    group: "hr",
+    native: "HR",
+    sample: "000",
   },
   avg_hr: {
     short: "AvgHR",
@@ -141,7 +125,8 @@ export const FIELDS = {
     qual: "Avg",
     label: "Avg HR",
     group: "hr",
-    value: (c) => intStr(c.stats.avgHr.value),
+    native: "HR_AVG",
+    sample: "000",
   },
   lap_hr: {
     short: "LapHR",
@@ -149,54 +134,53 @@ export const FIELDS = {
     qual: "Lap",
     label: "Lap HR",
     group: "hr",
-    value: (c) => intStr(c.stats.lapHr()),
+    native: "HR_CUR_SECTION",
+    sample: "000",
   },
-  max_hr: {
-    short: "MaxHR",
+  last_lap_hr: {
+    short: "LastH",
     icon: "heart",
-    qual: "Max",
-    label: "Max HR",
+    qual: "Last",
+    label: "Last HR",
     group: "hr",
-    value: (c) => intStr(c.stats.maxHr),
+    native: "HR_PREV_SECTION",
+    sample: "000",
   },
   pace: {
-    unit: PACE,
     short: "Pace",
     icon: "gauge",
     qual: "",
     label: "Pace",
     group: "pace",
-    value: (c) => pace(c.s.speed, c),
+    native: "PACE",
+    sample: "0'00\"",
   },
   avg_pace: {
-    unit: PACE,
     short: "AvgP",
     icon: "gauge",
     qual: "Avg",
     label: "Avg Pace",
     group: "pace",
-    value: (c) => pace(avgSpeed(c), c),
+    native: "PACE_AVG",
+    sample: "0'00\"",
   },
   lap_pace: {
-    unit: PACE,
     short: "LapP",
     icon: "gauge",
     qual: "Lap",
     label: "Lap Pace",
     group: "pace",
-    value: (c) => pace(c.stats.lapSpeed(), c),
+    native: "PACE_CUR_AVG",
+    sample: "0'00\"",
   },
   last_lap_pace: {
-    unit: PACE,
     short: "LastP",
     icon: "gauge",
     qual: "Last",
     label: "Last Lap",
     group: "pace",
-    value: (c) => {
-      const l = c.stats.laps[c.stats.laps.length - 1]
-      return pace(l && l.time > 0 ? l.distance / l.time : null, c)
-    },
+    native: "PACE_PREV_AVG",
+    sample: "0'00\"",
   },
   speed: {
     short: "Spd",
@@ -204,42 +188,35 @@ export const FIELDS = {
     qual: "Spd",
     label: "Speed",
     group: "pace",
-    value: (c) => {
-      const v = c.s.speed
-      if (v == null) return "--"
-      const perHour = c.unit === "min_per_mile" ? 3600 / 1609.344 : 3.6
-      return (v * perHour).toFixed(1)
-    },
+    native: "SPEED",
+    sample: "00.0",
   },
   power: {
-    unit: "W",
     short: "Pwr",
     icon: "bolt",
     qual: "",
     label: "Power",
     group: "pace",
-    needs: ["power"],
-    value: (c) => intStr(c.s.power),
+    native: "DEVICE_POWER",
+    sample: "000",
   },
   avg_power: {
-    unit: "W",
     short: "AvgW",
     icon: "bolt",
     qual: "Avg",
     label: "Avg Pwr",
     group: "pace",
-    needs: ["power"],
-    value: (c) => intStr(c.stats.avgPower.value),
+    native: "DEVICE_AVG_POWER",
+    sample: "000",
   },
   lap_power: {
-    unit: "W",
     short: "LapW",
     icon: "bolt",
     qual: "Lap",
     label: "Lap Pwr",
     group: "pace",
-    needs: ["power"],
-    value: (c) => intStr(c.stats.lapPower()),
+    native: "DEVICE_LAP_AVG_POWER",
+    sample: "000",
   },
   elapsed: {
     short: "Time",
@@ -247,7 +224,8 @@ export const FIELDS = {
     qual: "",
     label: "Time",
     group: "time",
-    value: (c) => durationStr(c.s.elapsed),
+    native: "DURATION_NET",
+    sample: "0:00:00",
   },
   lap_time: {
     short: "LapT",
@@ -255,7 +233,17 @@ export const FIELDS = {
     qual: "Lap",
     label: "Lap Time",
     group: "time",
-    value: (c) => lapTimeStr(c.stats.lapTime()),
+    native: "DURATION_CUR_SECTION",
+    sample: "00:00",
+  },
+  last_lap_time: {
+    short: "LastT",
+    icon: "stopwatch",
+    qual: "Last",
+    label: "Last Lap",
+    group: "time",
+    native: "DURATION_PREV_SECTION",
+    sample: "00:00",
   },
   clock: {
     short: "Clock",
@@ -263,33 +251,35 @@ export const FIELDS = {
     qual: "",
     label: "Clock",
     group: "time",
-    value: (c) => `${c.now.getHours()}:${pad2(c.now.getMinutes())}`,
+    native: "OTHER_CUR_TIME",
+    sample: "00:00",
   },
   distance: {
-    unit: DIST,
     short: "Dist",
     icon: "flag",
     qual: "",
     label: "Distance",
     group: "dist",
-    value: (c) => distanceStr(c.s.distance, c.unit),
+    native: "DISTANCE_TOTAL",
+    sample: "00.00",
   },
   lap_distance: {
-    unit: DIST,
     short: "LapD",
     icon: "flag",
     qual: "Lap",
     label: "Lap Dist",
     group: "dist",
-    value: (c) => distanceStr(c.stats.lapDistance(), c.unit),
+    native: "DISTANCE_CUR_SECTION",
+    sample: "0.00",
   },
   laps: {
-    short: "Laps",
+    short: "Lap#",
     icon: "laps",
     qual: "",
-    label: "Laps",
+    label: "Lap #",
     group: "dist",
-    value: (c) => `${c.stats.laps.length}`,
+    native: "OTHER_SECTION_ORDER",
+    sample: "00",
   },
   grade: {
     short: "Grade",
@@ -297,7 +287,8 @@ export const FIELDS = {
     qual: "",
     label: "Grade",
     group: "dist",
-    value: (c) => gradeStr(c.stats.grade),
+    native: "SLOPE",
+    sample: "-00%",
   },
   ascent: {
     short: "Asc",
@@ -305,16 +296,17 @@ export const FIELDS = {
     qual: "",
     label: "Ascent",
     group: "dist",
-    value: (c) => ascentStr(c.s.ascent, c.unit),
+    native: "ALTITUDE_TOTAL_UP",
+    sample: "0000",
   },
   altitude: {
-    unit: ALT,
     short: "Alt",
     icon: "altitude",
     qual: "",
     label: "Altitude",
     group: "dist",
-    value: (c) => ascentStr(c.s.altitude, c.unit),
+    native: "ALTITUDE",
+    sample: "0000",
   },
   cadence: {
     short: "Cad",
@@ -322,7 +314,8 @@ export const FIELDS = {
     qual: "",
     label: "Cadence",
     group: "body",
-    value: (c) => intStr(c.s.cadence),
+    native: "STRIDE_FREQ",
+    sample: "000",
   },
   avg_cadence: {
     short: "AvgC",
@@ -330,8 +323,8 @@ export const FIELDS = {
     qual: "Avg",
     label: "Avg Cad",
     group: "body",
-    needs: ["avg_cadence"],
-    value: (c) => intStr(c.s.avg_cadence),
+    native: "STRIDE_AVG_FREQ",
+    sample: "000",
   },
   calories: {
     short: "Cal",
@@ -339,12 +332,9 @@ export const FIELDS = {
     qual: "",
     label: "Calories",
     group: "body",
-    needs: ["calories"],
-    value: (c) => intStr(c.s.calories),
+    native: "CONSUME",
+    sample: "0000",
   },
-  // Native-only fields: RunDeck can't read these values, the watch draws
-  // them itself in a SPORT_DATA widget placed over the slot
-  // (`native` = the @zos/ui sport_data type). Their value text stays empty.
   descent: {
     short: "Desc",
     icon: "descent",
@@ -352,7 +342,7 @@ export const FIELDS = {
     label: "Descent",
     group: "dist",
     native: "ALTITUDE_TOTAL_DOWN",
-    value: () => "",
+    sample: "0000",
   },
   lap_ascent: {
     short: "LapAs",
@@ -361,7 +351,7 @@ export const FIELDS = {
     label: "Lap Asc",
     group: "dist",
     native: "ALTITUDE_CUR_UP",
-    value: () => "",
+    sample: "000",
   },
   lap_descent: {
     short: "LapDs",
@@ -370,7 +360,7 @@ export const FIELDS = {
     label: "Lap Desc",
     group: "dist",
     native: "ALTITUDE_CUR_DOWN",
-    value: () => "",
+    sample: "000",
   },
   max_altitude: {
     short: "MaxAl",
@@ -379,7 +369,7 @@ export const FIELDS = {
     label: "Max Alt",
     group: "dist",
     native: "ALTITUDE_MAX",
-    value: () => "",
+    sample: "0000",
   },
   vertical_speed: {
     short: "VSpd",
@@ -388,7 +378,7 @@ export const FIELDS = {
     label: "Vert Spd",
     group: "dist",
     native: "SPEED_VERTICAL",
-    value: () => "",
+    sample: "0000",
   },
   max_speed: {
     short: "MaxSp",
@@ -397,7 +387,7 @@ export const FIELDS = {
     label: "Max Spd",
     group: "pace",
     native: "SPEED_MAX",
-    value: () => "",
+    sample: "00.0",
   },
   stride: {
     short: "Strd",
@@ -406,7 +396,7 @@ export const FIELDS = {
     label: "Stride",
     group: "body",
     native: "STRIDE",
-    value: () => "",
+    sample: "0.00",
   },
   avg_stride: {
     short: "AvgSt",
@@ -415,7 +405,7 @@ export const FIELDS = {
     label: "Avg Strd",
     group: "body",
     native: "STRIDE_AVG",
-    value: () => "",
+    sample: "0.00",
   },
   steps: {
     short: "Steps",
@@ -424,7 +414,7 @@ export const FIELDS = {
     label: "Steps",
     group: "body",
     native: "STRIDE_COUNT",
-    value: () => "",
+    sample: "00000",
   },
   hr_pct_max: {
     short: "%Max",
@@ -433,7 +423,7 @@ export const FIELDS = {
     label: "%HR Max",
     group: "hr",
     native: "HR_MAX_PERCENT",
-    value: () => "",
+    sample: "000%",
   },
   hr_pct_reserve: {
     short: "%HRR",
@@ -442,7 +432,7 @@ export const FIELDS = {
     label: "%HRR",
     group: "hr",
     native: "HR_RESERVED_PERCENT",
-    value: () => "",
+    sample: "000%",
   },
   aerobic_te: {
     short: "AerTE",
@@ -451,7 +441,7 @@ export const FIELDS = {
     label: "Aer TE",
     group: "body",
     native: "OTHER_AEROBIC_TE",
-    value: () => "",
+    sample: "0.0",
   },
   anaerobic_te: {
     short: "AnaTE",
@@ -460,7 +450,7 @@ export const FIELDS = {
     label: "Ana TE",
     group: "body",
     native: "OTHER_ANAEROBIC_TE",
-    value: () => "",
+    sample: "0.0",
   },
   train_load: {
     short: "Load",
@@ -469,7 +459,7 @@ export const FIELDS = {
     label: "Load",
     group: "body",
     native: "OTHER_TRAIN_LOAD",
-    value: () => "",
+    sample: "000",
   },
   temperature: {
     short: "Temp",
@@ -478,7 +468,7 @@ export const FIELDS = {
     label: "Temp",
     group: "time",
     native: "TEMP",
-    value: () => "",
+    sample: "-00",
   },
   sunset: {
     short: "Sunst",
@@ -487,7 +477,7 @@ export const FIELDS = {
     label: "Sunset",
     group: "time",
     native: "OTHER_SUNSET_TIME",
-    value: () => "",
+    sample: "00:00",
   },
 }
 
@@ -497,7 +487,7 @@ export const FIELD_IDS = [
   "hr_zone",
   "avg_hr",
   "lap_hr",
-  "max_hr",
+  "last_lap_hr",
   "pace",
   "avg_pace",
   "lap_pace",
@@ -508,6 +498,7 @@ export const FIELD_IDS = [
   "lap_power",
   "elapsed",
   "lap_time",
+  "last_lap_time",
   "clock",
   "distance",
   "lap_distance",
@@ -544,7 +535,7 @@ export const FIELD_NAMES = {
   hr_zone: "HR zone",
   avg_hr: "Average HR",
   lap_hr: "Lap HR",
-  max_hr: "Max HR",
+  last_lap_hr: "Last lap HR",
   pace: "Pace",
   avg_pace: "Average pace",
   lap_pace: "Lap pace",
@@ -555,10 +546,11 @@ export const FIELD_NAMES = {
   lap_power: "Lap power",
   elapsed: "Workout time",
   lap_time: "Lap time",
+  last_lap_time: "Last lap time",
   clock: "Time of day",
   distance: "Distance",
   lap_distance: "Lap distance",
-  laps: "Lap count",
+  laps: "Lap number",
   grade: "Grade",
   ascent: "Total ascent",
   altitude: "Altitude",
@@ -598,7 +590,7 @@ export const DEFAULT_SLOTS = {
   headerl: "hr",
   headerr: "elapsed",
   r1l: "lap_hr",
-  r1c: "max_hr",
+  r1c: "hr_pct_max",
   r1r: "avg_hr",
   r2l: "lap_pace",
   r2c: "pace",
@@ -619,7 +611,6 @@ export const defaultLayout = () => ({
   slots: { ...DEFAULT_SLOTS },
   cols: { ...DEFAULT_COLS },
   labels: "text",
-  units: "show",
   bar: "auto",
   updated_at: 0,
 })
@@ -638,7 +629,6 @@ export function normalizeLayout(raw) {
     if (row.cols.indexOf(n) >= 0) out.cols[row.id] = n
   }
   if (LABEL_STYLES.indexOf(raw.labels) >= 0) out.labels = raw.labels
-  if (raw.units === "show" || raw.units === "hide") out.units = raw.units
   if (BAR_OPTIONS.indexOf(raw.bar) >= 0) out.bar = raw.bar
   const t = Number(raw.updated_at)
   if (Number.isFinite(t) && t > 0) out.updated_at = t
@@ -652,26 +642,8 @@ export function newerLayout(a, b) {
   return lb.updated_at > la.updated_at ? lb : la
 }
 
-/** Extra native channels the layout needs polled (visible slots only). */
-export function channelsNeeded(layout, extra = []) {
-  const set = {}
-  for (const id of activeSlots(layout)) {
-    const f = FIELDS[layout.slots[id]]
-    for (const n of (f && f.needs) || []) set[n] = true
-  }
-  if (layout.bar === "power") set.power = true
-  for (const n of extra) set[n] = true
-  return set
-}
-
-/** The unit shown after a field's value ("" when it has none). */
-export function fieldUnit(fieldId, ctx) {
-  const u = (FIELDS[fieldId] || FIELDS.none).unit
-  if (!u) return ""
-  return typeof u === "function" ? u(ctx) : u
-}
-
+/** Text a RunDeck-drawn field shows ("" for native and empty ones). */
 export function fieldValue(fieldId, ctx) {
   const f = FIELDS[fieldId] || FIELDS.none
-  return f.value(ctx)
+  return f.value ? f.value(ctx) : ""
 }

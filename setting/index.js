@@ -282,18 +282,6 @@ AppSettingsPage({
         (v) => saveLayout({ ...layout, labels: v }),
       ),
       hint("Short text and icons leave more room for the numbers."),
-      label("Units after values"),
-      chips(
-        [
-          { name: "Show", value: "show" },
-          { name: "Hide", value: "hide" },
-        ],
-        layout.units,
-        (v) => saveLayout({ ...layout, units: v }),
-      ),
-      hint(
-        "Small km, m, W and /km after the numbers. Heart rate, cadence, calories, speed and the big center numbers stay unit-free.",
-      ),
       label("Zone bar (middle)"),
       chips(
         BAR_OPTIONS.map((id) => ({ name: BAR_NAMES[id], value: id })),
@@ -354,16 +342,6 @@ AppSettingsPage({
             { name: "min/mi", value: "min_per_mile" },
           ],
           "min_per_km",
-        ),
-        ...choice(
-          "Auto lap",
-          "auto_lap",
-          [
-            { name: `Every 1 ${perUnit === "/mi" ? "mi" : "km"}`, value: "1" },
-            { name: "Off (lap key only)", value: "0" },
-          ],
-          "1",
-          "Match the watch's own auto-lap (or turn it off) so RunDeck laps line up with the native ones.",
         ),
       ]),
 

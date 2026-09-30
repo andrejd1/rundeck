@@ -2,6 +2,7 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import {
+  HEADER_CENTERED,
   HEADER_SUFFIX,
   NOTICE,
   NOTICE_SUB,
@@ -26,7 +27,6 @@ const LAP_HR_VALUE = SLOT_GEOMETRY.r1l.value
 const LAP_TIME_VALUE = SLOT_GEOMETRY.r3l.value
 const LAP_DIST_VALUE = SLOT_GEOMETRY.r4l.value
 const labelAt = (w, id) => w.textAt(SLOT_GEOMETRY[id].label)
-const valueAt = (w, id) => w.textAt(SLOT_GEOMETRY[id].value)
 
 const cfg = (obj = {}) => buildConfig((k) => obj[k])
 
@@ -63,9 +63,9 @@ test("trial used up: basic screen only", async () => {
   assert.equal(w.page.state.mode, "locked")
   assert.equal(w.textAt(NOTICE), "Unlock in Zepp app")
   assert.match(w.textAt(NOTICE_SUB), /Trial ended/)
-  assert.equal(w.textAt(LAP_HR_VALUE), null) // hidden
-  assert.equal(w.textAt(LAP_TIME_VALUE), null)
-  assert.equal(w.textAt(CENTER_VALUE), "5'38")
+  assert.equal(w.typeAt(LAP_HR_VALUE), null) // hidden
+  assert.equal(w.typeAt(LAP_TIME_VALUE), null)
+  assert.equal(w.typeAt(CENTER_VALUE), "PACE")
 })
 
 test("license from the phone unlocks a locked screen mid-run", async () => {
@@ -80,7 +80,7 @@ test("license from the phone unlocks a locked screen mid-run", async () => {
   await new Promise((r) => setImmediate(r)) // let the GET_CONFIG reply land
   w.run(5)
   assert.equal(w.page.state.mode, "full")
-  assert.notEqual(w.textAt(LAP_HR_VALUE), null)
+  assert.equal(w.typeAt(LAP_HR_VALUE), "HR_CUR_SECTION")
   assert.equal(w.textAt(NOTICE_SUB), null)
 })
 
@@ -94,16 +94,38 @@ test("the phone's higher trial count wins", async () => {
   assert.equal(w.page.state.mode, "locked")
 })
 
-test("lap key closes a lap and leaves the native lap alone", async () => {
-  const w = await bootWidget({ licensed: true, config: cfg({ auto_lap: "0" }) })
-  w.run(100, { speed: 4 })
-  assert.equal(w.pressLap(), false)
-  assert.match(w.textAt(NOTICE), /^Lap 1 /)
-  assert.equal(w.textAt(LAP_DIST_VALUE), null) // notice covers the row
-  w.run(10, { speed: 4 })
-  assert.equal(w.textAt(LAP_TIME_VALUE), "00:10")
-  w.run(10, { speed: 4 })
-  assert.equal(w.textAt(LAP_DIST_VALUE), "0.08") // notice gone after 6 s
+test("every value is the watch's own: native widgets, nothing computed", async () => {
+  const w = await bootWidget({ licensed: true, config: cfg() })
+  w.run(3)
+  const types = {}
+  for (const [id, box] of Object.entries(SLOT_GEOMETRY))
+    types[id] = w.typeAt(box.value)
+  assert.deepEqual(types, {
+    header: "HR",
+    r1l: "HR_CUR_SECTION",
+    r1r: "HR_AVG",
+    r2l: "PACE_CUR_AVG",
+    r2c: "PACE",
+    r2r: "PACE_AVG",
+    r3l: "DURATION_CUR_SECTION",
+    r3c: "DURATION_NET",
+    r3r: "STRIDE_FREQ",
+    r4l: "DISTANCE_CUR_SECTION",
+    r4r: "SLOPE",
+    r5l: "DISTANCE_TOTAL",
+    r5r: "ALTITUDE_TOTAL_UP",
+  })
+  // no RunDeck-drawn value text anywhere but the labels
+  assert.equal(w.textAt(CENTER_VALUE), null)
+  assert.equal(w.textAt(LAP_DIST_VALUE), null)
+  // the watch's own HR chart beside the top HR
+  assert.ok(w.widgets().some((x) => x.props.default_type === "CHART_HR"))
+})
+
+test("the lap key is left to the watch", async () => {
+  const w = await bootWidget({ licensed: true, config: cfg() })
+  w.run(3)
+  assert.equal(globalThis.__sim.keyHandler, undefined)
 })
 
 test("center pace is colored against the target", async () => {
@@ -112,10 +134,15 @@ test("center pace is colored against the target", async () => {
     config: cfg({ target_range: "5:00-5:20" }),
   })
   w.run(5)
-  const center = w
-    .widgets()
-    .find((x) => x.props.x === CENTER_VALUE.x && x.props.y === CENTER_VALUE.y)
-  assert.equal(center.props.color, 0x60a5fa) // 5'38 is slower: below
+  assert.equal(w.nativeAt(CENTER_VALUE).props.text_color, 0x60a5fa) // 5'38 is slower: below
+  // back in range: the watch-drawn value is recreated in the new color
+  w.set({ sport: { ...globalThis.__sim.sport, pace: { pace: "5'10''" } } })
+  w.run(5)
+  assert.equal(w.nativeAt(CENTER_VALUE).props.text_color, 0x2ee66b)
+  assert.equal(
+    w.widgets().filter((x) => x.props.default_type === "PACE").length,
+    1,
+  )
 })
 
 test("layout from the phone puts fields where the user wants them", async () => {
@@ -133,14 +160,15 @@ test("layout from the phone puts fields where the user wants them", async () => 
       }),
     }),
   })
-  w.set({ sport: { ...globalThis.__sim.sport, calories: { calories: "8" } } })
   w.run(20)
   assert.equal(labelAt(w, "r1l"), "Avg HR")
   assert.equal(labelAt(w, "r3r"), "Distance")
   assert.equal(labelAt(w, "r4l"), "Calories")
-  assert.equal(valueAt(w, "r4l"), "8")
-  // calories are polled only because they are on screen
-  assert.ok(globalThis.__sim.sportReads.calories > 0)
+  assert.equal(w.typeAt(SLOT_GEOMETRY.r4l.value), "CONSUME")
+  assert.equal(w.typeAt(SLOT_GEOMETRY.r3r.value), "DISTANCE_TOTAL")
+  // nothing is read that only the watch draws
+  assert.equal(globalThis.__sim.sportReads.calories, undefined)
+  assert.equal(globalThis.__sim.sportReads.distance, undefined)
 })
 
 test("a newer layout edited on the watch beats the phone's", async () => {
@@ -303,7 +331,9 @@ test("watch editor: row buttons cycle the column count", async () => {
   list.tap("Row 1: 2 cols")
   assert.equal(loadObject(LAYOUT_KEY).cols.r1, 3)
   const again = await bootEditor({})
-  assert.ok(again.buttons().some((b) => b.props.text === "1 middle: Max HR"))
+  assert.ok(
+    again.buttons().some((b) => b.props.text === "1 middle: % of max HR"),
+  )
   again.tap("Labels: Text")
   assert.equal(loadObject(LAYOUT_KEY).labels, "short")
 })
@@ -321,13 +351,13 @@ test("3 columns and icon labels on the run screen", async () => {
   })
   w.run(20)
   const r1c = RG.r1[3].r1c
-  assert.equal(w.textAt(r1c.value) != null, true)
+  assert.equal(w.typeAt(r1c.value), "HR_MAX_PERCENT")
   const icons = w
     .widgets()
     .filter((x) => x.type === "IMG" && x.props.visible !== false)
   assert.ok(icons.some((i) => i.props.src === "icons/20/heart.png"))
   // the two-column slot of row 1 isn't drawn at its old spot any more
-  assert.equal(w.textAt(RG.r1[2].r1l.value), null)
+  assert.equal(w.typeAt(RG.r1[2].r1l.value), null)
 })
 
 test("short labels", async () => {
@@ -359,7 +389,7 @@ test("top row: two columns, HR label carries the zone", async () => {
   assert.ok(!w.textAt(HEADER_SUFFIX)) // no zone suffix in 2 columns
 })
 
-test("single non-HR top value is centered, no graph", async () => {
+test("single non-HR top value is centered, no HR chart", async () => {
   const w = await bootWidget({
     licensed: true,
     config: cfg({
@@ -370,56 +400,32 @@ test("single non-HR top value is centered, no graph", async () => {
     }),
   })
   w.run(5)
-  // graph bars live in the header band (y 50-102); none may be drawn
-  const bars = w
-    .widgets()
-    .filter(
-      (x) =>
-        x.type === "FILL_RECT" &&
-        x.props.visible !== false &&
-        x.props.y >= 50 &&
-        x.props.y + x.props.h <= 102 &&
-        x.props.h > 2 &&
-        x.props.color !== 0,
-    )
-  assert.deepEqual(
-    bars.map((b) => b.props),
-    [],
-  )
+  assert.equal(w.typeAt(HEADER_CENTERED.value), "DURATION_NET")
+  assert.ok(!w.widgets().some((x) => x.props.default_type === "CHART_HR"))
 })
 
-test("native-only fields are drawn by SPORT_DATA widgets in their slot", async () => {
-  const w = await bootWidget({
-    licensed: true,
-    config: cfg({
-      layout_json: JSON.stringify({
-        slots: { r4l: "descent", r4r: "aerobic_te" },
-        updated_at: 2,
-      }),
-    }),
-  })
+test("native values sit by their box's alignment", async () => {
+  const w = await bootWidget({ licensed: true, config: cfg() })
   w.run(3)
-  const natives = () =>
-    w
-      .widgets()
-      .filter((x) => x.type === "SPORT_DATA" && x.props.visible !== false)
-  assert.deepEqual(
-    natives()
-      .map((n) => n.props.default_type)
-      .sort(),
-    ["ALTITUDE_TOTAL_DOWN", "OTHER_AEROBIC_TE"],
-  )
-  const box = SLOT_GEOMETRY.r4l.value
-  const d = natives().find(
-    (n) => n.props.default_type === "ALTITUDE_TOTAL_DOWN",
-  )
-  assert.equal(d.props.x, box.x)
-  assert.equal(d.props.y, box.y)
-  assert.equal(labelAt(w, "r4l"), "Descent")
-  assert.equal(w.textAt(box), null) // our own value text stays hidden
-  // the lap notice covers row 4: native values hide with it
-  w.pressLap()
-  assert.equal(natives().length, 0)
+  const box = SLOT_GEOMETRY.r1r.value // right-aligned beside its label
+  const n = w.nativeAt(box)
+  assert.equal(n.props.x + n.props.w, box.x + box.w)
+  assert.ok(n.props.w < box.w)
+  const left = w.nativeAt(SLOT_GEOMETRY.r1l.value)
+  assert.equal(left.props.x, SLOT_GEOMETRY.r1l.value.x)
+})
+
+test("locked mode deletes the hidden native values", async () => {
+  const w = await bootWidget({ config: cfg(), trial: { used: 5, last: null } })
+  w.run(30)
+  assert.equal(w.page.state.mode, "locked")
+  const types = w
+    .widgets()
+    .filter((x) => x.type === "SPORT_DATA")
+    .map((x) => x.props.default_type)
+    .sort()
+  // top HR and the two big center values only, no chart
+  assert.deepEqual(types, ["DURATION_NET", "HR", "PACE"])
 })
 
 test("heart rate target colors HR and marks the bar", async () => {
@@ -433,107 +439,14 @@ test("heart rate target colors HR and marks the bar", async () => {
     sim: { hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] } },
   })
   w.run(3, { hr: 160 })
-  const header = w
-    .widgets()
-    .find(
-      (x) =>
-        x.type === "TEXT" &&
-        x.props.visible !== false &&
-        x.props.x === RG.header[1].header.value.x &&
-        x.props.y === RG.header[1].header.value.y,
-    )
-  assert.equal(header.props.text, "160")
-  assert.equal(header.props.color, 0xef4444) // above the range
+  const header = w.nativeAt(RG.header[1].header.value)
+  assert.equal(header.props.default_type, "HR")
+  assert.equal(header.props.text_color, 0xef4444) // above the range
   const band = w
     .widgets()
     .find((x) => x.type === "FILL_RECT" && x.props.h === 5)
   assert.equal(band.props.visible, true)
 })
-
-test("units: small unit after values, none on the big center numbers", async () => {
-  const w = await bootWidget({ licensed: true, config: cfg({}) })
-  w.run(300, { speed: 3.4, hr: 150 })
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r5l.value), "km") // distance
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r1l.value), null) // HR: no "bpm"
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r2r.value), null) // no room in 3 columns
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r3r.value), null) // cadence: no "spm"
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r2c.value), null) // big pace: none
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r3c.value), null) // big time: none
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r3l.value), null) // lap time has none
-  // value and unit don't overlap
-  const v = w
-    .widgets()
-    .find(
-      (x) =>
-        x.type === "TEXT" &&
-        x.props.visible !== false &&
-        x.props.text === w.textAt(SLOT_GEOMETRY.r5l.value) &&
-        x.props.y === SLOT_GEOMETRY.r5l.value.y,
-    )
-  const u = w
-    .widgets()
-    .find(
-      (x) =>
-        x.type === "TEXT" && x.props.visible !== false && x.props.text === "km",
-    )
-  assert.ok(u.props.x >= v.props.x + v.props.w - 2)
-})
-
-// a layout full of fields with units, in every kind of box
-const UNIT_LAYOUT = {
-  slots: {
-    r1l: "lap_pace",
-    r1r: "avg_power",
-    r2l: "distance",
-    r2r: "avg_pace",
-    r3l: "lap_distance",
-    r3r: "ascent",
-    r4l: "lap_power",
-    r4r: "altitude",
-    r5l: "distance",
-    r5r: "avg_pace",
-  },
-  cols: { r1: 2, r2: 3, r3: 3, r4: 2, r5: 2 },
-}
-const UNIT_GEOMETRY = {
-  ...RG.r1[2],
-  ...RG.r2[3],
-  ...RG.r3[3],
-  ...RG.r4[2],
-  ...RG.r5[2],
-}
-const bootUnits = (units) =>
-  bootWidget({
-    licensed: true,
-    config: cfg({
-      layout_json: JSON.stringify({ ...UNIT_LAYOUT, units, updated_at: 2 }),
-    }),
-    sim: { sport: { ...powerSport(), avg_pace: { avg_pace: "12'30''" } } },
-  })
-const powerSport = () => ({
-  pace: { pace: "5'38''" },
-  avg_pace: { avg_pace: "4'42''" },
-  distance: { distance: "0.00" },
-  duration: { duration: "0:00" },
-  cadence: { cadence: "178" },
-  altitude: { altitude: "210" },
-  total_up_altitude: { total_up_altitude: "0" },
-  power: { power: "312" },
-})
-// value text -> size of every visible value (unit texts excluded)
-const valueSizes = (w) => {
-  const units = new Set(["km", "mi", "m", "ft", "W", "/km", "/mi"])
-  const out = {}
-  for (const x of w.widgets())
-    if (
-      x.type === "TEXT" &&
-      x.props.visible !== false &&
-      !units.has(x.props.text) &&
-      x.props.text_size >= 24
-    )
-      out[`${x.props.y}|${x.props.text}`] = x.props.text_size
-  return out
-}
 
 test("top HR icon is centered on the screen", async () => {
   const w = await bootWidget({
@@ -551,225 +464,82 @@ test("top HR icon is centered on the screen", async () => {
   }
 })
 
-test("units never shrink the value: same sizes with units on and off", async () => {
-  // widgets share one stub screen, so run the two sequentially
-  const sizesAt = async (units) => {
-    const w = await bootUnits(units)
-    const out = []
-    // ~1 km, then past 10 km where "10.44" needs the room
-    for (const secs of [300, 2600]) {
-      w.run(secs, { speed: 3.6, grade: 2, hr: 150 })
-      out.push(valueSizes(w))
-    }
-    return out
-  }
-  const on = await sizesAt("show")
-  const off = await sizesAt("hide")
-  // values move sideways to make room for a unit, never change size
-  const bySize = (o) =>
-    Object.entries(o)
-      .map(([k, v]) => `${k.split("|")[1]}@${v}`)
-      .sort()
-  assert.deepEqual(on.map(bySize), off.map(bySize))
-})
-
-test("a unit is shown only when it fits beside the full-size value", async () => {
-  const w = await bootUnits("show")
-  w.run(300, { speed: 3.6, grade: 2, hr: 150 })
-  let shown = 0
-  for (const [id, box] of Object.entries(UNIT_GEOMETRY)) {
-    const unit = w.unitAt(box.value)
-    if (!unit) continue
-    shown++
-    const u = w
-      .widgets()
-      .find(
-        (x) =>
-          x.type === "TEXT" &&
-          x.props.visible !== false &&
-          x.props.text === unit &&
-          x.props.x > box.value.x &&
-          x.props.x < box.value.x + box.value.w &&
-          x.props.y > box.value.y &&
-          x.props.y < box.value.y + box.value.h,
-      )
-    const right = box.value.x + box.value.w - (box.value.unitPad || 0)
-    assert.ok(u.props.x + u.props.w - 4 <= right, `${id}: ${unit} overflows`)
-  }
-  assert.ok(shown >= 2)
-  // 1 km: "1.08 km" fits in the bottom row; 12'30 /km doesn't
-  assert.equal(w.unitAt(UNIT_GEOMETRY.r5l.value), "km")
-  assert.equal(w.unitAt(UNIT_GEOMETRY.r5r.value), null)
-  assert.equal(w.unitAt(UNIT_GEOMETRY.r2r.value), null) // narrow side column
-  assert.equal(w.unitAt(UNIT_GEOMETRY.r3r.value), null) // ascent: no "m"
-})
-
-test("a unit that stopped fitting stays off (no flicker)", async () => {
-  const w = await bootUnits("show")
-  w.run(2700, { speed: 3.6 }) // 9.72 km
-  assert.equal(w.unitAt(UNIT_GEOMETRY.r5l.value), "km")
-  w.run(100, { speed: 3.6 }) // 10.08 km: "10.08 km" no longer fits
-  assert.equal(w.unitAt(UNIT_GEOMETRY.r5l.value), null)
-  assert.equal(w.textAt(UNIT_GEOMETRY.r5l.value), "10.08")
-  // back to a narrower value: the unit doesn't come back mid-run
-  globalThis.__sim.sport.distance = { distance: "9.99" }
-  w.page.onTick()
-  assert.equal(w.textAt(UNIT_GEOMETRY.r5l.value), "9.99")
-  assert.equal(w.unitAt(UNIT_GEOMETRY.r5l.value), null)
-  // a fresh layout decides again
-  const fresh = await bootUnits("show")
-  globalThis.__sim.sport.distance = { distance: "9.99" }
-  fresh.page.onTick()
-  assert.equal(fresh.unitAt(UNIT_GEOMETRY.r5l.value), "km")
-})
-
-test("units follow miles and can be switched off", async () => {
+test("out of view: nothing drawn, drawn at once when back", async () => {
   const w = await bootWidget({
     licensed: true,
-    config: cfg({ pace_unit: "min_per_mile" }),
+    config: cfg(),
+    sim: { hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] } },
   })
-  w.run(60, { speed: 3.4 })
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r5l.value), "mi")
-  assert.equal(w.unitAt(SLOT_GEOMETRY.r5r.value), null) // ascent: no "ft"
-  const off = await bootWidget({
-    licensed: true,
-    config: cfg({
-      layout_json: JSON.stringify({ units: "hide", updated_at: 2 }),
-    }),
-  })
-  off.run(60, { speed: 3.4 })
-  assert.equal(off.unitAt(SLOT_GEOMETRY.r5l.value), null)
-  assert.equal(off.textAt(SLOT_GEOMETRY.r5l.value), "0.20")
-})
-
-test("out of view: no drawing, every value still read", async () => {
-  const w = await bootWidget({
-    licensed: true,
-    config: cfg({
-      layout_json: JSON.stringify({
-        slots: { r1l: "avg_hr", r4l: "calories" },
-        updated_at: 5,
-      }),
-    }),
-  })
-  w.set({ sport: { ...globalThis.__sim.sport, calories: { calories: "8" } } })
-  w.run(60, { hr: 120 })
-  assert.equal(valueAt(w, "r1l"), "120")
-  const before = JSON.stringify(w.snapshot())
-  const reads = { ...globalThis.__sim.sportReads }
+  w.run(5, { hr: 120 })
+  assert.equal(w.textAt(HEADER_SUFFIX), "Z2")
   w.page.onPause()
-  w.run(60, { hr: 180 })
-  // nothing redrawn while another page is on screen
-  assert.equal(JSON.stringify(w.snapshot()), before)
-  // but nothing goes stale either
-  const r = globalThis.__sim.sportReads
-  for (const type of ["pace", "cadence", "duration", "distance"])
-    assert.equal(r[type] - reads[type], 60, `${type} reads while hidden`)
-  for (const type of ["avg_pace", "calories"])
-    assert.equal(r[type] - reads[type], 12, `${type} reads while hidden`)
+  w.run(5, { hr: 160 })
+  assert.equal(w.textAt(HEADER_SUFFIX), "Z2") // not redrawn meanwhile
   w.page.onResume()
-  // the hidden minute at 180 bpm counts: (60 x 120 + 60 x 180) / 120
-  assert.equal(valueAt(w, "r1l"), "150")
-})
-
-test("back in view: the slow channels are read at once", async () => {
-  const w = await bootWidget({ licensed: true, config: cfg() })
-  w.run(12)
-  w.page.onPause()
-  w.run(3)
-  const reads = { ...globalThis.__sim.sportReads }
-  w.page.onResume() // not a 5th or 10th tick: read anyway
-  const r = globalThis.__sim.sportReads
-  assert.equal(r.avg_pace - reads.avg_pace, 1)
-  assert.equal(r.total_up_altitude - reads.total_up_altitude, 1)
+  assert.equal(w.textAt(HEADER_SUFFIX), "Z4")
 })
 
 test("screen off without always-on display: no drawing, fresh on wake", async () => {
   const w = await bootWidget({
     licensed: true,
     config: cfg(),
-    sim: { screen: { status: 1, aod: false } },
+    sim: {
+      screen: { status: 1, aod: false },
+      hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] },
+    },
   })
-  w.run(30, { speed: 3.4 })
-  const before = JSON.stringify(w.snapshot())
-  const paceReads = globalThis.__sim.sportReads.pace
+  w.run(5, { hr: 120 })
   globalThis.__sim.setScreen(2) // raise-to-wake: screen goes dark
-  w.run(30, { speed: 3.4 })
-  assert.equal(JSON.stringify(w.snapshot()), before)
-  assert.equal(globalThis.__sim.sportReads.pace, paceReads + 30)
+  w.run(5, { hr: 160 })
+  assert.equal(w.textAt(HEADER_SUFFIX), "Z2")
   // wrist raised: redrawn at once, without waiting for the next tick
   globalThis.__sim.setScreen(1)
-  assert.notEqual(JSON.stringify(w.snapshot()), before)
-  assert.equal(w.textAt(SLOT_GEOMETRY.r3c.value), "1:00") // elapsed, fresh
+  assert.equal(w.textAt(HEADER_SUFFIX), "Z4")
 })
 
 test("a missed screen-on event doesn't freeze the screen", async () => {
   const w = await bootWidget({
     licensed: true,
     config: cfg(),
-    sim: { screen: { status: 1, aod: false } },
+    sim: {
+      screen: { status: 1, aod: false },
+      hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] },
+    },
   })
-  w.run(10)
+  w.run(5, { hr: 120 })
   globalThis.__sim.setScreen(2)
-  w.run(10)
+  w.run(5, { hr: 160 })
   globalThis.__sim.screen.status = 1 // on again, but no change event came
-  w.run(1)
-  assert.equal(w.textAt(SLOT_GEOMETRY.r3c.value), "0:21")
-})
-
-test("page suspended past several auto-laps: real lap times, sane lap pace", async () => {
-  const w = await bootWidget({
-    licensed: true,
-    config: cfg({ auto_lap: "1" }),
-  })
-  w.run(100, { speed: 4 }) // 400 m, 4'10 /km
-  w.run(1000, { speed: 4, frozen: true }) // 4 km without a single tick
-  w.run(1, { speed: 4 })
-  const laps = w.page.state.stats.laps
-  assert.equal(laps.length, 4)
-  // every lap took its 250 s, none closed in a second on the catch-up
-  for (const lap of laps) assert.equal(Math.round(lap.time), 250)
-  assert.equal(w.textAt(NOTICE), "Lap 4  4'10  04:10")
-  w.run(10, { speed: 4 }) // notice gone
-  assert.equal(valueAt(w, "r2l"), "4'10") // lap pace
-})
-
-test("lap notice hides the covered row's dividers and native values", async () => {
-  const w = await bootWidget({
-    licensed: true,
-    config: cfg({
-      layout_json: JSON.stringify({
-        slots: { r4r: "steps" },
-        updated_at: 2,
-      }),
-    }),
-  })
-  w.run(3)
-  const rowDividers = () =>
-    w.page.state.ui.rowDividers.r4.filter((d) => d.props.visible !== false)
-  const natives = () => w.widgets().filter((x) => x.type === "SPORT_DATA")
-  assert.equal(rowDividers().length, 1)
-  assert.equal(natives().length, 1)
-  w.pressLap()
-  w.run(1)
-  assert.equal(rowDividers().length, 0)
-  // deleted, not hidden: the watch draws SPORT_DATA whatever `visible` says
-  assert.equal(natives().length, 0)
-  w.run(8)
-  assert.equal(rowDividers().length, 1)
-  assert.equal(natives().length, 1)
+  w.run(1, { hr: 160 })
+  assert.equal(w.textAt(HEADER_SUFFIX), "Z4")
 })
 
 test("screen off with always-on display: keeps drawing", async () => {
   const w = await bootWidget({
     licensed: true,
     config: cfg(),
-    sim: { screen: { status: 1, aod: true } },
+    sim: {
+      screen: { status: 1, aod: true },
+      hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] },
+    },
   })
-  w.run(30, { speed: 3.4 })
-  const before = JSON.stringify(w.snapshot())
+  w.run(5, { hr: 120 })
   globalThis.__sim.setScreen(2)
-  w.run(30, { speed: 3.4 })
-  assert.notEqual(JSON.stringify(w.snapshot()), before)
-  assert.equal(w.textAt(SLOT_GEOMETRY.r3c.value), "1:00")
+  w.run(5, { hr: 160 })
+  assert.equal(w.textAt(HEADER_SUFFIX), "Z4")
+})
+
+test("only what colors the screen is read: pace and power on demand", async () => {
+  const w = await bootWidget({ licensed: true, config: cfg() })
+  w.run(5)
+  const r = globalThis.__sim.sportReads
+  assert.equal(r.duration, 6) // trial clock
+  assert.equal(r.pace, undefined) // no pace target, HR bar
+  assert.equal(r.power, undefined)
+  const paced = await bootWidget({
+    licensed: true,
+    config: cfg({ target_range: "5:00-5:20" }),
+  })
+  paced.run(5)
+  assert.ok(globalThis.__sim.sportReads.pace > 0)
 })
