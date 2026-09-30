@@ -7,7 +7,7 @@
     
     
     
-    <text x="214" y="50" text-anchor="start" font-size="20" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">HR</text>
+    <text x="240" y="48" text-anchor="middle" font-size="20" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">HR</text>
     
     
     
@@ -83,7 +83,7 @@
     
     <text x="240" y="393.1" text-anchor="middle" font-size="26" fill="#f59e0b" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Unlock in Zepp app</text>
     <text x="240" y="144.1" text-anchor="middle" font-size="26" fill="#f59e0b" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">Trial ended (5 runs)</text>
-    <text x="265.5" y="100.6" text-anchor="middle" font-size="56" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
+    <text x="240.5" y="100.6" text-anchor="middle" font-size="56" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
     <text x="240" y="229.4" text-anchor="middle" font-size="64" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">5'38"</text>
     <text x="240" y="333.1" text-anchor="middle" font-size="46" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">1:52:13</text>
   </g>

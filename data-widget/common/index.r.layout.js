@@ -60,13 +60,6 @@ const line = (x, y, w, h) => ({
 // count (ROW_GEOMETRY); any field can go in any slot, so the widget shrinks
 // text that would overflow its slot width.
 
-// the watch's own HR chart (SPORT_DATA CHART_HR) left of a single top HR
-export const HR_GRAPH = {
-  x: px(92),
-  y: px(50),
-  w: px(108),
-  h: px(52),
-}
 // zone ("Z2") next to the header value when the header shows heart rate
 export const HEADER_SUFFIX = label(330, 64, 70, COLORS.value, align.LEFT, 28)
 

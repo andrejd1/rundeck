@@ -37,7 +37,16 @@ export const text_style = {
 
 // SPORT_DATA type constants: the stub uses the names themselves, so tests
 // and the preview can read which native value a widget shows.
-export const sport_data = new Proxy({}, { get: (_, name) => name })
+// __sim.unknownSportTypes lists names this "firmware" lacks (undefined).
+export const sport_data = new Proxy(
+  {},
+  {
+    get: (_, name) =>
+      ((globalThis.__sim || {}).unknownSportTypes || []).includes(name)
+        ? undefined
+        : name,
+  },
+)
 export const edit_widget_group_type = { SPORTS: "SPORTS" }
 
 // Not every firmware has getTextLayout; the stub leaves it out so the

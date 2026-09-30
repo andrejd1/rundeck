@@ -12,8 +12,10 @@
   exactly (distance, lap pace, lap distance, averages) and keeps updating while RunDeck's
   code is suspended (screen off, another data page). RunDeck computes nothing any more: its
   own laps, averages, max HR, grade and HR history are gone. Lap fields follow the watch's
-  laps and auto-lap setting; the lap key is left entirely to the watch. The HR graph is the
-  watch's HR chart. New fields: last-lap HR and last-lap time; "Lap count" is now the
+  laps and auto-lap setting; the lap key is left entirely to the watch. The HR graph is
+  gone (the watch's HR chart widget is the prime suspect in a watch restart); the top
+  value is centered.
+  New fields: last-lap HR and last-lap time; "Lap count" is now the
   watch's lap number. Max HR is dropped (the watch offers no such value to extensions).
 - The watch draws values in its own format, so RunDeck no longer adds units after them; the
   units and auto-lap settings are gone. Target colors apply to the watch-drawn value.
@@ -29,6 +31,9 @@
 - The watch's own HR zones: app.json now targets API 4.2, where
   Workout.getUserHrZoneSettings lives (3.6 stays the minimum; older watches still fall back
   to 220 - age).
+- Crash guards: watch-drawn values are no longer deleted and recreated each time the page
+  comes back into view, a type the firmware doesn't know is never handed to the watch, and
+  VO2 max is read only when a slot shows it.
 
 - Every round screen size: the HR graph, icons and bottom row scale correctly from 480 down to 360 px
   (icons ship in five pixel sizes, graph bars are placed from the scaled width, the bottom row sits
