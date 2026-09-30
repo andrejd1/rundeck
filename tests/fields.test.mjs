@@ -1,51 +1,49 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import {
-  channelsNeeded,
   DEFAULT_SLOTS,
   defaultLayout,
   FIELD_IDS,
   FIELD_NAMES,
   FIELDS,
-  fieldUnit,
   fieldValue,
   newerLayout,
   normalizeLayout,
   SLOT_IDS,
 } from "../shared/fields.js"
-import { RunStats } from "../shared/stats.js"
 
-const ctx = (s = {}, stats = new RunStats()) => ({
-  s: { hr: 150, speed: 1000 / 300, distance: 5000, elapsed: 1500, ...s },
-  stats,
-  unit: "min_per_km",
-  hrZones: [100, 120, 140, 160, 180, 200],
-  now: new Date(2026, 0, 1, 7, 5),
-})
-
-test("every field formats without throwing, with and without data", () => {
+test("every field is the watch's own value, except HR zone and VO2 max", () => {
+  assert.deepEqual(Object.keys(FIELDS).sort(), [...FIELD_IDS].sort())
   for (const id of FIELD_IDS) {
-    assert.equal(typeof fieldValue(id, ctx()), "string", id)
-    assert.equal(
-      typeof fieldValue(
-        id,
-        ctx({ hr: null, speed: null, distance: null, elapsed: null }),
-      ),
-      "string",
-      id,
-    )
+    const f = FIELDS[id]
     assert.ok(FIELD_NAMES[id], `name for ${id}`)
-    assert.ok(FIELDS[id].label.length <= 9, `short label for ${id}`)
+    assert.ok(f.label.length <= 9, `label for ${id}`)
+    assert.ok(f.short.length <= 5, `short label for ${id}`)
+    if (id === "none") continue
+    if (id === "hr_zone" || id === "vo2max") {
+      assert.equal(f.native, undefined)
+      continue
+    }
+    assert.match(f.native, /^[A-Z0-9_]+$/, id)
+    assert.ok(f.sample, `sample for ${id}`)
+    assert.equal(f.value, undefined, `${id} is drawn by the watch`)
+    assert.equal(fieldValue(id, {}), "")
   }
+  // no two fields show the same native value
+  const natives = FIELD_IDS.map((id) => FIELDS[id].native).filter(Boolean)
+  assert.equal(new Set(natives).size, natives.length)
 })
 
-test("a few formats", () => {
-  assert.equal(fieldValue("pace", ctx()), "5'00")
-  assert.equal(fieldValue("hr_zone", ctx()), "Z3")
-  assert.equal(fieldValue("speed", ctx()), "12.0")
-  assert.equal(fieldValue("clock", ctx()), "7:05")
-  assert.equal(fieldValue("distance", ctx()), "5.00")
-  assert.equal(fieldValue("bogus", ctx()), "")
+test("the HR zone places the native heart rate in the zones", () => {
+  const ctx = (hr) => ({ s: { hr }, hrZones: [100, 120, 140, 160, 180, 200] })
+  assert.equal(fieldValue("hr_zone", ctx(150)), "Z3")
+  assert.equal(fieldValue("hr_zone", ctx(null)), "--")
+  assert.equal(fieldValue("bogus", ctx(150)), "")
+})
+
+test("VO2 max is the watch's user status value", () => {
+  assert.equal(fieldValue("vo2max", { vo2max: 52.4 }), "52")
+  assert.equal(fieldValue("vo2max", { vo2max: null }), "--")
 })
 
 test("default layout fills every slot", () => {
@@ -73,32 +71,4 @@ test("newer layout wins, ties keep the first", () => {
   assert.equal(newerLayout(b, a).slots.header, "clock")
   assert.equal(newerLayout(a, { ...b, updated_at: 10 }).slots.header, "pace")
   assert.equal(newerLayout(a, null).slots.header, "pace")
-})
-
-test("only channels on screen are polled", () => {
-  assert.deepEqual(channelsNeeded(defaultLayout()), {})
-  const l = normalizeLayout({ slots: { r4l: "calories", r2c: "power" } })
-  assert.deepEqual(channelsNeeded(l), { calories: true, power: true })
-  assert.deepEqual(channelsNeeded(normalizeLayout({ bar: "power" })), {
-    power: true,
-  })
-})
-
-test("units: short ones and the pace suffix only", () => {
-  const km = { unit: "min_per_km" }
-  const mi = { unit: "min_per_mile" }
-  const allowed = ["", "km", "mi", "m", "ft", "W", "/km", "/mi"]
-  for (const id of FIELD_IDS)
-    for (const c of [km, mi])
-      assert.ok(
-        allowed.includes(fieldUnit(id, c)),
-        `${id}: "${fieldUnit(id, c)}"`,
-      )
-  assert.equal(fieldUnit("pace", mi), "/mi")
-  assert.equal(fieldUnit("cadence", km), "")
-  assert.equal(fieldUnit("calories", km), "")
-  assert.equal(fieldUnit("speed", km), "")
-  assert.equal(fieldUnit("altitude", km), "m")
-  assert.equal(fieldUnit("altitude", mi), "ft")
-  assert.equal(fieldUnit("ascent", km), "") // matches the native descent
 })

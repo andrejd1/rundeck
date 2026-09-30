@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { SCREEN } from "./stubs/zos-utils.mjs"
+import { nativeText } from "./native-samples.mjs"
 
 const ASSETS = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -106,7 +107,14 @@ function renderWidget(w) {
     // native value drawn by the watch: the preview shows __sim-style sample
     // values per type (or a dash), centered in the box like the watch does
     case "SPORT_DATA": {
-      const sample = (globalThis.__nativeSamples || {})[p.default_type] || "--"
+      // the watch's own HR chart: a stand-in sparkline
+      if (p.default_type === "CHART_HR") {
+        const pts = [0.6, 0.5, 0.55, 0.4, 0.45, 0.3, 0.35, 0.2, 0.3, 0.25]
+          .map((v, i) => `${p.x + (i * p.w) / 9},${Math.round(p.y + v * p.h)}`)
+          .join(" ")
+        return `<polyline points="${pts}" fill="none" stroke="#ef4444" stroke-width="3"/>`
+      }
+      const sample = nativeText(p.default_type)
       const size = p.text_size || 30
       return `<text x="${p.x + p.w / 2}" y="${p.y + p.h / 2 + size * 0.35}" text-anchor="middle" font-size="${size}" fill="${hex(p.text_color)}" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">${esc(sample)}</text>`
     }

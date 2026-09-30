@@ -25,6 +25,16 @@ export function readDeviceHrZones() {
   }
 }
 
+// The VO2 max the watch keeps for the user (Workout.getStatus), or null.
+export function readVo2Max() {
+  try {
+    const v = Number(new Workout().getStatus().vo2Max)
+    return v > 0 ? v : null
+  } catch (e) {
+    return null // no workout sensor on this firmware
+  }
+}
+
 export function resolveHrZones(cfg) {
   if (cfg.hr_zone_source !== "device" && cfg.hr_zones) return cfg.hr_zones
   return readDeviceHrZones() || hrZones({ maxHr: 190 })

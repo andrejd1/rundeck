@@ -10,6 +10,7 @@ import { existsSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { GLYPH_WIDTH } from "../data-widget/common/index.r.layout.js"
+import { nativeText } from "./native-samples.mjs"
 import { SCREEN } from "./stubs/zos-utils.mjs"
 
 const ASSETS = join(
@@ -38,7 +39,9 @@ export function extent(w) {
   // native value: the watch draws it centered in the box; measure the
   // sample the preview shows for its type
   if (w.type === "SPORT_DATA") {
-    const text = (globalThis.__nativeSamples || {})[p.default_type] || "--"
+    if (p.default_type === "CHART_HR")
+      return { x0: p.x, x1: p.x + p.w, y0: p.y, y1: p.y + p.h }
+    const text = nativeText(p.default_type)
     return extent({
       type: "TEXT",
       props: { ...p, text, align_h: "center_h", align_v: "center_v" },
@@ -133,17 +136,12 @@ export const CHECK_LAYOUTS = {
 async function main() {
   const { buildConfig } = await import("../shared/config.js")
   const { bootWidget } = await import("./world.mjs")
-  globalThis.__nativeSamples = {
-    ALTITUDE_TOTAL_DOWN: "1234",
-    STRIDE_COUNT: "12345",
-  }
   const out = {}
   for (const [name, layout] of Object.entries(CHECK_LAYOUTS))
     for (const labels of ["text", "short", "icons"]) {
       const json = JSON.stringify({
         ...layout,
         labels,
-        units: "show",
         updated_at: 1,
       })
       const w = await bootWidget({

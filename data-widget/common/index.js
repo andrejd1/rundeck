@@ -1,6 +1,11 @@
 // RunDeck — Zepp OS Workout Extension data screen. Pinned inside the native
 // running workout (app.json extType "workout"): the native workout keeps GPS,
-// recording and laps; this page renders a dense one-screen dashboard on top.
+// recording and laps; this page lays out a dense one-screen dashboard on top.
+//
+// Every number is the watch's own: each slot's value is a SPORT_DATA widget
+// the watch draws and updates itself (also while this page's code is
+// suspended), so the screen always matches the native workout. RunDeck draws
+// the labels, the HR zone, the zone bar and the target colors.
 //
 // The screen is a fixed grid of slots (shared/fields.js); which field sits in
 // which slot is the user's layout, edited in the phone settings or on the
@@ -20,12 +25,10 @@ import {
   NOTICE_SUB,
   ROW_DIVIDERS,
   ROW_GEOMETRY,
-  UNIT,
   ZONE_BAR,
 } from "zosLoader:./index.[pf].layout.js"
 import { BasePage } from "@zeppos/zml/base-page"
 import { getDeviceInfo } from "@zos/device"
-import { KEY_EVENT_CLICK, KEY_SHORTCUT, offKey, onKey } from "@zos/interaction"
 import { Screen } from "@zos/sensor"
 import {
   align,
@@ -51,18 +54,14 @@ import {
 } from "../../shared/device-store.js"
 import {
   activeSlots,
-  channelsNeeded,
   FIELDS,
-  fieldUnit,
   fieldValue,
   newerLayout,
   ROWS,
   rowSlots,
   SLOT_IDS,
 } from "../../shared/fields.js"
-import { lapTimeStr, paceStr } from "../../shared/format.js"
 import { MSG } from "../../shared/messages.js"
-import { HR_GRAPH_BARS, RunStats } from "../../shared/stats.js"
 import { TargetTracker } from "../../shared/target.js"
 import { TRIAL_RUNS, TrialSession } from "../../shared/trial.js"
 import {
@@ -71,28 +70,20 @@ import {
   zoneColor,
   zonePosition,
 } from "../../shared/zones.js"
-import { resolveHrZones } from "./hr-zones.js"
+import { readVo2Max, resolveHrZones } from "./hr-zones.js"
 import { LiveMetrics } from "./metrics.js"
 
 const TICK_MS = 1000
 const SCREEN_OFF = 2 // Screen.getStatus(): 1 on, 2 off
-const GRAPH_EVERY_TICKS = 5 // HR graph redraw cadence (bars move every 10 s)
-const LAP_NOTICE_SEC = 6
-const LAP_DEBOUNCE_SEC = 2
+// For a moment after coming back on screen, late getSportData answers
+// redraw at once (the zone bar and target colors).
+const CATCH_UP_REDRAW_SEC = 3
 const CONFIG_RETRY_SEC = 60
 // Wait this long for the phone's reply (license, trial count) before the
 // access mode is latched for the activity; offline, the cached state decides.
 const PHONE_GRACE_SEC = 10
-// Rows the notice lines cover while they are up.
-const NOTICE_ROW = "r4"
-const NOTICE_SUB_ROW = "r1"
-
-// x and width of HR graph bar i: positions come from the scaled graph width,
-// so rounding doesn't add up across the bars on smaller screens
-function graphBarX(i) {
-  const at = (k) => HR_GRAPH.x + Math.round((k * HR_GRAPH.w) / HR_GRAPH_BARS)
-  return { x: at(i), w: Math.max(1, at(i + 1) - at(i) - 1) }
-}
+// edit_id of the native HR chart; slots take 101 and up
+const CHART_EDIT_ID = 100
 
 // shipped icon size nearest to a scaled size
 function iconFile(size) {
@@ -119,24 +110,24 @@ DataWidget(
       trial: null, // TrialSession
       mode: "pending",
       metrics: null,
-      stats: null,
       tracker: null,
       inView: true, // onPause/onResume: drawing only while on screen
       screenDark: false, // screen off without the always-on display
       screen: null,
+      screenUpdate: null,
+      drawn: false, // the last tick drew the screen
+      inRefresh: false,
+      redrawUntil: 0, // late getSportData answers redraw until then
       timer: null,
       ticks: 0,
       ui: {},
       cache: {}, // last rendered text/color/size/visibility per widget key
-      notice: null, // {text, color, until}
-      lastLapAt: null,
       lastConfigAttemptAt: null,
       configReceived: false,
       initAt: null,
       reportedUsed: null, // trial count last reported to the phone
-      native: {}, // slotId -> {type, w}: SPORT_DATA widgets for native fields
+      native: {}, // slotId -> {sig, w}: the watch-drawn value widgets
       measureCache: new Map(), // "size|text" -> px width
-      unitDropped: {}, // "slot|unit" -> true once the unit didn't fit
     },
 
     nowSec() {
@@ -153,6 +144,7 @@ DataWidget(
         loadObject(LAYOUT_KEY),
       )
       this.state.hrZones = resolveHrZones(this.state.config)
+      this.state.vo2max = readVo2Max()
       const lic = loadObject(LICENSE_KEY)
       this.state.licensed = !!(lic && lic.licensed)
       this.state.trial = new TrialSession(
@@ -175,11 +167,19 @@ DataWidget(
         paceUnit: cfg.pace_unit,
         channels: this.channels(),
       })
-      this.state.stats = new RunStats({ autoLapM: cfg.auto_lap_m })
+      // answers that land after the tick drew (async on device) redraw at
+      // once when the screen just came back
+      this.state.metrics.onData = () => {
+        if (
+          !this.state.inRefresh &&
+          this.visible() &&
+          this.nowSec() < this.state.redrawUntil
+        )
+          this.render()
+      }
       this.state.tracker = new TargetTracker(cfg.target)
       this.buildUi()
       this.applyGeometry()
-      this.registerKeys()
       this.watchScreen()
       this.state.timer = setInterval(() => this.onTick(), TICK_MS)
       this.onTick()
@@ -193,9 +193,8 @@ DataWidget(
       this.onTick()
     },
 
-    // Out of view (another data page): keep sampling for the lap/average
-    // stats and the trial, but read and draw nothing that only the screen
-    // needs.
+    // Out of view (another data page): draw nothing; the watch keeps its own
+    // values current.
     onPause() {
       this.state.inView = false
     },
@@ -208,16 +207,27 @@ DataWidget(
       try {
         const screen = new Screen()
         const update = () => {
-          const dark = screen.getStatus() === SCREEN_OFF && !screen.getAodMode()
           const was = this.state.screenDark
-          this.state.screenDark = dark
-          if (was && !dark) this.onTick()
+          this.readScreen()
+          if (was && !this.state.screenDark) this.onTick()
         }
-        this.state.screen = { screen, update }
+        this.state.screen = screen
+        this.state.screenUpdate = update
         screen.onChange(update)
-        update()
+        this.readScreen()
       } catch (e) {
         this.state.screen = null // no screen sensor: always drawn
+      }
+    },
+
+    readScreen() {
+      const screen = this.state.screen
+      if (!screen) return
+      try {
+        this.state.screenDark =
+          screen.getStatus() === SCREEN_OFF && !screen.getAodMode()
+      } catch (e) {
+        this.state.screenDark = false
       }
     },
 
@@ -227,15 +237,10 @@ DataWidget(
     },
 
     onDestroy() {
-      try {
-        offKey()
-      } catch (e) {
-        /* ignore */
-      }
       if (this.state.timer) clearInterval(this.state.timer)
       if (this.state.screen)
         try {
-          this.state.screen.screen.offChange(this.state.screen.update)
+          this.state.screen.offChange(this.state.screenUpdate)
         } catch (e) {
           /* ignore */
         }
@@ -244,27 +249,6 @@ DataWidget(
       const globals = appGlobals()
       if (globals && globals.onConfigPush === this.state.pushHook)
         globals.onConfigPush = null
-    },
-
-    // Lap key: close a RunDeck lap and let the native workout record its own
-    // lap too (returning false keeps the native default behavior).
-    registerKeys() {
-      onKey({
-        callback: (key, event) => {
-          if (key === KEY_SHORTCUT && event === KEY_EVENT_CLICK) {
-            const now = this.nowSec()
-            if (
-              this.state.lastLapAt == null ||
-              now - this.state.lastLapAt >= LAP_DEBOUNCE_SEC
-            ) {
-              this.state.lastLapAt = now
-              this.onLap(this.state.stats.lapNow())
-              this.render()
-            }
-          }
-          return false
-        },
-      })
     },
 
     // ------------------------------------------------------ phone messaging
@@ -325,9 +309,11 @@ DataWidget(
     applyConfig(cfg) {
       this.state.config = cfg
       this.state.hrZones = resolveHrZones(cfg)
-      const { metrics, stats, tracker } = this.state
-      if (metrics) metrics.paceUnit = cfg.pace_unit
-      if (stats) stats.setAutoLap(cfg.auto_lap_m)
+      const { metrics, tracker } = this.state
+      if (metrics) {
+        metrics.paceUnit = cfg.pace_unit
+        metrics.channels = this.channels()
+      }
       if (tracker) tracker.setTarget(cfg.target)
       const local = loadObject(LAYOUT_KEY)
       const layout = newerLayout(cfg.layout, local)
@@ -364,8 +350,7 @@ DataWidget(
       for (const id of Object.keys(this.state.native)) this.dropNative(id)
       // sizes/positions changed: forget what was drawn for the slots
       for (const k of Object.keys(this.state.cache))
-        if (/^(r\d[lcr]|header[lr]?)[lviu]:/.test(k)) delete this.state.cache[k]
-      this.state.unitDropped = {}
+        if (/^(r\d[lcr]|header[lr]?)[lvi]:/.test(k)) delete this.state.cache[k]
       for (const id of SLOT_IDS) {
         const g = geo[id]
         const slot = ui.slots[id]
@@ -373,11 +358,9 @@ DataWidget(
           this.setProp(`${id}v`, slot.value, "visible", false)
           this.setProp(`${id}l`, slot.label, "visible", false)
           this.setProp(`${id}i`, slot.icon, "visible", false)
-          this.setProp(`${id}u`, slot.unit, "visible", false)
           continue
         }
-        const { unitPad, ...valueProps } = g.value // unitPad is ours, not a widget prop
-        slot.value.setProperty(prop.MORE, valueProps)
+        slot.value.setProperty(prop.MORE, { ...g.value })
         if (g.label) slot.label.setProperty(prop.MORE, { ...g.label })
       }
       for (const row of ROWS) {
@@ -399,12 +382,16 @@ DataWidget(
       }
     },
 
+    // Live values the screen colors by: pace/power only when the zone bar
+    // or the target uses them (HR comes from the sensor anyway).
     channels() {
-      const t = this.state.config.target
-      return channelsNeeded(
-        this.state.layout,
-        t && t.metric === "power" ? ["power"] : [],
-      )
+      const { config: cfg, layout, hrZones } = this.state
+      const set = {}
+      const bar = resolveBar(layout.bar, cfg, hrZones)
+      if (bar && bar.metric !== "hr") set[bar.metric] = true
+      if (cfg.target && cfg.target.metric !== "hr")
+        set[cfg.target.metric] = true
+      return set
     },
 
     persistTrial() {
@@ -424,22 +411,25 @@ DataWidget(
     // ------------------------------------------------------------------ tick
 
     onTick() {
-      const { metrics, stats, trial } = this.state
+      const { metrics, trial } = this.state
       if (!metrics) return
       this.state.ticks += 1
-      const s = metrics.refresh({ display: this.visible() })
-      const autoLap = stats.update({
-        elapsed: s.elapsed,
-        distance: s.distance,
-        hr: s.hr,
-        power: s.power,
-        altitude: s.altitude,
-      })
-      if (autoLap) this.onLap(autoLap)
+      // a missed screen-on event must not leave the screen frozen
+      if (this.state.screenDark) this.readScreen()
+      const now = this.nowSec()
+      const visible = this.visible()
+      if (visible && !this.state.drawn)
+        this.state.redrawUntil = now + CATCH_UP_REDRAW_SEC
+      this.state.inRefresh = true
+      let s
+      try {
+        s = metrics.refresh()
+      } finally {
+        this.state.inRefresh = false
+      }
 
       // Trial runs are counted silently: the run screen stays clean, and the
       // trial status lives in the phone settings.
-      const now = this.nowSec()
       const settled =
         this.state.configReceived || now - this.state.initAt >= PHONE_GRACE_SEC
       this.state.mode = trial.tick(now, settled ? s.elapsed : null)
@@ -450,22 +440,8 @@ DataWidget(
         now - this.state.lastConfigAttemptAt >= CONFIG_RETRY_SEC
       )
         this.fetchConfig()
-      if (this.visible()) this.render()
-    },
-
-    onLap(lap) {
-      if (!lap) return
-      const unit = this.state.config.pace_unit
-      const speed = lap.time > 0 ? lap.distance / lap.time : null
-      this.showNotice(
-        `Lap ${lap.index}  ${paceStr(speed, unit)}  ${lapTimeStr(lap.time)}`,
-        COLORS.notice,
-        LAP_NOTICE_SEC,
-      )
-    },
-
-    showNotice(text, color, seconds) {
-      this.state.notice = { text, color, until: this.nowSec() + seconds }
+      if (visible) this.render()
+      this.state.drawn = visible
     },
 
     // ------------------------------------------------------------------- UI
@@ -482,18 +458,6 @@ DataWidget(
       })
       ui.dividers = DIVIDERS.map((d) => createWidget(widget.FILL_RECT, d))
 
-      ui.graph = []
-      for (let i = 0; i < HR_GRAPH_BARS; i++) {
-        ui.graph.push(
-          createWidget(widget.FILL_RECT, {
-            ...graphBarX(i),
-            y: HR_GRAPH.y + HR_GRAPH.h - HR_GRAPH.minBarH,
-            h: HR_GRAPH.minBarH,
-            color: COLORS.graphEmpty,
-          }),
-        )
-      }
-
       // every slot of every column count exists once; applyGeometry places
       // the ones the layout shows and hides the rest
       const blank = ROW_GEOMETRY.header[1].header
@@ -502,7 +466,6 @@ DataWidget(
         ui.slots[id] = {
           label: text(blank.label),
           value: text(blank.value),
-          unit: text({ ...blank.value, visible: false }),
           icon: createWidget(widget.IMG, {
             x: 0,
             y: 0,
@@ -575,45 +538,66 @@ DataWidget(
       if (color != null) this.setProp(key, w, "color", color)
     },
 
-    // One SPORT_DATA widget per slot showing a native-only field, created on
-    // demand at the slot's value box (the value is read and drawn by the
-    // watch itself; RunDeck never sees it). `type` null hides it.
-    showNative(id, type, box) {
+    // The watch-drawn value of a slot: one SPORT_DATA widget, sized for the
+    // field's widest typical value and placed by the box's alignment (the
+    // widget has no alignment of its own). A new color (target status)
+    // recreates it: text_color is fixed at creation. `f` null deletes it;
+    // deleted, not hidden, since the watch keeps drawing a SPORT_DATA widget
+    // whatever its visible property says.
+    showNative(id, f, box, color) {
+      if (!f) {
+        this.dropNative(id)
+        return
+      }
+      const size = fittedSize(box, f.sample)
+      const w = Math.min(box.w, this.measure(f.sample, size) + 2)
+      let x = box.x
+      if (box.align_h === align.CENTER_H)
+        x = box.x + Math.round((box.w - w) / 2)
+      else if (box.align_h === align.RIGHT) x = box.x + box.w - w
+      const sig = `${f.native}|${color}|${x}|${w}|${size}`
       const cur = this.state.native[id]
-      if (!type) {
-        if (cur) this.setProp(`${id}n`, cur.w, "visible", false)
-        return
-      }
-      if (cur && cur.type === type) {
-        this.setProp(`${id}n`, cur.w, "visible", true)
-        return
-      }
-      if (cur) this.dropNative(id)
-      let w = null
-      try {
-        w = createWidget(widget.SPORT_DATA, {
-          edit_id: 101 + SLOT_IDS.indexOf(id),
-          category: edit_widget_group_type.SPORTS,
-          default_type: sport_data[type],
-          x: box.x,
+      if (cur && cur.sig === sig) return
+      this.dropNative(id)
+      const widgetObj = this.createNative(
+        101 + SLOT_IDS.indexOf(id),
+        f.native,
+        {
+          x,
           y: box.y,
-          w: box.w,
+          w,
           h: box.h,
-          text_x: 0,
-          text_y: 0,
-          text_w: box.w,
-          text_h: box.h,
-          text_size: box.text_size,
-          text_color: COLORS.value,
-          rect_visible: false,
-          sub_text_visible: false,
-        })
+          text_size: size,
+          text_color: color,
+        },
+      )
+      if (widgetObj) this.state.native[id] = { sig, w: widgetObj }
+    },
+
+    createNative(editId, type, box) {
+      try {
+        return (
+          createWidget(widget.SPORT_DATA, {
+            edit_id: editId,
+            category: edit_widget_group_type.SPORTS,
+            default_type: sport_data[type],
+            x: box.x,
+            y: box.y,
+            w: box.w,
+            h: box.h,
+            text_x: 0,
+            text_y: 0,
+            text_w: box.w,
+            text_h: box.h,
+            text_size: box.text_size,
+            text_color: box.text_color,
+            rect_visible: false,
+            sub_text_visible: false,
+          }) || null
+        )
       } catch (e) {
-        w = null // type not supported on this firmware: the slot stays blank
+        return null // type not supported on this firmware: the slot stays blank
       }
-      if (!w) return
-      this.state.native[id] = { type, w }
-      delete this.state.cache[`${id}n:visible`]
     },
 
     dropNative(id) {
@@ -625,20 +609,27 @@ DataWidget(
         /* already gone */
       }
       delete this.state.native[id]
-      delete this.state.cache[`${id}n:visible`]
     },
 
-    // Unit shown after a value, or "" for none: units can be switched off;
-    // the big center numbers of three-column rows stay unit-free (they are
-    // the main pace/time and a unit would shrink them); the single top HR
-    // shows its zone there instead.
-    unitFor(id, fieldId, ctx) {
-      const { layout } = this.state
-      if (layout.units === "hide") return ""
-      if ((id === "r2c" || id === "r3c") && layout.cols[id.slice(0, 2)] === 3)
-        return ""
-      if (id === "header" && fieldId === "hr") return ""
-      return fieldUnit(fieldId, ctx)
+    // The watch's own HR chart next to a single top HR value.
+    showChart(show) {
+      const ui = this.state.ui
+      if (!show) {
+        if (ui.chart)
+          try {
+            deleteWidget(ui.chart)
+          } catch (e) {
+            /* already gone */
+          }
+        ui.chart = null
+        return
+      }
+      if (ui.chart) return
+      ui.chart = this.createNative(CHART_EDIT_ID, "CHART_HR", {
+        ...HR_GRAPH,
+        text_size: px(16),
+        text_color: COLORS.value,
+      })
     },
 
     // Rendered text width in px: the watch's own layout engine when the
@@ -662,63 +653,6 @@ DataWidget(
       if (cache.size > 300) cache.clear()
       cache.set(key, w)
       return w
-    },
-
-    // Value with an optional small unit after it ("7.14 km"). The pair is
-    // measured, shrunk together to fit the box, then placed by the box's
-    // alignment; the unit sits on the value's baseline.
-    // Value + small unit. The unit never costs the value any size: the
-    // value keeps the size it would have alone, and the unit is shown only
-    // when it fits next to it. Once a unit doesn't fit (10.00 km, 10'05 /km)
-    // it stays off until the layout changes, so it doesn't flicker as the
-    // value's width changes.
-    renderValue(id, slot, box, text, unit, color) {
-      const key = `${id}v`
-      const size = fittedSize(box, text)
-      const unitSize = Math.max(UNIT.minSize, Math.round(size * UNIT.ratio))
-      const dropKey = `${id}|${unit}`
-      let vw = 0
-      let uw = 0
-      if (unit && !this.state.unitDropped[dropKey]) {
-        vw = this.measure(text, size)
-        uw = this.measure(unit, unitSize)
-        // the unit is always on the right; keep clear of a label/divider there
-        if (vw + UNIT.gap + uw > box.w - (box.unitPad || 0))
-          this.state.unitDropped[dropKey] = true
-      }
-      if (!unit || this.state.unitDropped[dropKey]) {
-        this.setProp(`${id}u`, slot.unit, "visible", false)
-        this.setProp(key, slot.value, "x", box.x)
-        this.setProp(key, slot.value, "w", box.w)
-        this.setProp(key, slot.value, "align_h", box.align_h)
-        this.setFitted(key, slot.value, box, text, color)
-        return
-      }
-      const room = box.w - (box.unitPad || 0)
-      const total = vw + UNIT.gap + uw
-      let x0 = box.x
-      if (box.align_h === align.CENTER_H)
-        x0 = box.x + Math.round((box.w - total) / 2)
-      else if (box.align_h === align.RIGHT) x0 = box.x + room - total
-      this.setProp(key, slot.value, "x", x0)
-      this.setProp(key, slot.value, "w", vw + 2)
-      this.setProp(key, slot.value, "align_h", align.LEFT)
-      this.setProp(key, slot.value, "text_size", size)
-      this.setProp(key, slot.value, "text", text)
-      this.setProp(key, slot.value, "color", color)
-      // baseline: the value is vertically centered in the box
-      const baseline = box.y + box.h / 2 + size * 0.36
-      const uk = `${id}u`
-      this.setProp(uk, slot.unit, "visible", true)
-      this.setProp(uk, slot.unit, "x", x0 + vw + UNIT.gap)
-      this.setProp(uk, slot.unit, "y", Math.round(baseline - unitSize * 1.05))
-      this.setProp(uk, slot.unit, "w", uw + 4)
-      this.setProp(uk, slot.unit, "h", unitSize + 6)
-      this.setProp(uk, slot.unit, "align_h", align.LEFT)
-      this.setProp(uk, slot.unit, "align_v", align.TOP)
-      this.setProp(uk, slot.unit, "text_size", unitSize)
-      this.setProp(uk, slot.unit, "text", unit)
-      this.setProp(uk, slot.unit, "color", COLORS.unit)
     },
 
     // Field name as text, short text, or icon + qualifier ("Avg", "Lap").
@@ -774,26 +708,16 @@ DataWidget(
     },
 
     render() {
-      const { ui, config: cfg, stats, metrics, mode, layout } = this.state
+      const { ui, config: cfg, metrics, mode, layout } = this.state
       if (!ui.slots || !metrics) return
       const s = metrics.snapshot
       const locked = mode === "locked"
-      const ctx = {
-        s,
-        stats,
-        unit: cfg.pace_unit,
-        hrZones: this.state.hrZones,
-        now: new Date(),
-      }
+      const ctx = { s, hrZones: this.state.hrZones, vo2max: this.state.vo2max }
 
       // target: colors every slot that shows the target's live metric
       const t = cfg.target
       const status = this.state.tracker.update(t ? barValue(t.metric, s) : null)
       const targetField = t ? t.metric : null
-
-      const n = this.state.notice
-      const noticeOn = !locked && !!n && this.nowSec() < n.until
-      if (!noticeOn) this.state.notice = null
 
       const hrPos = zonePosition(s.hr, this.state.hrZones)
 
@@ -807,18 +731,14 @@ DataWidget(
       for (const id of shown) {
         const slot = ui.slots[id]
         const g = this.state.geo[id]
-        const row = id.slice(0, 2)
-        const visible =
-          (!locked || lockedKeep.indexOf(id) >= 0) &&
-          !(noticeOn && row === NOTICE_ROW) &&
-          !(locked && row === NOTICE_SUB_ROW)
+        const visible = !locked || lockedKeep.indexOf(id) >= 0
         const fieldId = layout.slots[id]
         let f = FIELDS[fieldId] || FIELDS.none
-        // native-only fields: the watch draws the value (SPORT_DATA widget)
-        this.showNative(id, visible && f.native ? f.native : null, g.value)
-        this.setProp(`${id}v`, slot.value, "visible", visible && !f.native)
-        if (!visible || f.native)
-          this.setProp(`${id}u`, slot.unit, "visible", false)
+        const valueColor =
+          fieldId === targetField && status ? COLORS[status] : COLORS.value
+        // the watch draws the value (SPORT_DATA widget)
+        this.showNative(id, visible && f.native ? f : null, g.value, valueColor)
+        this.setProp(`${id}v`, slot.value, "visible", visible && !!f.value)
         if (!visible) {
           this.setProp(`${id}l`, slot.label, "visible", false)
           this.setProp(`${id}i`, slot.icon, "visible", false)
@@ -837,20 +757,18 @@ DataWidget(
         const labelBox =
           layout.labels === "icons" && g.iconLabel ? g.iconLabel : g.label
         this.renderLabel(id, slot, labelBox, f, layout.labels, labelColor)
-        const valueColor =
-          fieldId === targetField && status ? COLORS[status] : COLORS.value
-        if (!f.native)
-          this.renderValue(
-            id,
-            slot,
+        // the HR zone: the one value RunDeck draws itself
+        if (f.value)
+          this.setFitted(
+            `${id}v`,
+            slot.value,
             g.value,
             fieldValue(fieldId, ctx),
-            this.unitFor(id, fieldId, ctx),
             valueColor,
           )
       }
 
-      // single top value showing HR: zone suffix + HR graph
+      // single top value showing HR: zone suffix + the watch's HR chart
       const headerIsHr =
         layout.cols.header === 1 && layout.slots.header === "hr"
       this.setProp(
@@ -865,9 +783,7 @@ DataWidget(
         "color",
         zoneColor(hrPos ? hrPos.zone : 0),
       )
-      const showGraph = !locked && headerIsHr
-      if (this.state.ticks % GRAPH_EVERY_TICKS === 1 || !showGraph)
-        this.renderGraph(!showGraph)
+      this.showChart(!locked && headerIsHr)
 
       // dividers: only the header rule stays in locked mode
       for (let i = 1; i < ui.dividers.length; i++)
@@ -881,7 +797,7 @@ DataWidget(
 
       this.renderZoneBar(locked)
 
-      this.setProp("notice", ui.notice, "visible", noticeOn || locked)
+      this.setProp("notice", ui.notice, "visible", locked)
       this.setProp("noticeSub", ui.noticeSub, "visible", locked)
       if (locked) {
         this.setProp(
@@ -892,9 +808,6 @@ DataWidget(
         )
         this.setProp("notice", ui.notice, "text", "Unlock in Zepp app")
         this.setProp("notice", ui.notice, "color", COLORS.noticeWarn)
-      } else if (noticeOn) {
-        this.setProp("notice", ui.notice, "text", n.text)
-        this.setProp("notice", ui.notice, "color", n.color)
       }
     },
 
@@ -943,45 +856,6 @@ DataWidget(
         w: ZONE_BAR.marker.w,
         h: ZONE_BAR.marker.h,
       })
-    },
-
-    renderGraph(hidden) {
-      const { ui, stats } = this.state
-      const zones = this.state.hrZones
-      const bars = hidden ? [] : stats.graph()
-      const vals = bars.filter((v) => v != null)
-      let lo = vals.length ? Math.min(...vals) - 5 : 0
-      let hi = vals.length ? Math.max(...vals) + 5 : 1
-      if (hi - lo < 30) {
-        const mid = (hi + lo) / 2
-        lo = mid - 15
-        hi = mid + 15
-      }
-      // right-aligned: the newest bucket is always the rightmost bar
-      const offset = HR_GRAPH_BARS - bars.length
-      for (let i = 0; i < HR_GRAPH_BARS; i++) {
-        const v = i >= offset ? bars[i - offset] : null
-        const h =
-          v == null
-            ? HR_GRAPH.minBarH
-            : Math.max(
-                HR_GRAPH.minBarH,
-                Math.round(((v - lo) / (hi - lo)) * HR_GRAPH.h),
-              )
-        const pos = v == null ? null : zonePosition(v, zones)
-        const color =
-          v == null ? COLORS.graphEmpty : zoneColor(pos ? pos.zone : 0)
-        const key = `g${i}`
-        const sig = hidden ? "hidden" : `${h}:${color}`
-        if (this.state.cache[key] === sig) continue
-        this.state.cache[key] = sig
-        ui.graph[i].setProperty(prop.MORE, {
-          ...graphBarX(i),
-          y: HR_GRAPH.y + HR_GRAPH.h - h,
-          h,
-          color: hidden ? COLORS.bg : color,
-        })
-      }
     },
   }),
 )

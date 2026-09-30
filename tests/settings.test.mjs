@@ -67,7 +67,6 @@ test("no Select dropdowns: every choice is a chip row with one selected", () => 
   const on = selectedChips(tree)
   for (const want of [
     "min/km",
-    "Every 1 km",
     "Pace",
     "Watch settings",
     "Text",
@@ -143,7 +142,9 @@ test("layout: column chips change the row and its spots", () => {
   ;({ tree, store } = render(Object.fromEntries(store)))
   assert.equal(JSON.parse(store.get("layout_json")).cols.r1, 3)
   assert.ok(
-    all(tree, "Button").some((b) => /^Middle:\s+Max HR/.test(b.props.label)),
+    all(tree, "Button").some((b) =>
+      /^Middle:\s+% of max HR/.test(b.props.label),
+    ),
   )
 })
 
@@ -200,9 +201,9 @@ test("target: heart rate option and separate From / To fields per metric", () =>
   assert.equal(paceInputs.target_pace_low, "4:40") // pace range kept
 })
 
-test("units chips save into the layout", () => {
-  const { tree, store } = render({})
-  assert.ok(selectedChips(tree).includes("Show"))
-  button(tree, "Hide").props.onClick()
-  assert.equal(JSON.parse(store.get("layout_json")).units, "hide")
+test("no units or auto-lap settings: the watch owns both", () => {
+  const { tree } = render({})
+  const labels = all(tree, "Button").map((b) => b.props.label)
+  assert.ok(!labels.includes("Hide"))
+  assert.ok(!labels.some((l) => /^Every 1 /.test(l)))
 })

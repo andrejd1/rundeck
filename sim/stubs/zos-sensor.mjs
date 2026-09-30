@@ -18,8 +18,9 @@ export class Workout {
     const z = sim().hrZoneSettings
     if (z) this.getUserHrZoneSettings = () => z
   }
+  // user status; __sim.workoutStatus scripts it ({vo2Max, ...})
   getStatus() {
-    return {}
+    return sim().workoutStatus || {}
   }
 }
 

@@ -7,11 +7,28 @@
   red ("Key not activated: ...") until it changes, instead of the reason vanishing behind the trial
   line.
 
+- Every value is the watch's own. Each slot's number is a SPORT_DATA widget the watch draws
+  and updates itself, so the screen matches the native workout and the saved activity
+  exactly (distance, lap pace, lap distance, averages) and keeps updating while RunDeck's
+  code is suspended (screen off, another data page). RunDeck computes nothing any more: its
+  own laps, averages, max HR, grade and HR history are gone. Lap fields follow the watch's
+  laps and auto-lap setting; the lap key is left entirely to the watch. The HR graph is the
+  watch's HR chart. New fields: last-lap HR and last-lap time; "Lap count" is now the
+  watch's lap number. Max HR is dropped (the watch offers no such value to extensions).
+- The watch draws values in its own format, so RunDeck no longer adds units after them; the
+  units and auto-lap settings are gone. Target colors apply to the watch-drawn value.
 - Battery: while another data page is on screen, or the screen is off without the always-on
-  display (raise to wake), RunDeck draws nothing and
-  reads only what the lap/average stats need (time, distance, HR, power, altitude), so averages
-  still include that time. Raising the wrist redraws at once. With the always-on display it keeps
-  drawing, as the screen may still show it.
+  display (raise to wake), RunDeck draws nothing; raising the wrist redraws at once, and a
+  missed screen-on event no longer leaves the screen frozen. With the always-on display it
+  keeps drawing. Only HR, the trial clock, and pace/power when a target or the zone bar
+  uses them are read.
+- 23 more watch values from the SDK's sport_data types: avg/lap % max HR; avg, lap and
+  last-lap speed; max and last-lap power, 3/10/30 s power, W/kg, work; average lap time;
+  last-lap distance; lap and average grade; last-lap ascent/descent; min altitude; lap and
+  last-lap cadence; lap stride length; sunrise. Plus VO2 max from the watch's user status.
+- The watch's own HR zones: app.json now targets API 4.2, where
+  Workout.getUserHrZoneSettings lives (3.6 stays the minimum; older watches still fall back
+  to 220 - age).
 
 - Every round screen size: the HR graph, icons and bottom row scale correctly from 480 down to 360 px
   (icons ship in five pixel sizes, graph bars are placed from the scaled width, the bottom row sits

@@ -38,11 +38,8 @@ const layoutJson = (slots, bar = "hr", extra = {}) =>
     grade: 1.5,
     hr: (t) => 118 + Math.round(20 * Math.sin(t / 200)),
   })
-  w.pressLap()
   w.run(43, { speed: 3.0, grade: -3, hr: 106 })
   snap(w, "Auto bar: pace zones from LT pace, target 5:30-5:50 marked")
-  w.pressLap()
-  snap(w, "Lap key - lap summary flash")
 }
 
 // 2. customized like the second reference screenshot
@@ -90,7 +87,7 @@ const layoutJson = (slots, bar = "hr", extra = {}) =>
         {
           header: "hr",
           r1l: "lap_hr",
-          r1r: "max_hr",
+          r1r: "hr_pct_max",
           r2l: "lap_power",
           r2c: "power",
           r2r: "pace",
@@ -127,7 +124,7 @@ const layoutJson = (slots, bar = "hr", extra = {}) =>
       layout_json: layoutJson(
         {
           r1l: "lap_hr",
-          r1c: "max_hr",
+          r1c: "hr_pct_max",
           r1r: "avg_hr",
           r4l: "lap_distance",
           r4c: "laps",
@@ -176,7 +173,7 @@ const layoutJson = (slots, bar = "hr", extra = {}) =>
           headerl: "hr",
           headerr: "elapsed",
           r1l: "lap_hr",
-          r1c: "max_hr",
+          r1c: "hr_pct_max",
           r1r: "avg_hr",
           r4l: "lap_distance",
           r4c: "distance",
@@ -199,13 +196,6 @@ const layoutJson = (slots, bar = "hr", extra = {}) =>
 
 // 7. native-only fields (drawn by the watch) and a heart rate target
 {
-  // what the watch would draw for each native type in this frame
-  globalThis.__nativeSamples = {
-    ALTITUDE_TOTAL_DOWN: "112",
-    OTHER_AEROBIC_TE: "3.4",
-    STRIDE: "1.12",
-    OTHER_TRAIN_LOAD: "86",
-  }
   const w = await bootWidget({
     licensed: true,
     config: cfg({

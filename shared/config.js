@@ -19,7 +19,6 @@ export const DEFAULT_CONFIG = {
   pace_zones: null,
   power_zones: null,
   target: null, // {metric: pace|power, min, max} in m/s or W
-  auto_lap_m: 1000,
   layout: defaultLayout(),
 }
 
@@ -120,7 +119,6 @@ export function buildConfig(get) {
       ? "min_per_mile"
       : "min_per_km"
   const method = s("hr_zone_method", "device")
-  const autoLap = s("auto_lap", "1")
   const targetMetric = s("target_metric", "pace")
   return {
     v: CONFIG_VERSION,
@@ -138,12 +136,6 @@ export function buildConfig(get) {
     pace_zones: paceZones(parsePace(s("threshold_pace", ""), paceUnit)),
     power_zones: powerZones(numOrNull(s("ftp", ""))),
     target: parseTarget(targetMetric, targetText(s, targetMetric), paceUnit),
-    auto_lap_m:
-      autoLap === "0"
-        ? 0
-        : paceUnit === "min_per_mile"
-          ? METERS_PER_MILE
-          : 1000,
     layout: readLayout(get),
   }
 }

@@ -18,14 +18,11 @@ export const COLORS = {
   time: 0x22c55e,
   dist: 0xf59e0b,
   body: 0x2dd4bf,
-  notice: 0xf2f2f2,
   noticeWarn: 0xf59e0b,
   // center value against the pace/power target
   below: 0x60a5fa,
   inside: 0x2ee66b,
   above: 0xef4444,
-  graphEmpty: 0x1a1a1a,
-  unit: 0x9aa4b2, // units after values: quieter than the value itself
 }
 
 const label = (x, y, w, color, alignH = align.CENTER_H, size = 22) => ({
@@ -63,12 +60,12 @@ const line = (x, y, w, h) => ({
 // count (ROW_GEOMETRY); any field can go in any slot, so the widget shrinks
 // text that would overflow its slot width.
 
+// the watch's own HR chart (SPORT_DATA CHART_HR) left of a single top HR
 export const HR_GRAPH = {
   x: px(92),
   y: px(50),
-  w: px(108), // 36 bars; each drawn 1 px narrower than its pitch
+  w: px(108),
   h: px(52),
-  minBarH: px(2),
 }
 // zone ("Z2") next to the header value when the header shows heart rate
 export const HEADER_SUFFIX = label(330, 64, 70, COLORS.value, align.LEFT, 28)
@@ -193,11 +190,6 @@ export const ROW_DIVIDERS = {
   },
 }
 
-// Units after values ("7.14 km"): a fraction of the value size, never tiny.
-// Value boxes with a label right beside them (the inline two-column rows)
-// carry `unitPad`: room kept free between the unit and that label/divider.
-export const UNIT = { ratio: 0.42, minSize: px(16), gap: px(4) }
-
 // Icon-mode labels: icon square next to the qualifier text ("Avg", "Lap").
 // IMG widgets aren't scaled by the watch, so the icons ship in these pixel
 // sizes (sim/gen-icons.mjs) and a label uses the one nearest its scaled size.
@@ -225,13 +217,13 @@ export const ZONE_BAR = {
   band: { y: px(275), h: px(5), minW: px(10), color: 0xffffff },
 }
 
-// --- notice (trial status, lap flash, locked) overlaying the lap dist row ---
+// --- notice (locked mode) overlaying row 4 ---
 export const NOTICE = {
   x: px(56),
   y: px(362),
   w: px(368),
   h: px(44),
-  color: COLORS.notice,
+  color: COLORS.noticeWarn,
   text_size: px(26),
   align_h: align.CENTER_H,
   align_v: align.CENTER_V,
