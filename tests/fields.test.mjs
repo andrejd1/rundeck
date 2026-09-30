@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
 import { test } from "node:test"
 import {
   DEFAULT_SLOTS,
@@ -71,4 +72,25 @@ test("newer layout wins, ties keep the first", () => {
   assert.equal(newerLayout(b, a).slots.header, "clock")
   assert.equal(newerLayout(a, { ...b, updated_at: 10 }).slots.header, "pace")
   assert.equal(newerLayout(a, null).slots.header, "pace")
+})
+
+test("every native type exists in the Zepp OS SDK", () => {
+  const dts = readFileSync(
+    new URL(
+      "../node_modules/@zeppos/device-types/dist/index.d.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  )
+  const start = dts.indexOf("interface IHmUISportDataType")
+  const known = new Set(
+    [
+      ...dts.slice(start, dts.indexOf("}", start)).matchAll(/(\w+): number/g),
+    ].map((m) => m[1]),
+  )
+  assert.ok(known.size > 100)
+  for (const id of FIELD_IDS) {
+    const t = FIELDS[id].native
+    if (t) assert.ok(known.has(t), `${id}: ${t}`)
+  }
 })

@@ -1,7 +1,7 @@
 # RunDeck — one-screen running dashboard for Amazfit (Zepp OS)
 
 A **Zepp OS Workout Extension** that pins a dense, glanceable data screen inside the native
-Amazfit running workout: HR with the watch's HR chart, lap vs average HR and
+Amazfit running workout: HR with its zone, lap vs average HR and
 pace around a big center pace (or power), a five-zone bar, elapsed time, cadence, lap
 distance, grade, distance and total ascent — all on one page.
 
@@ -20,7 +20,7 @@ regenerates them).
 ## The screen
 
 ```
-        [watch HR chart]  106 Z1
+                  106 Z1
       Lap HR 105   │   117 Avg HR
  Lap Pace        5'38         Avg Pace       <- center: pace or power, colored vs target
    4'52                         4'42
@@ -33,7 +33,7 @@ regenerates them).
 
 | What | Source |
 |---|---|
-| Every value in a slot, the HR chart | drawn by the watch: `SPORT_DATA` widgets (`@zos/ui` `sport_data` types, e.g. `PACE_CUR_AVG` lap pace, `DISTANCE_TOTAL`, `DURATION_NET`) |
+| Every value in a slot | drawn by the watch: `SPORT_DATA` widgets (`@zos/ui` `sport_data` types, e.g. `PACE_CUR_AVG` lap pace, `DISTANCE_TOTAL`, `DURATION_NET`) |
 | HR zone (field, top-row suffix), zone bar marker | HeartRate sensor (`data:user.hd.heart_rate`) placed in the HR zones |
 | Target colors, pace/power zone bar marker | native `getSportData` (`pace`; `power` — **not in the documented types**, probed only when a target or the bar uses it) |
 | Trial run counting | native `getSportData("duration")` |
@@ -43,7 +43,7 @@ regenerates them).
 The screen is a top row plus five rows and the zone bar. Each row has a **column count**
 (top row: 1–2, rows 1 and 4: 2–3, the big-number rows 2 and 3: 1–3, bottom row: 1–2; the
 limits keep text readable on the round screen). HR as the single top value gets the
-watch's HR chart and a zone suffix; in a two-column top row the zone moves into its label
+zone suffix; in a two-column top row the zone moves into its label
 ("HR Z3", zone-colored). Any of 66 fields can go in any spot:
 
 - **Heart rate:** HR, HR zone, avg / lap / last-lap HR, % max HR (current / avg / lap),
@@ -66,7 +66,8 @@ alignment; RunDeck adds the label. Lap values follow the watch's own laps and it
 auto-lap setting. VO2 max is the value the watch keeps for the user
 (`Workout.getStatus`, read once when the screen opens). The SDK's `sport_data` types were
 the source for the catalog; left out are the ones for other sports (swim, ski, golf,
-rowing, diving), the other charts (pace, altitude, cadence), barometric pressure and
+rowing, diving), the charts (HR, pace, altitude, cadence; the HR chart is the prime
+suspect in a watch restart), barometric pressure and
 min/max temperature. There is no max HR value for extensions, and GAP, vertical
 oscillation and ground contact time are not exposed by Zepp OS at all. Units are the
 watch's to draw, so RunDeck adds none.

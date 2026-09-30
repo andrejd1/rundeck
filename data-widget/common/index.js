@@ -19,7 +19,6 @@ import {
   GLYPH_WIDTH,
   HEADER_CENTERED,
   HEADER_SUFFIX,
-  HR_GRAPH,
   ICON,
   NOTICE,
   NOTICE_SUB,
@@ -82,8 +81,6 @@ const CONFIG_RETRY_SEC = 60
 // Wait this long for the phone's reply (license, trial count) before the
 // access mode is latched for the activity; offline, the cached state decides.
 const PHONE_GRACE_SEC = 10
-// edit_id of the native HR chart; slots take 101 and up
-const CHART_EDIT_ID = 100
 
 // shipped icon size nearest to a scaled size
 function iconFile(size) {
@@ -144,7 +141,6 @@ DataWidget(
         loadObject(LAYOUT_KEY),
       )
       this.state.hrZones = resolveHrZones(this.state.config)
-      this.state.vo2max = readVo2Max()
       const lic = loadObject(LICENSE_KEY)
       this.state.licensed = !!(lic && lic.licensed)
       this.state.trial = new TrialSession(
@@ -342,12 +338,14 @@ DataWidget(
         for (const id of rowSlots(row.id, cols))
           geo[id] = ROW_GEOMETRY[row.id][cols][id]
       }
-      // a single top value without the HR graph is centered
-      if (geo.header && layout.slots.header !== "hr")
-        geo.header = HEADER_CENTERED
+      // a single top value is centered (the HR zone suffix sits after it)
+      if (geo.header) geo.header = HEADER_CENTERED
       this.state.geo = geo
-      // native value widgets are placed per slot: rebuild them where needed
-      for (const id of Object.keys(this.state.native)) this.dropNative(id)
+      // watch-drawn values of slots the layout no longer shows go; the rest
+      // are moved by render() only if their place or size changed (creating
+      // and deleting SPORT_DATA widgets is costly for the watch)
+      for (const id of Object.keys(this.state.native))
+        if (!geo[id] || !FIELDS[layout.slots[id]].native) this.dropNative(id)
       // sizes/positions changed: forget what was drawn for the slots
       for (const k of Object.keys(this.state.cache))
         if (/^(r\d[lcr]|header[lr]?)[lvi]:/.test(k)) delete this.state.cache[k]
@@ -575,12 +573,15 @@ DataWidget(
     },
 
     createNative(editId, type, box) {
+      // a type this firmware doesn't know must never reach the watch
+      const nativeType = sport_data ? sport_data[type] : null
+      if (nativeType == null) return null
       try {
         return (
           createWidget(widget.SPORT_DATA, {
             edit_id: editId,
             category: edit_widget_group_type.SPORTS,
-            default_type: sport_data[type],
+            default_type: nativeType,
             x: box.x,
             y: box.y,
             w: box.w,
@@ -609,27 +610,6 @@ DataWidget(
         /* already gone */
       }
       delete this.state.native[id]
-    },
-
-    // The watch's own HR chart next to a single top HR value.
-    showChart(show) {
-      const ui = this.state.ui
-      if (!show) {
-        if (ui.chart)
-          try {
-            deleteWidget(ui.chart)
-          } catch (e) {
-            /* already gone */
-          }
-        ui.chart = null
-        return
-      }
-      if (ui.chart) return
-      ui.chart = this.createNative(CHART_EDIT_ID, "CHART_HR", {
-        ...HR_GRAPH,
-        text_size: px(16),
-        text_color: COLORS.value,
-      })
     },
 
     // Rendered text width in px: the watch's own layout engine when the
@@ -712,6 +692,12 @@ DataWidget(
       if (!ui.slots || !metrics) return
       const s = metrics.snapshot
       const locked = mode === "locked"
+      // VO2 max: read once, and only when a slot shows it
+      if (
+        this.state.vo2max === undefined &&
+        activeSlots(layout).some((id) => layout.slots[id] === "vo2max")
+      )
+        this.state.vo2max = readVo2Max()
       const ctx = { s, hrZones: this.state.hrZones, vo2max: this.state.vo2max }
 
       // target: colors every slot that shows the target's live metric
@@ -768,7 +754,7 @@ DataWidget(
           )
       }
 
-      // single top value showing HR: zone suffix + the watch's HR chart
+      // single top value showing HR: zone suffix
       const headerIsHr =
         layout.cols.header === 1 && layout.slots.header === "hr"
       this.setProp(
@@ -783,7 +769,6 @@ DataWidget(
         "color",
         zoneColor(hrPos ? hrPos.zone : 0),
       )
-      this.showChart(!locked && headerIsHr)
 
       // dividers: only the header rule stays in locked mode
       for (let i = 1; i < ui.dividers.length; i++)

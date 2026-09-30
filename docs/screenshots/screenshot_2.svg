@@ -7,7 +7,7 @@
     <rect x="28" y="158" width="424" height="2" rx="0" fill="#3a3a3a"/>
     <rect x="44" y="357" width="392" height="2" rx="0" fill="#3a3a3a"/>
     <rect x="84" y="409" width="312" height="2" rx="0" fill="#3a3a3a"/>
-    <text x="214" y="50" text-anchor="start" font-size="20" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">HR</text>
+    <text x="240" y="48" text-anchor="middle" font-size="20" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">HR</text>
     
     
     
@@ -83,7 +83,7 @@
     <rect x="261" y="250" width="8" height="30" rx="4" fill="#ffffff"/>
     
     
-    <text x="265.5" y="100.6" text-anchor="middle" font-size="56" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
+    <text x="240.5" y="100.6" text-anchor="middle" font-size="56" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
     <text x="187" y="145.9" text-anchor="middle" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">161</text>
     <text x="288" y="144.5" text-anchor="middle" font-size="30" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">84%</text>
     <text x="81.5" y="225.3" text-anchor="middle" font-size="38" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">251</text>
@@ -94,7 +94,6 @@
     <text x="176.5" y="396.9" text-anchor="middle" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">19</text>
     <text x="293" y="396.9" text-anchor="middle" font-size="34" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">244</text>
     <text x="188.5" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">18.34</text>
-    <polyline points="92,81 104,76 116,79 128,71 140,73 152,66 164,68 176,60 188,66 200,63" fill="none" stroke="#ef4444" stroke-width="3"/>
     <text x="240" y="232.2" text-anchor="middle" font-size="72" fill="#ef4444" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">388</text>
   </g>
   <circle cx="240" cy="240" r="238" fill="none" stroke="#333" stroke-width="3"/>

@@ -15,7 +15,7 @@ import { bootEditor, bootWidget } from "../sim/world.mjs"
 
 // geometry of the default column counts
 const SLOT_GEOMETRY = {
-  header: RG.header[1].header,
+  header: HEADER_CENTERED,
   ...RG.r1[2],
   ...RG.r2[3],
   ...RG.r3[3],
@@ -118,8 +118,8 @@ test("every value is the watch's own: native widgets, nothing computed", async (
   // no RunDeck-drawn value text anywhere but the labels
   assert.equal(w.textAt(CENTER_VALUE), null)
   assert.equal(w.textAt(LAP_DIST_VALUE), null)
-  // the watch's own HR chart beside the top HR
-  assert.ok(w.widgets().some((x) => x.props.default_type === "CHART_HR"))
+  // no watch chart widget beside the top HR
+  assert.ok(!w.widgets().some((x) => x.props.default_type === "CHART_HR"))
 })
 
 test("the lap key is left to the watch", async () => {
@@ -439,7 +439,7 @@ test("heart rate target colors HR and marks the bar", async () => {
     sim: { hrZoneSettings: { range: [90, 108, 126, 144, 162, 181] } },
   })
   w.run(3, { hr: 160 })
-  const header = w.nativeAt(RG.header[1].header.value)
+  const header = w.nativeAt(HEADER_CENTERED.value)
   assert.equal(header.props.default_type, "HR")
   assert.equal(header.props.text_color, 0xef4444) // above the range
   const band = w
@@ -570,4 +570,33 @@ test("new native fields reach their slot", async () => {
   w.run(2)
   assert.equal(w.typeAt(SLOT_GEOMETRY.r4l.value), "DEVICE_3S_AVG_POWER")
   assert.equal(w.typeAt(SLOT_GEOMETRY.r4r.value), "DISTANCE_PREV_SECTION")
+})
+
+test("watch-drawn values are not recreated when the page comes back", async () => {
+  const w = await bootWidget({ licensed: true, config: cfg() })
+  w.run(3)
+  const before = w.widgets().filter((x) => x.type === "SPORT_DATA")
+  w.page.onPause()
+  w.page.onResume()
+  w.run(3)
+  const after = w.widgets().filter((x) => x.type === "SPORT_DATA")
+  assert.equal(after.length, before.length)
+  for (const x of before) assert.ok(after.includes(x))
+})
+
+test("a type the firmware doesn't know is never handed to the watch", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg(),
+    sim: { unknownSportTypes: ["PACE_CUR_AVG"] },
+  })
+  w.run(3)
+  assert.equal(w.typeAt(SLOT_GEOMETRY.r2l.value), null) // lap pace: blank
+  assert.equal(w.typeAt(SLOT_GEOMETRY.r2c.value), "PACE")
+  assert.ok(
+    w
+      .widgets()
+      .filter((x) => x.type === "SPORT_DATA")
+      .every((x) => x.props.default_type != null),
+  )
 })
