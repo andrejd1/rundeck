@@ -43,8 +43,8 @@ regenerates them).
 The screen is a top row plus five rows and the zone bar. Each row has a **column count**
 (top row: 1–2, rows 1 and 4: 2–3, the big-number rows 2 and 3: 1–3, bottom row: 1–2; the
 limits keep text readable on the round screen). HR as the single top value gets the
-zone suffix; in a two-column top row the zone moves into its label
-("HR Z3", zone-colored). Any of 66 fields can go in any spot:
+zone suffix; HR anywhere else carries the zone in its label ("HR Z3", zone-colored).
+Zones read Z1-Z5: a heart rate below zone 1 shows Z1. Any of 66 fields can go in any spot:
 
 - **Heart rate:** HR, HR zone, avg / lap / last-lap HR, % max HR (current / avg / lap),
   % HR reserve

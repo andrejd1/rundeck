@@ -69,7 +69,27 @@ export const NATIVE_PREVIEW = {
   STRIDE_CUR: "1.10",
 }
 
+// Workout time and heart rate follow the simulated run, so a frame shows
+// what the watch would at that moment (sizes depend on the elapsed time).
+function live(type) {
+  const sim = globalThis.__sim || {}
+  if (type === "DURATION_NET") {
+    const d = sim.sport && sim.sport.duration && sim.sport.duration.duration
+    const sec =
+      typeof d === "string"
+        ? d.split(":").reduce((a, v) => a * 60 + +v, 0)
+        : null
+    if (!(sec > 0)) return null
+    const h = Math.floor(sec / 3600)
+    const m = Math.floor((sec % 3600) / 60)
+    const pad = (n) => String(n).padStart(2, "0")
+    return h ? `${h}:${pad(m)}:${pad(sec % 60)}` : `${m}:${pad(sec % 60)}`
+  }
+  if (type === "HR" && sim.hr > 0) return String(sim.hr)
+  return null
+}
+
 export function nativeText(type) {
   const own = globalThis.__nativeSamples || {}
-  return own[type] || NATIVE_PREVIEW[type] || "--"
+  return own[type] || live(type) || NATIVE_PREVIEW[type] || "--"
 }

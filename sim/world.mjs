@@ -3,6 +3,7 @@
 
 import { KEY_EVENT_CLICK, KEY_SHORTCUT } from "@zos/interaction"
 import { __resetWidgets, __widgets } from "@zos/ui"
+import { nativeText } from "./native-samples.mjs"
 
 let bootCount = 0
 
@@ -146,8 +147,16 @@ export async function bootWidget({
       )
       return u ? u.props.text : null
     },
+    // a frame of the screen; watch-drawn values carry the text the watch
+    // would show right now (`preview`), since frames are rendered later
     snapshot: () =>
-      __widgets.map((w) => ({ type: w.type, props: { ...w.props } })),
+      __widgets.map((w) => ({
+        type: w.type,
+        props:
+          w.type === "SPORT_DATA"
+            ? { ...w.props, preview: nativeText(w.props.default_type) }
+            : { ...w.props },
+      })),
   }
   return world
 }

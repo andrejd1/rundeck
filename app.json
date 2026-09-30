@@ -6,12 +6,12 @@
     "appType": "app",
     "extType": "workout",
     "version": {
-      "code": 2,
-      "name": "0.2.0"
+      "code": 3,
+      "name": "0.3.0"
     },
     "icon": "icon.png",
     "vender": "andrejd1",
-    "description": "Dense one-screen running dashboard: HR zones and graph, lap vs average pace and HR, grade and ascent"
+    "description": "Dense one-screen running dashboard with the watch's own values: HR zones, lap vs average pace and HR, power, grade and ascent"
   },
   "permissions": [
     "data:user.hd.workout",

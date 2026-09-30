@@ -67,12 +67,15 @@ import {
   ZONE_COLORS,
   ZONE_COUNT,
   zoneColor,
+  hrZoneOf,
   zonePosition,
 } from "../../shared/zones.js"
 import { readVo2Max, resolveHrZones } from "./hr-zones.js"
 import { LiveMetrics } from "./metrics.js"
 
 const TICK_MS = 1000
+// width given to a watch-drawn value over its sample's estimated width
+const NATIVE_SLACK = 1.3
 const SCREEN_OFF = 2 // Screen.getStatus(): 1 on, 2 off
 // For a moment after coming back on screen, late getSportData answers
 // redraw at once (the zone bar and target colors).
@@ -547,8 +550,17 @@ DataWidget(
         this.dropNative(id)
         return
       }
-      const size = fittedSize(box, f.sample)
-      const w = Math.min(box.w, this.measure(f.sample, size) + 2)
+      const sample =
+        typeof f.sample === "function"
+          ? f.sample(this.state.metrics.snapshot)
+          : f.sample
+      const size = fittedSize(box, sample)
+      // generous room: the watch's digits run wider than our estimate, and
+      // text wider than its widget scrolls round instead of fitting
+      const w = Math.min(
+        box.w,
+        Math.ceil(this.measure(sample, size) * NATIVE_SLACK) + px(8),
+      )
       let x = box.x
       if (box.align_h === align.CENTER_H)
         x = box.x + Math.round((box.w - w) / 2)
@@ -705,7 +717,7 @@ DataWidget(
       const status = this.state.tracker.update(t ? barValue(t.metric, s) : null)
       const targetField = t ? t.metric : null
 
-      const hrPos = zonePosition(s.hr, this.state.hrZones)
+      const hrZone = hrZoneOf(s.hr, this.state.hrZones)
 
       // locked mode keeps the top row and one big value from rows 2 and 3
       const shown = activeSlots(layout)
@@ -731,14 +743,12 @@ DataWidget(
           continue
         }
         let labelColor = null
-        // HR in a two-column top row: no room for the graph or the zone
-        // suffix, so the zone rides in the label, in the zone's color
-        if (fieldId === "hr" && (id === "headerl" || id === "headerr")) {
-          const z = hrPos && hrPos.zone > 0 ? `Z${hrPos.zone}` : ""
-          if (z) {
-            f = { ...f, label: `HR ${z}`, short: `HR ${z}`, qual: z }
-            labelColor = zoneColor(hrPos.zone)
-          }
+        // HR anywhere but the single top value (which has the zone suffix):
+        // the zone rides in the label, in the zone's color
+        if (fieldId === "hr" && id !== "header" && hrZone) {
+          const z = `Z${hrZone}`
+          f = { ...f, label: `HR ${z}`, short: `HR ${z}`, qual: z }
+          labelColor = zoneColor(hrZone)
         }
         const labelBox =
           layout.labels === "icons" && g.iconLabel ? g.iconLabel : g.label
@@ -761,14 +771,9 @@ DataWidget(
         "suffix",
         ui.headerSuffix,
         "text",
-        headerIsHr && hrPos && hrPos.zone > 0 ? `Z${hrPos.zone}` : "",
+        headerIsHr && hrZone ? `Z${hrZone}` : "",
       )
-      this.setProp(
-        "suffix",
-        ui.headerSuffix,
-        "color",
-        zoneColor(hrPos ? hrPos.zone : 0),
-      )
+      this.setProp("suffix", ui.headerSuffix, "color", zoneColor(hrZone || 0))
 
       // dividers: only the header rule stays in locked mode
       for (let i = 1; i < ui.dividers.length; i++)
