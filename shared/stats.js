@@ -67,6 +67,7 @@ export class RunStats {
    * @returns {object|null} the lap closed by auto-lap on this tick, if any
    */
   update({ elapsed, distance, hr, power, altitude } = {}) {
+    const prevDistance = this.distance
     if (distance != null && Number.isFinite(distance) && distance >= 0) {
       this.distance = distance
     }
@@ -94,7 +95,7 @@ export class RunStats {
     }
     this._rollGraph(elapsed)
     this._sampleAltitude(altitude)
-    return this._checkAutoLap()
+    return this._checkAutoLap(prev, prevDistance)
   }
 
   _rollGraph(elapsed) {
@@ -130,29 +131,56 @@ export class RunStats {
     }
   }
 
-  _checkAutoLap() {
+  // A long gap between samples (the watch suspended the page while it was
+  // off screen) can carry the distance across several lap boundaries at
+  // once: every one of them closes now, each at its own distance and at the
+  // time interpolated along the gap, so lap times stay real instead of the
+  // catch-up laps lasting a second each.
+  _checkAutoLap(prevElapsed, prevDistance) {
     if (!this.autoLapM || this.distance == null) return null
-    if (this.distance - this.lap.startDistance < this.autoLapM) return null
-    // lap boundary lands on the exact auto-lap distance, not the sample
-    // that crossed it, so 1 km laps don't drift by a few meters each
-    return this._closeLap(this.lap.startDistance + this.autoLapM)
+    let closed = null
+    while (this.distance - this.lap.startDistance >= this.autoLapM) {
+      // lap boundary lands on the exact auto-lap distance, not the sample
+      // that crossed it, so 1 km laps don't drift by a few meters each
+      const at = this.lap.startDistance + this.autoLapM
+      closed = this._closeLap(
+        at,
+        this._elapsedAt(at, prevElapsed, prevDistance),
+      )
+    }
+    return closed
+  }
+
+  // Native clock at distance `d`, linear between the previous sample and
+  // this one.
+  _elapsedAt(d, prevElapsed, prevDistance) {
+    const e = this.elapsed
+    if (prevElapsed == null || prevDistance == null || e == null) return e
+    const span = this.distance - prevDistance
+    if (!(span > 0)) return e
+    const f = Math.max(0, Math.min(1, (d - prevDistance) / span))
+    return prevElapsed + f * (e - prevElapsed)
   }
 
   /** Manual lap (lap key). Returns the closed lap. */
   lapNow() {
-    return this._closeLap(this.distance != null ? this.distance : 0)
+    return this._closeLap(
+      this.distance != null ? this.distance : 0,
+      this.elapsed,
+    )
   }
 
-  _closeLap(atDistance) {
+  _closeLap(atDistance, atElapsed) {
+    const end = atElapsed != null ? atElapsed : 0
     const closed = {
       index: this.lap.index,
-      time: this.lapTime(),
+      time: Math.max(0, end - this.lap.startElapsed),
       distance: Math.max(0, atDistance - this.lap.startDistance),
       hr: this.lap.hr.value,
       power: this.lap.power.value,
     }
     this.laps.push(closed)
-    this._startLap(this.elapsed != null ? this.elapsed : 0, atDistance)
+    this._startLap(end, atDistance)
     return closed
   }
 

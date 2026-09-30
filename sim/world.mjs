@@ -65,8 +65,9 @@ export async function bootWidget({
     set(fields) {
       Object.assign(globalThis.__sim, fields)
     },
-    // advance n seconds of running at `speed` m/s, `grade` %
-    run(n, { speed = 3.4, grade = 0, hr } = {}) {
+    // advance n seconds of running at `speed` m/s, `grade` %; `frozen`:
+    // the watch has the page suspended, so no tick runs meanwhile
+    run(n, { speed = 3.4, grade = 0, hr, frozen = false } = {}) {
       for (let i = 0; i < n; i++) {
         wall += 1
         world.elapsed += 1
@@ -84,7 +85,7 @@ export async function bootWidget({
         s.distance = { distance: (world.distance / 1000).toFixed(3) }
         s.altitude = { altitude: world.altitude.toFixed(1) }
         s.total_up_altitude = { total_up_altitude: world.ascent.toFixed(0) }
-        page.onTick()
+        if (!frozen) page.onTick()
       }
     },
     pressLap() {

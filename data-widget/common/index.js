@@ -76,6 +76,10 @@ import { LiveMetrics } from "./metrics.js"
 
 const TICK_MS = 1000
 const SCREEN_OFF = 2 // Screen.getStatus(): 1 on, 2 off
+// Ticks this far apart mean the watch suspended the page: read everything
+// at once, and redraw as late answers arrive for a moment after.
+const STALE_TICK_SEC = 3
+const CATCH_UP_REDRAW_SEC = 3
 const GRAPH_EVERY_TICKS = 5 // HR graph redraw cadence (bars move every 10 s)
 const LAP_NOTICE_SEC = 6
 const LAP_DEBOUNCE_SEC = 2
@@ -124,6 +128,11 @@ DataWidget(
       inView: true, // onPause/onResume: drawing only while on screen
       screenDark: false, // screen off without the always-on display
       screen: null,
+      screenUpdate: null,
+      drawn: false, // the last tick drew the screen
+      lastTickAt: null,
+      inRefresh: false,
+      redrawUntil: 0, // late getSportData answers redraw until then
       timer: null,
       ticks: 0,
       ui: {},
@@ -175,6 +184,16 @@ DataWidget(
         paceUnit: cfg.pace_unit,
         channels: this.channels(),
       })
+      // answers that land after the tick drew (async on device) redraw at
+      // once when the screen just came back
+      this.state.metrics.onData = () => {
+        if (
+          !this.state.inRefresh &&
+          this.visible() &&
+          this.nowSec() < this.state.redrawUntil
+        )
+          this.render()
+      }
       this.state.stats = new RunStats({ autoLapM: cfg.auto_lap_m })
       this.state.tracker = new TargetTracker(cfg.target)
       this.buildUi()
@@ -193,9 +212,8 @@ DataWidget(
       this.onTick()
     },
 
-    // Out of view (another data page): keep sampling for the lap/average
-    // stats and the trial, but read and draw nothing that only the screen
-    // needs.
+    // Out of view (another data page): keep reading so every value is
+    // current when it comes back, but draw nothing.
     onPause() {
       this.state.inView = false
     },
@@ -208,16 +226,27 @@ DataWidget(
       try {
         const screen = new Screen()
         const update = () => {
-          const dark = screen.getStatus() === SCREEN_OFF && !screen.getAodMode()
           const was = this.state.screenDark
-          this.state.screenDark = dark
-          if (was && !dark) this.onTick()
+          this.readScreen()
+          if (was && !this.state.screenDark) this.onTick()
         }
-        this.state.screen = { screen, update }
+        this.state.screen = screen
+        this.state.screenUpdate = update
         screen.onChange(update)
-        update()
+        this.readScreen()
       } catch (e) {
         this.state.screen = null // no screen sensor: always drawn
+      }
+    },
+
+    readScreen() {
+      const screen = this.state.screen
+      if (!screen) return
+      try {
+        this.state.screenDark =
+          screen.getStatus() === SCREEN_OFF && !screen.getAodMode()
+      } catch (e) {
+        this.state.screenDark = false
       }
     },
 
@@ -235,7 +264,7 @@ DataWidget(
       if (this.state.timer) clearInterval(this.state.timer)
       if (this.state.screen)
         try {
-          this.state.screen.screen.offChange(this.state.screen.update)
+          this.state.screen.offChange(this.state.screenUpdate)
         } catch (e) {
           /* ignore */
         }
@@ -427,7 +456,25 @@ DataWidget(
       const { metrics, stats, trial } = this.state
       if (!metrics) return
       this.state.ticks += 1
-      const s = metrics.refresh({ display: this.visible() })
+      // a missed screen-on event must not leave the screen frozen
+      if (this.state.screenDark) this.readScreen()
+      const now = this.nowSec()
+      const visible = this.visible()
+      // back on screen, or ticks stopped (the watch suspended the page):
+      // read the slow channels now instead of on their next turn
+      const catchUp =
+        (visible && !this.state.drawn) ||
+        (this.state.lastTickAt != null &&
+          now - this.state.lastTickAt > STALE_TICK_SEC)
+      this.state.lastTickAt = now
+      if (catchUp && visible) this.state.redrawUntil = now + CATCH_UP_REDRAW_SEC
+      this.state.inRefresh = true
+      let s
+      try {
+        s = metrics.refresh({ full: catchUp })
+      } finally {
+        this.state.inRefresh = false
+      }
       const autoLap = stats.update({
         elapsed: s.elapsed,
         distance: s.distance,
@@ -439,7 +486,6 @@ DataWidget(
 
       // Trial runs are counted silently: the run screen stays clean, and the
       // trial status lives in the phone settings.
-      const now = this.nowSec()
       const settled =
         this.state.configReceived || now - this.state.initAt >= PHONE_GRACE_SEC
       this.state.mode = trial.tick(now, settled ? s.elapsed : null)
@@ -450,7 +496,8 @@ DataWidget(
         now - this.state.lastConfigAttemptAt >= CONFIG_RETRY_SEC
       )
         this.fetchConfig()
-      if (this.visible()) this.render()
+      if (visible) this.render()
+      this.state.drawn = visible
     },
 
     onLap(lap) {
@@ -580,14 +627,13 @@ DataWidget(
     // watch itself; RunDeck never sees it). `type` null hides it.
     showNative(id, type, box) {
       const cur = this.state.native[id]
+      // hidden (lap notice, locked mode) = deleted: the watch keeps drawing
+      // a SPORT_DATA widget whatever its visible property says
       if (!type) {
-        if (cur) this.setProp(`${id}n`, cur.w, "visible", false)
+        this.dropNative(id)
         return
       }
-      if (cur && cur.type === type) {
-        this.setProp(`${id}n`, cur.w, "visible", true)
-        return
-      }
+      if (cur && cur.type === type) return
       if (cur) this.dropNative(id)
       let w = null
       try {
@@ -613,7 +659,6 @@ DataWidget(
       }
       if (!w) return
       this.state.native[id] = { type, w }
-      delete this.state.cache[`${id}n:visible`]
     },
 
     dropNative(id) {
@@ -625,7 +670,6 @@ DataWidget(
         /* already gone */
       }
       delete this.state.native[id]
-      delete this.state.cache[`${id}n:visible`]
     },
 
     // Unit shown after a value, or "" for none: units can be switched off;
@@ -875,7 +919,13 @@ DataWidget(
       for (const row of ROWS) {
         const want = (ROW_DIVIDERS[row.id] || {})[layout.cols[row.id]] || []
         ui.rowDividers[row.id].forEach((w, i) => {
-          this.setProp(`rd${row.id}${i}`, w, "visible", !locked && !!want[i])
+          const covered = noticeOn && row.id === NOTICE_ROW
+          this.setProp(
+            `rd${row.id}${i}`,
+            w,
+            "visible",
+            !locked && !covered && !!want[i],
+          )
         })
       }
 

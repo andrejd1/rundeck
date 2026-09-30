@@ -642,7 +642,7 @@ test("units follow miles and can be switched off", async () => {
   assert.equal(off.textAt(SLOT_GEOMETRY.r5l.value), "0.20")
 })
 
-test("out of view: no drawing, only the reads the stats need", async () => {
+test("out of view: no drawing, every value still read", async () => {
   const w = await bootWidget({
     licensed: true,
     config: cfg({
@@ -661,22 +661,27 @@ test("out of view: no drawing, only the reads the stats need", async () => {
   w.run(60, { hr: 180 })
   // nothing redrawn while another page is on screen
   assert.equal(JSON.stringify(w.snapshot()), before)
+  // but nothing goes stale either
   const r = globalThis.__sim.sportReads
-  for (const type of [
-    "pace",
-    "cadence",
-    "avg_pace",
-    "calories",
-    "total_up_altitude",
-  ])
-    assert.equal(r[type] || 0, reads[type] || 0, `${type} read while hidden`)
-  // time and distance keep the lap/average stats running
-  assert.equal(r.duration - reads.duration, 60)
-  assert.equal(r.distance - reads.distance, 60)
+  for (const type of ["pace", "cadence", "duration", "distance"])
+    assert.equal(r[type] - reads[type], 60, `${type} reads while hidden`)
+  for (const type of ["avg_pace", "calories"])
+    assert.equal(r[type] - reads[type], 12, `${type} reads while hidden`)
   w.page.onResume()
   // the hidden minute at 180 bpm counts: (60 x 120 + 60 x 180) / 120
   assert.equal(valueAt(w, "r1l"), "150")
-  assert.ok(r.pace > reads.pace)
+})
+
+test("back in view: the slow channels are read at once", async () => {
+  const w = await bootWidget({ licensed: true, config: cfg() })
+  w.run(12)
+  w.page.onPause()
+  w.run(3)
+  const reads = { ...globalThis.__sim.sportReads }
+  w.page.onResume() // not a 5th or 10th tick: read anyway
+  const r = globalThis.__sim.sportReads
+  assert.equal(r.avg_pace - reads.avg_pace, 1)
+  assert.equal(r.total_up_altitude - reads.total_up_altitude, 1)
 })
 
 test("screen off without always-on display: no drawing, fresh on wake", async () => {
@@ -691,12 +696,68 @@ test("screen off without always-on display: no drawing, fresh on wake", async ()
   globalThis.__sim.setScreen(2) // raise-to-wake: screen goes dark
   w.run(30, { speed: 3.4 })
   assert.equal(JSON.stringify(w.snapshot()), before)
-  assert.equal(globalThis.__sim.sportReads.pace, paceReads)
+  assert.equal(globalThis.__sim.sportReads.pace, paceReads + 30)
   // wrist raised: redrawn at once, without waiting for the next tick
   globalThis.__sim.setScreen(1)
   assert.notEqual(JSON.stringify(w.snapshot()), before)
-  assert.equal(globalThis.__sim.sportReads.pace, paceReads + 1)
   assert.equal(w.textAt(SLOT_GEOMETRY.r3c.value), "1:00") // elapsed, fresh
+})
+
+test("a missed screen-on event doesn't freeze the screen", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg(),
+    sim: { screen: { status: 1, aod: false } },
+  })
+  w.run(10)
+  globalThis.__sim.setScreen(2)
+  w.run(10)
+  globalThis.__sim.screen.status = 1 // on again, but no change event came
+  w.run(1)
+  assert.equal(w.textAt(SLOT_GEOMETRY.r3c.value), "0:21")
+})
+
+test("page suspended past several auto-laps: real lap times, sane lap pace", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({ auto_lap: "1" }),
+  })
+  w.run(100, { speed: 4 }) // 400 m, 4'10 /km
+  w.run(1000, { speed: 4, frozen: true }) // 4 km without a single tick
+  w.run(1, { speed: 4 })
+  const laps = w.page.state.stats.laps
+  assert.equal(laps.length, 4)
+  // every lap took its 250 s, none closed in a second on the catch-up
+  for (const lap of laps) assert.equal(Math.round(lap.time), 250)
+  assert.equal(w.textAt(NOTICE), "Lap 4  4'10  04:10")
+  w.run(10, { speed: 4 }) // notice gone
+  assert.equal(valueAt(w, "r2l"), "4'10") // lap pace
+})
+
+test("lap notice hides the covered row's dividers and native values", async () => {
+  const w = await bootWidget({
+    licensed: true,
+    config: cfg({
+      layout_json: JSON.stringify({
+        slots: { r4r: "steps" },
+        updated_at: 2,
+      }),
+    }),
+  })
+  w.run(3)
+  const rowDividers = () =>
+    w.page.state.ui.rowDividers.r4.filter((d) => d.props.visible !== false)
+  const natives = () => w.widgets().filter((x) => x.type === "SPORT_DATA")
+  assert.equal(rowDividers().length, 1)
+  assert.equal(natives().length, 1)
+  w.pressLap()
+  w.run(1)
+  assert.equal(rowDividers().length, 0)
+  // deleted, not hidden: the watch draws SPORT_DATA whatever `visible` says
+  assert.equal(natives().length, 0)
+  w.run(8)
+  assert.equal(rowDividers().length, 1)
+  assert.equal(natives().length, 1)
 })
 
 test("screen off with always-on display: keeps drawing", async () => {

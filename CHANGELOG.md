@@ -8,10 +8,18 @@
   line.
 
 - Battery: while another data page is on screen, or the screen is off without the always-on
-  display (raise to wake), RunDeck draws nothing and
-  reads only what the lap/average stats need (time, distance, HR, power, altitude), so averages
-  still include that time. Raising the wrist redraws at once. With the always-on display it keeps
-  drawing, as the screen may still show it.
+  display (raise to wake), RunDeck draws nothing but keeps reading every value, so nothing is
+  stale when it is back. Raising the wrist redraws at once, reading the slow channels (average
+  pace, ascent) right away too; a missed screen-on event no longer leaves the screen frozen. With
+  the always-on display it keeps drawing, as the screen may still show it.
+
+- Auto-laps after the watch suspended the page: when the distance jumped past several lap marks
+  at once, each catch-up lap closed in 1 s (a "Lap 18  0'01  00:01" notice) and the lap pace read
+  nonsense until the next lap. Every crossed lap now closes at its own distance with the time
+  interpolated across the gap.
+
+- Lap notice: the row it covers hides its dividers and native values (steps, stride, ...) too;
+  the watch drew those through the notice.
 
 - Every round screen size: the HR graph, icons and bottom row scale correctly from 480 down to 360 px
   (icons ship in five pixel sizes, graph bars are placed from the scaled width, the bottom row sits
