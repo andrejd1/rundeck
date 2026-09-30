@@ -9,7 +9,7 @@
     <rect x="84" y="409" width="312" height="2" rx="0" fill="#3a3a3a"/>
     
     
-    <image x="227" y="30" width="26" height="26" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAABuElEQVR4nNyWP0hCQRjAv7unREtpUw0RQUEQrc2F59IurUFkU0NDNLU5Fi0N/YGWlob2QJ8ODpFBk0OL0BJtmjaYg++u78RHT98f7+xh0A/Ed3ff9/3u3p2HERgRERgRfysSAOSDsVnDsmYmms0XUip9BhWpMTaJsUtRy3ofLxbfSKdEL6S/AwVr+HWNn3mH+JEIcR7L528wgXf6UimjUatt4VgaCFl1lKgA59vxQqHoK6onEpuCkFvwQ4jniGFsGO12tEXpPSav+IXixFI4sTuXqJFMLnIhyvg4BsFUUBjFVcwFBQkhvqhhLMey2VfZpvYA5/xQQSJZGCSREELGBef7dtt5GBiEDO7fulukMEtdcJ+m7Wf6oxdVCBlcUdUlws4nCBncpweXiFJ6AuFi4eRPXaJYLpfHgWMICTzeR1OmWbbbPT/Y7tVzgZ078AuwzlXcNHedVxHxCsS763JYmZTgStL9/dQrWAbKBNDnzEviK7JlMhE0JPi69vwGaVBmN1FFFigZKFKRyZM6SKIksmVeR1/24Ss+UKmhJJLIgk6ZjkRCQJM6YxmUtHCVGZ08bdGw/L+/W98AAAD///lKrSQAAAAGSURBVAMAeueftVOfPGUAAAAASUVORK5CYII="/>
+    <image x="227" y="28" width="26" height="26" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAABuElEQVR4nNyWP0hCQRjAv7unREtpUw0RQUEQrc2F59IurUFkU0NDNLU5Fi0N/YGWlob2QJ8ODpFBk0OL0BJtmjaYg++u78RHT98f7+xh0A/Ed3ff9/3u3p2HERgRERgRfysSAOSDsVnDsmYmms0XUip9BhWpMTaJsUtRy3ofLxbfSKdEL6S/AwVr+HWNn3mH+JEIcR7L528wgXf6UimjUatt4VgaCFl1lKgA59vxQqHoK6onEpuCkFvwQ4jniGFsGO12tEXpPSav+IXixFI4sTuXqJFMLnIhyvg4BsFUUBjFVcwFBQkhvqhhLMey2VfZpvYA5/xQQSJZGCSREELGBef7dtt5GBiEDO7fulukMEtdcJ+m7Wf6oxdVCBlcUdUlws4nCBncpweXiFJ6AuFi4eRPXaJYLpfHgWMICTzeR1OmWbbbPT/Y7tVzgZ078AuwzlXcNHedVxHxCsS763JYmZTgStL9/dQrWAbKBNDnzEviK7JlMhE0JPi69vwGaVBmN1FFFigZKFKRyZM6SKIksmVeR1/24Ss+UKmhJJLIgk6ZjkRCQJM6YxmUtHCVGZ08bdGw/L+/W98AAAD///lKrSQAAAAGSURBVAMAeueftVOfPGUAAAAASUVORK5CYII="/>
     
     
     
@@ -83,7 +83,7 @@
     <rect x="163" y="250" width="8" height="30" rx="4" fill="#ffffff"/>
     
     
-    <text x="265.5" y="100.6" text-anchor="middle" font-size="56" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
+    <text x="240.5" y="100.6" text-anchor="middle" font-size="56" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">178</text>
     <text x="104.5" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">161</text>
     <text x="240" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">84%</text>
     <text x="376.5" y="152.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">152</text>
@@ -98,7 +98,6 @@
     <text x="364" y="403.4" text-anchor="middle" font-size="24" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">-3%</text>
     <text x="188.5" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">18.34</text>
     <text x="292" y="461.8" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'DejaVu Sans',Arial,sans-serif" font-weight="600">115</text>
-    <polyline points="92,81 104,76 116,79 128,71 140,73 152,66 164,68 176,60 188,66 200,63" fill="none" stroke="#ef4444" stroke-width="3"/>
   </g>
   <circle cx="240" cy="240" r="238" fill="none" stroke="#333" stroke-width="3"/>
 </svg>
