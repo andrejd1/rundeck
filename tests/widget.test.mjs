@@ -9,7 +9,13 @@ import {
   ROW_GEOMETRY as RG,
 } from "../data-widget/common/index.r.layout.js"
 import { buildConfig } from "../shared/config.js"
-import { LAYOUT_KEY, loadObject, TRIAL_KEY } from "../shared/device-store.js"
+import {
+  CONFIG_KEY,
+  LAYOUT_KEY,
+  loadObject,
+  PRESET_KEY,
+  TRIAL_KEY,
+} from "../shared/device-store.js"
 import { MSG } from "../shared/messages.js"
 import { bootEditor, bootWidget } from "../sim/world.mjs"
 
@@ -242,8 +248,9 @@ test("custom phone zones override the watch", async () => {
 
 test("watch editor: pick a field for a slot", async () => {
   const list = await bootEditor({})
-  assert.equal(list.buttons()[0].props.text, "Top row: 1 col")
-  assert.equal(list.buttons()[1].props.text, "Top: Heart rate")
+  assert.equal(list.buttons()[0].props.text, "Presets")
+  assert.equal(list.buttons()[1].props.text, "Top row: 1 col")
+  assert.equal(list.buttons()[2].props.text, "Top: Heart rate")
   list.tap("2 center: Pace")
   assert.deepEqual(JSON.parse(globalThis.__sim.navigation.at(-1).params), {
     pick: "r2c",
@@ -645,4 +652,52 @@ test("every HR field names its zone, Z1 to Z5", async () => {
   w.run(3, { hr: 150 })
   assert.equal(w.textAt(RG.r1[3].r1c.label), "HR Z4")
   assert.equal(w.textAt(HEADER_SUFFIX), "Z4")
+})
+
+test("watch presets: switch offline, keep the pick against an older phone config", async () => {
+  const presetJson = JSON.stringify([
+    {
+      id: "p1",
+      name: "Power",
+      layout: { slots: { r2c: "power" }, bar: "power" },
+      values: {
+        target_metric: "power",
+        target_power_low: "250",
+        target_power_high: "270",
+      },
+    },
+  ])
+  const phone = cfg({ presets_json: presetJson, target_at: "100" })
+  assert.equal(phone.target, null)
+
+  const list = await bootEditor({}, { config: phone, preset: null })
+  assert.equal(list.buttons()[0].props.text, "Presets")
+  const view = await bootEditor({ pick: "presets" })
+  view.tap("Power")
+  assert.equal(loadObject(PRESET_KEY).id, "p1")
+  assert.equal(loadObject(LAYOUT_KEY).slots.r2c, "power")
+  assert.equal(loadObject(CONFIG_KEY).target.metric, "power")
+  const sent = globalThis.__sim.sideCalls.filter(
+    (c) => c.method === MSG.PRESET_SELECT,
+  )
+  assert.equal(sent.at(-1).params.preset.id, "p1")
+  const again = await bootEditor({})
+  assert.equal(again.buttons()[0].props.text, "Preset: Power")
+
+  // the run screen: the phone (which never heard of the pick) answers with
+  // its old config; the pick keeps its target and is sent along
+  const pick = loadObject(PRESET_KEY)
+  const w = await bootWidget({
+    config: phone,
+    preset: pick,
+    layout: loadObject(LAYOUT_KEY),
+    sideResponse: async (req) => {
+      assert.deepEqual(req.params.preset, pick)
+      return { code: 0, config: phone, licensed: true }
+    },
+  })
+  w.run(2)
+  await new Promise((r) => setImmediate(r))
+  assert.equal(w.page.state.config.target.metric, "power")
+  assert.equal(w.page.state.layout.slots.r2c, "power")
 })

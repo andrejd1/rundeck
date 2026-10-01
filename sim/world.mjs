@@ -12,6 +12,7 @@ export async function bootWidget({
   licensed,
   trial,
   layout,
+  preset,
   sideResponse,
   sim = {},
 } = {}) {
@@ -26,6 +27,8 @@ export async function bootWidget({
   else store.removeObject(store.TRIAL_KEY)
   if (layout) store.saveObject(store.LAYOUT_KEY, layout)
   else store.removeObject(store.LAYOUT_KEY)
+  if (preset) store.saveObject(store.PRESET_KEY, preset)
+  else store.removeObject(store.PRESET_KEY)
 
   globalThis.__sim = {
     hr: 148,
@@ -164,11 +167,15 @@ export async function bootWidget({
 let editorCount = 0
 
 /** Boot the on-watch layout editor page with router params. */
-export async function bootEditor(params = {}, { config, layout } = {}) {
+export async function bootEditor(params = {}, { config, layout, preset } = {}) {
   __resetWidgets()
   const store = await import("../shared/device-store.js")
   if (config) store.saveObject(store.CONFIG_KEY, config)
   if (layout) store.saveObject(store.LAYOUT_KEY, layout)
+  if (preset !== undefined) {
+    if (preset) store.saveObject(store.PRESET_KEY, preset)
+    else store.removeObject(store.PRESET_KEY)
+  }
   globalThis.__sim = {
     ...(globalThis.__sim || {}),
     navigation: [],

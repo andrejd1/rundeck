@@ -4,6 +4,7 @@
 // (shared/fields.js); the watch keeps whichever layout copy is newer.
 
 import { defaultLayout, normalizeLayout } from "./fields.js"
+import { readActive, readPresets } from "./presets.js"
 import { hrZones, paceZones, powerZones } from "./zones.js"
 
 export const CONFIG_VERSION = 2
@@ -20,6 +21,10 @@ export const DEFAULT_CONFIG = {
   power_zones: null,
   target: null, // {metric: pace|power, min, max} in m/s or W
   layout: defaultLayout(),
+  // presets the watch can switch to: [{id, name, layout, target}]
+  presets: [],
+  preset_id: null, // preset applied last (phone or watch)
+  target_at: 0, // when the target last changed on the phone (ms)
 }
 
 const numOrNull = (v) => {
@@ -108,18 +113,28 @@ export function readLayout(get) {
   return normalizeLayout(raw)
 }
 
+const getterOf = (get) => (k, d) => {
+  const v = get(k)
+  return v == null || v === "" ? d : String(v)
+}
+
+/** A preset's target in watch units (the pace unit is the runner's). */
+export function presetTarget(preset, paceUnit) {
+  const s = getterOf((k) => preset.values[k])
+  const metric = s("target_metric", "pace")
+  return parseTarget(metric, targetText(s, metric), paceUnit)
+}
+
 /** `get(key)` returns the raw settings string (or "" / null). */
 export function buildConfig(get) {
-  const s = (k, d) => {
-    const v = get(k)
-    return v == null || v === "" ? d : String(v)
-  }
+  const s = getterOf(get)
   const paceUnit =
     s("pace_unit", "min_per_km") === "min_per_mile"
       ? "min_per_mile"
       : "min_per_km"
   const method = s("hr_zone_method", "device")
   const targetMetric = s("target_metric", "pace")
+  const active = readActive(get)
   return {
     v: CONFIG_VERSION,
     pace_unit: paceUnit,
@@ -137,6 +152,17 @@ export function buildConfig(get) {
     power_zones: powerZones(numOrNull(s("ftp", ""))),
     target: parseTarget(targetMetric, targetText(s, targetMetric), paceUnit),
     layout: readLayout(get),
+    presets: readPresets(get).map((p) => ({
+      id: p.id,
+      name: p.name,
+      layout: p.layout,
+      target: presetTarget(p, paceUnit),
+    })),
+    preset_id: active ? active.id : null,
+    target_at: Math.max(
+      active ? active.at : 0,
+      parseInt(s("target_at", "0"), 10) || 0,
+    ),
   }
 }
 
@@ -144,5 +170,27 @@ export function buildConfig(get) {
 export function normalizeConfig(raw) {
   if (!raw || typeof raw !== "object" || raw.v !== CONFIG_VERSION)
     return { ...DEFAULT_CONFIG, layout: defaultLayout() }
-  return { ...DEFAULT_CONFIG, ...raw, layout: normalizeLayout(raw.layout) }
+  return {
+    ...DEFAULT_CONFIG,
+    ...raw,
+    layout: normalizeLayout(raw.layout),
+    presets: normalizeWatchPresets(raw.presets),
+    preset_id: typeof raw.preset_id === "string" ? raw.preset_id : null,
+    target_at: Number(raw.target_at) > 0 ? Number(raw.target_at) : 0,
+  }
+}
+
+function normalizeWatchPresets(raw) {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter((p) => p && typeof p.id === "string" && typeof p.name === "string")
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      layout: normalizeLayout(p.layout),
+      target:
+        p.target && typeof p.target === "object" && p.target.metric
+          ? p.target
+          : null,
+    }))
 }

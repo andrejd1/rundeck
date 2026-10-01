@@ -1,7 +1,10 @@
-// On-watch layout editor (open RunDeck from the watch's app list). Two modes
-// of the same page, switched with router.replace:
-//   list: one button per screen slot (+ zone bar, reset), showing its field
+// On-watch layout editor (open RunDeck from the watch's app list). Modes of
+// the same page, switched with router.replace:
+//   list: presets, one button per screen slot (+ zone bar, reset), showing
+//         its field
 //   pick: the field catalog for one slot; tapping a field saves and returns
+//   presets: the presets saved in the phone settings; tapping one switches
+//         layout and target (shared/presets.js), offline too
 // Edits land in the watch's layout copy (LAYOUT_KEY) with a fresh updated_at,
 // so they beat the phone's copy until the phone changes the layout again,
 // and are sent to the phone right away when it is in range.
@@ -21,6 +24,7 @@ import {
   CONFIG_KEY,
   LAYOUT_KEY,
   loadObject,
+  PRESET_KEY,
   saveObject,
 } from "../shared/device-store.js"
 import {
@@ -32,11 +36,13 @@ import {
   LABEL_STYLE_NAMES,
   LABEL_STYLES,
   newerLayout,
+  normalizeLayout,
   ROWS,
   rowSlots,
   SLOTS,
 } from "../shared/fields.js"
 import { MSG } from "../shared/messages.js"
+import { withLocalPreset } from "../shared/presets.js"
 
 function parseParams(params) {
   if (!params) return {}
@@ -63,11 +69,16 @@ Page(
       try {
         const p = parseParams(params)
         if (p.pick === "bar") this.state.mode = "bar"
+        else if (p.pick === "presets") this.state.mode = "presets"
         else if (SLOTS.some((s) => s.id === p.pick)) {
           this.state.mode = "pick"
           this.state.slot = p.pick
         }
-        const cfg = normalizeConfig(loadObject(CONFIG_KEY))
+        const cfg = withLocalPreset(
+          normalizeConfig(loadObject(CONFIG_KEY)),
+          loadObject(PRESET_KEY),
+        )
+        this.state.config = cfg
         this.state.layout = newerLayout(cfg.layout, loadObject(LAYOUT_KEY))
       } catch (e) {
         this.state.error = e
@@ -81,6 +92,7 @@ Page(
         const { mode } = this.state
         if (mode === "pick") this.buildPick()
         else if (mode === "bar") this.buildBar()
+        else if (mode === "presets") this.buildPresets()
         else this.buildList()
       } catch (e) {
         this.showError(e)
@@ -111,6 +123,16 @@ Page(
           this.go({ pick: id }),
         )
       this.title("RunDeck layout")
+      const { config } = this.state
+      const active = config.presets.find((p) => p.id === config.preset_id)
+      this.button(
+        // the name shortened so "Preset: " still fits the button
+        active
+          ? `Preset: ${active.name.length > 14 ? `${active.name.slice(0, 12)}...` : active.name}`
+          : "Presets",
+        () => this.go({ pick: "presets" }),
+        COLORS.row,
+      )
       for (const row of ROWS) {
         const cols = layout.cols[row.id]
         this.button(
@@ -192,7 +214,45 @@ Page(
       this.pad()
     },
 
+    buildPresets() {
+      const { config } = this.state
+      this.title("Presets")
+      this.button("< Back", () => this.go({}), COLORS.muted)
+      if (!config.presets.length)
+        this.button("Save presets in the Zepp app", () => {}, COLORS.muted)
+      for (const p of config.presets) {
+        this.button(
+          p.name,
+          () => {
+            this.applyPreset(p)
+            this.go({})
+          },
+          p.id === config.preset_id ? COLORS.selected : COLORS.button,
+        )
+      }
+      this.pad()
+    },
+
     // --------------------------------------------------------------- helpers
+
+    // Layout and target of a preset. The pick ({id, at}) is kept on the
+    // watch so a phone config that doesn't know it yet can't undo the
+    // target, and goes to the phone right away when it is in range (else
+    // with the next GET_CONFIG).
+    applyPreset(p) {
+      const at = Date.now()
+      const pick = { id: p.id, at }
+      saveObject(PRESET_KEY, pick)
+      const cfg = withLocalPreset(this.state.config, pick)
+      this.state.config = cfg
+      saveObject(CONFIG_KEY, cfg)
+      this.save({ ...normalizeLayout(p.layout), updated_at: at })
+      try {
+        this.call({ method: MSG.PRESET_SELECT, params: { preset: pick } })
+      } catch (e) {
+        /* phone away: sent with the next GET_CONFIG */
+      }
+    },
 
     save(layout) {
       this.state.layout = layout

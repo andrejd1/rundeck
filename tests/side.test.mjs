@@ -141,7 +141,10 @@ test("settings changes push a new config", async () => {
   const pushes = []
   svc.call = (msg) => pushes.push(msg)
   await svc.onSettingsChange({ key: "layout_json", newValue: "{}" })
+  await svc.onSettingsChange({ key: "target_metric", newValue: "hr" })
   await svc.onSettingsChange({ key: "unrelated", newValue: "x" })
+  assert.equal(pushes.length, 0) // batched
+  await new Promise((r) => setTimeout(r, 350))
   assert.equal(pushes.length, 1)
   assert.equal(pushes[0].method, MSG.CONFIG_PUSH)
 })
@@ -204,4 +207,56 @@ test("the settings page saving the key twice activates it once", async () => {
   assert.equal(calls.filter((c) => /activate$/.test(c.url)).length, 1)
   assert.equal(JSON.parse(store.get("license_state")).licensed, true)
   assert.match(store.get("license_status_text"), /Unlocked/)
+})
+
+test("a preset picked on the watch is applied when newer than the phone's target", async () => {
+  store.clear()
+  const preset = {
+    id: "p1",
+    name: "HR",
+    layout: { slots: { r2c: "hr" } },
+    values: {
+      target_metric: "hr",
+      target_hr_low: "150",
+      target_hr_high: "160",
+    },
+  }
+  store.set("presets_json", JSON.stringify([preset]))
+  store.set("target_metric", "pace")
+  store.set("target_at", "500")
+  store.set(
+    "layout_json",
+    JSON.stringify({ slots: { r2c: "pace" }, updated_at: 900 }),
+  )
+  const pushes = []
+  svc.call = (msg) => pushes.push(msg)
+
+  // older than the phone's last target edit: ignored
+  svc.onCall({
+    method: MSG.PRESET_SELECT,
+    params: { preset: { id: "p1", at: 400 } },
+  })
+  assert.equal(store.get("target_metric"), "pace")
+
+  // newer than the target, older than the phone's layout: target only
+  svc.onCall({
+    method: MSG.PRESET_SELECT,
+    params: { preset: { id: "p1", at: 600 } },
+  })
+  assert.equal(store.get("target_metric"), "hr")
+  assert.equal(store.get("target_hr_low"), "150")
+  assert.equal(JSON.parse(store.get("layout_json")).slots.r2c, "pace")
+  assert.deepEqual(JSON.parse(store.get("preset_active")), {
+    id: "p1",
+    at: 600,
+  })
+  await new Promise((r) => setTimeout(r, 350))
+  assert.equal(pushes.length, 1)
+
+  // through GET_CONFIG (phone was away): applied before the config is built
+  const r = await getConfig({ preset: { id: "p1", at: 1000 } })
+  assert.equal(r.config.layout.slots.r2c, "hr")
+  assert.equal(r.config.target.metric, "hr")
+  assert.equal(r.config.preset_id, "p1")
+  assert.equal(r.config.target_at, 1000)
 })

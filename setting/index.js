@@ -11,8 +11,14 @@
 // The screen layout is one JSON value ("layout_json") shared with the watch's
 // own layout editor: every change stamps updated_at, and the newer copy wins.
 // "ui_open_slot" only remembers which field picker is expanded (re-render
-// happens on settingsStorage changes).
+// happens on settingsStorage changes); the other ui_* keys are page state
+// the same way (a pending confirmation, the export view, pasted import text).
+//
+// Presets (shared/presets.js) and export / import (shared/backup.js) live
+// here; the watch can switch presets too, but export and import are only
+// on the phone.
 
+import { exportSettings, importSettings } from "../shared/backup.js"
 import { readLayout, targetKeys } from "../shared/config.js"
 import {
   BAR_NAMES,
@@ -26,6 +32,17 @@ import {
   rowSlots,
 } from "../shared/fields.js"
 import { BUY_URL, PRIVACY_URL } from "../shared/license.js"
+import {
+  MAX_PRESETS,
+  newPresetId,
+  PRESET_NAME_MAX,
+  PRESET_TARGET_KEYS,
+  presetFromSettings,
+  presetMatches,
+  presetSettings,
+  readActive,
+  readPresets,
+} from "../shared/presets.js"
 
 const C = {
   page: "#f2f3f5",
@@ -59,7 +76,18 @@ AppSettingsPage({
       const v = store.getItem(k)
       return v == null || v === "" ? d : String(v)
     }
-    const put = (k, v) => store.setItem(k, v == null ? "" : String(v))
+    // a target edit is stamped, so a preset picked earlier on the watch
+    // can't roll it back (shared/presets.js)
+    const put = (k, v) => {
+      store.setItem(k, v == null ? "" : String(v))
+      if (PRESET_TARGET_KEYS.indexOf(k) >= 0)
+        store.setItem("target_at", String(Date.now()))
+    }
+    // many keys at once (a preset, an import): only the ones that change
+    const putAll = (values) => {
+      for (const k of Object.keys(values))
+        if (get(k) !== values[k]) store.setItem(k, values[k])
+    }
     const layout = readLayout((k) => store.getItem(k))
     const saveLayout = (next) =>
       put("layout_json", JSON.stringify({ ...next, updated_at: Date.now() }))
@@ -307,6 +335,201 @@ AppSettingsPage({
       }),
     ])
 
+    // ------------------------------------------------------------ presets
+
+    const presets = readPresets(get)
+    const active = readActive(get)
+    const confirm = get("ui_confirm", "")
+    const savePresets = (list) => put("presets_json", JSON.stringify(list))
+    const action = (text, onClick, danger) =>
+      Button({
+        label: text,
+        style: {
+          fontSize: "13px",
+          borderRadius: "16px",
+          padding: "0 12px",
+          height: "32px",
+          lineHeight: "32px",
+          margin: "0 6px 6px 0",
+          background: danger ? "#fdecec" : C.chip,
+          color: danger ? C.accent : C.text,
+          border: "none",
+          display: "inline-block",
+        },
+        onClick,
+      })
+    const actions = (buttons) =>
+      block(buttons, { display: "flex", flexWrap: "wrap", margin: "0 0 4px 0" })
+
+    const presetRow = (p) => {
+      const isActive = !!active && active.id === p.id
+      const same = presetMatches(get, p, layout)
+      const status = isActive ? (same ? "Active" : "Active, changed since") : ""
+      const replace = () =>
+        savePresets(
+          presets.map((q) =>
+            q.id === p.id ? presetFromSettings(get, p.id, p.name, layout) : q,
+          ),
+        )
+      let buttons
+      if (confirm === `del:${p.id}`)
+        buttons = [
+          action(
+            `Delete ${p.name}`,
+            () => {
+              savePresets(presets.filter((q) => q.id !== p.id))
+              if (isActive) put("preset_active", "")
+              put("ui_confirm", "")
+            },
+            true,
+          ),
+          action("Keep", () => put("ui_confirm", "")),
+        ]
+      else if (confirm === `upd:${p.id}`)
+        buttons = [
+          action("Overwrite with current", () => {
+            replace()
+            put("preset_active", JSON.stringify({ id: p.id, at: Date.now() }))
+            put("ui_confirm", "")
+          }),
+          action("Keep", () => put("ui_confirm", "")),
+        ]
+      else
+        buttons = [
+          isActive && same
+            ? null
+            : action("Apply", () => {
+                putAll(presetSettings(p, Date.now()))
+                put("ui_confirm", "")
+              }),
+          same
+            ? null
+            : action("Save current", () => put("ui_confirm", `upd:${p.id}`)),
+          action("Delete", () => put("ui_confirm", `del:${p.id}`), true),
+        ]
+      return block([label(p.name, status), actions(buttons)])
+    }
+
+    const presetsCard = card("Presets", [
+      hint(
+        "A preset keeps the screen layout and the target, so you can switch between, say, an easy run and intervals in one tap. Zones, FTP, LT pace and the pace unit stay as they are. Switch here or on the watch: open RunDeck from the app list, then Presets.",
+      ),
+      ...presets.map(presetRow),
+      presets.length < MAX_PRESETS
+        ? block([
+            label("Save current layout and target as"),
+            TextInput({
+              label: "",
+              placeholder: `Preset name, e.g. Intervals (max ${PRESET_NAME_MAX} letters)`,
+              value: "",
+              onChange: (v) => {
+                const name = String(v == null ? "" : v).trim()
+                if (!name) return
+                const p = presetFromSettings(get, newPresetId(), name, layout)
+                if (!p) return
+                savePresets([...presets, p])
+                put(
+                  "preset_active",
+                  JSON.stringify({ id: p.id, at: Date.now() }),
+                )
+              },
+              subStyle: {
+                border: `1px solid ${C.line}`,
+                borderRadius: "8px",
+                padding: "8px 10px",
+                fontSize: "14px",
+                color: C.text,
+                background: "#fafafa",
+              },
+            }),
+            block([], { height: "10px" }),
+          ])
+        : hint(`Up to ${MAX_PRESETS} presets: delete one to save another.`),
+    ])
+
+    // ----------------------------------------------------- export / import
+
+    const exportOpen = get("ui_export_open") === "1"
+    const importText = get("ui_import_text", "")
+    const importStatus = get("ui_import_status", "")
+    const pending = importText ? importSettings(importText) : null
+    const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`
+    const backupCard = card("Export and import", [
+      hint(
+        "Copy all your settings and presets to another phone, or keep them safe before reinstalling. The license key is not included: enter it again after a new install.",
+      ),
+      actions([
+        action(exportOpen ? "Hide export" : "Export settings", () =>
+          put("ui_export_open", exportOpen ? "" : "1"),
+        ),
+      ]),
+      ...(exportOpen
+        ? [
+            TextInput({
+              label: "",
+              value: exportSettings(get),
+              subStyle: {
+                border: `1px solid ${C.line}`,
+                borderRadius: "8px",
+                padding: "8px 10px",
+                fontSize: "12px",
+                color: C.text,
+                background: "#fafafa",
+              },
+            }),
+            hint(
+              "Select all of this text and copy it, for example into a note or an e-mail to yourself.",
+            ),
+          ]
+        : []),
+      label("Import"),
+      TextInput({
+        label: "",
+        placeholder: "Paste exported settings here",
+        value: importText,
+        onChange: (v) => {
+          put("ui_import_status", "")
+          put("ui_import_text", String(v == null ? "" : v).trim())
+        },
+        subStyle: {
+          border: `1px solid ${C.line}`,
+          borderRadius: "8px",
+          padding: "8px 10px",
+          fontSize: "12px",
+          color: C.text,
+          background: "#fafafa",
+        },
+      }),
+      pending && !pending.ok
+        ? para(`Can't import: ${pending.message}.`, { color: C.accent })
+        : null,
+      pending && pending.ok
+        ? block([
+            hint(
+              `Found ${plural(pending.settings, "setting")}, ${plural(pending.presets, "preset")} and a screen layout. Importing replaces your current settings and presets.`,
+            ),
+            actions([
+              action("Import and replace", () => {
+                const r = importSettings(importText)
+                if (!r.ok) return
+                putAll(r.values)
+                put("ui_import_text", "")
+                put("ui_confirm", "")
+                put(
+                  "ui_import_status",
+                  `Imported ${plural(r.settings, "setting")} and ${plural(r.presets, "preset")}.`,
+                )
+              }),
+              action("Cancel", () => put("ui_import_text", "")),
+            ]),
+          ])
+        : null,
+      importStatus && !importText
+        ? para(importStatus, { color: C.good, fontWeight: "bold" })
+        : null,
+      block([], { height: "6px" }),
+    ])
+
     // ------------------------------------------------------------- page
 
     return View({ style: { padding: "12px", background: C.page } }, [
@@ -330,6 +553,8 @@ AppSettingsPage({
               { margin: "4px 0 10px 0" },
             ),
       ]),
+
+      presetsCard,
 
       layoutCard,
 
@@ -418,6 +643,8 @@ AppSettingsPage({
           "Power zones for the zone bar are built from this.",
         ),
       ]),
+      backupCard,
+
       block([Link({ source: PRIVACY_URL }, "Privacy statement")], {
         margin: "4px 0 0 4px",
       }),
