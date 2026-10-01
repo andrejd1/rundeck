@@ -12,6 +12,7 @@ export const CONFIG_KEY = "rundeck_config" // screen config from the phone
 export const TRIAL_KEY = "rundeck_trial" // {used, last}
 export const LICENSE_KEY = "rundeck_license" // {licensed, checked_at}
 export const LAYOUT_KEY = "rundeck_layout" // layout edited on the watch
+export const PRESET_KEY = "rundeck_preset" // {id, at} preset picked on the watch
 
 const filePath = (key) => `${key}.json`
 

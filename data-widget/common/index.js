@@ -48,6 +48,7 @@ import {
   LAYOUT_KEY,
   LICENSE_KEY,
   loadObject,
+  PRESET_KEY,
   saveObject,
   TRIAL_KEY,
 } from "../../shared/device-store.js"
@@ -61,6 +62,7 @@ import {
   SLOT_IDS,
 } from "../../shared/fields.js"
 import { MSG } from "../../shared/messages.js"
+import { withLocalPreset } from "../../shared/presets.js"
 import { TargetTracker } from "../../shared/target.js"
 import { TRIAL_RUNS, TrialSession } from "../../shared/trial.js"
 import {
@@ -138,7 +140,10 @@ DataWidget(
 
     onInit() {
       this.state.initAt = this.nowSec()
-      this.state.config = normalizeConfig(loadObject(CONFIG_KEY))
+      this.state.config = withLocalPreset(
+        normalizeConfig(loadObject(CONFIG_KEY)),
+        loadObject(PRESET_KEY),
+      )
       this.state.layout = newerLayout(
         this.state.config.layout,
         loadObject(LAYOUT_KEY),
@@ -185,9 +190,12 @@ DataWidget(
     },
 
     // Back in view (from another data page, the on-watch layout editor or
-    // any other page): pick up a layout edited there and draw at once.
+    // any other page): pick up a layout or preset picked there and draw at
+    // once.
     onResume() {
       this.state.inView = true
+      const cfg = withLocalPreset(this.state.config, loadObject(PRESET_KEY))
+      if (cfg !== this.state.config) this.applyConfig(cfg)
       this.applyLayout(newerLayout(this.state.layout, loadObject(LAYOUT_KEY)))
       this.onTick()
     },
@@ -267,6 +275,8 @@ DataWidget(
           params: {
             device_uuid: uuid,
             trial_used: this.state.trial.trial.used,
+            // a preset picked on the watch while the phone was away
+            preset: loadObject(PRESET_KEY),
           },
         })
       } catch (e) {
@@ -288,7 +298,11 @@ DataWidget(
     applyRemote(data) {
       if (!data || typeof data !== "object") return
       if (data.config) {
-        const cfg = normalizeConfig(data.config)
+        // a newer preset pick on the watch keeps its target
+        const cfg = withLocalPreset(
+          normalizeConfig(data.config),
+          loadObject(PRESET_KEY),
+        )
         saveObject(CONFIG_KEY, cfg)
         this.applyConfig(cfg)
       }

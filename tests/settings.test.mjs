@@ -207,3 +207,94 @@ test("no units or auto-lap settings: the watch owns both", () => {
   assert.ok(!labels.includes("Hide"))
   assert.ok(!labels.some((l) => /^Every 1 /.test(l)))
 })
+
+const inputByPlaceholder = (tree, re) => {
+  const n = all(tree, "TextInput").find((i) =>
+    re.test(i.props.placeholder || ""),
+  )
+  if (!n) throw new Error(`no input ${re}`)
+  return n
+}
+
+test("presets: save current, apply another, delete with confirmation", () => {
+  let { tree, store } = render({
+    target_metric: "pace",
+    target_pace_low: "4:40",
+    layout_json: JSON.stringify({ slots: { r2c: "pace" }, updated_at: 1 }),
+  })
+  inputByPlaceholder(tree, /Preset name/).props.onChange("Tempo")
+  const [tempo] = JSON.parse(store.get("presets_json"))
+  assert.equal(tempo.name, "Tempo")
+  assert.equal(JSON.parse(store.get("preset_active")).id, tempo.id)
+  ;({ tree, store } = render(Object.fromEntries(store)))
+  assert.match(texts(tree).join("|"), /Tempo\|\s+Active/)
+
+  // change layout + target, save as a second preset
+  button(tree, "Heart rate").props.onClick()
+  assert.ok(Number(store.get("target_at")) > 0, "target edits are stamped")
+  store.set(
+    "layout_json",
+    JSON.stringify({ slots: { r2c: "hr" }, updated_at: 2 }),
+  )
+  ;({ tree, store } = render(Object.fromEntries(store)))
+  assert.match(texts(tree).join("|"), /Active, changed since/)
+  inputByPlaceholder(tree, /Preset name/).props.onChange("Easy")
+  assert.equal(JSON.parse(store.get("presets_json")).length, 2)
+
+  // apply Tempo again: layout and target come back
+  ;({ tree, store } = render(Object.fromEntries(store)))
+  button(tree, "Apply").props.onClick()
+  assert.equal(store.get("target_metric"), "pace")
+  assert.equal(JSON.parse(store.get("layout_json")).slots.r2c, "pace")
+  assert.equal(JSON.parse(store.get("preset_active")).id, tempo.id)
+
+  // delete asks first
+  ;({ tree, store } = render(Object.fromEntries(store)))
+  all(tree, "Button")
+    .filter((b) => b.props.label === "Delete")[0]
+    .props.onClick()
+  assert.equal(JSON.parse(store.get("presets_json")).length, 2)
+  ;({ tree, store } = render(Object.fromEntries(store)))
+  button(tree, "Delete Tempo").props.onClick()
+  assert.deepEqual(
+    JSON.parse(store.get("presets_json")).map((p) => p.name),
+    ["Easy"],
+  )
+  assert.equal(store.get("preset_active"), "")
+})
+
+test("export shows the settings as text; import previews, then replaces", () => {
+  let { tree, store } = render({
+    ftp: "300",
+    license_key: "SECRET-KEY-1234",
+  })
+  button(tree, "Export settings").props.onClick()
+  ;({ tree, store } = render(Object.fromEntries(store)))
+  const exported = all(tree, "TextInput").find((i) =>
+    /"app":"RunDeck"/.test(i.props.value || ""),
+  )
+  assert.ok(exported, "export text shown")
+  assert.ok(!/SECRET/.test(exported.props.value))
+
+  // bad paste: a reason, no import button
+  inputByPlaceholder(tree, /Paste exported/).props.onChange("nonsense")
+  ;({ tree, store } = render(Object.fromEntries(store)))
+  assert.match(texts(tree).join("|"), /Can't import: Not a RunDeck export/)
+  assert.ok(
+    !all(tree, "Button").some((b) => b.props.label === "Import and replace"),
+  )
+
+  // good paste into a fresh phone
+  ;({ tree, store } = render({ license_key: "OTHER-KEY", ftp: "200" }))
+  inputByPlaceholder(tree, /Paste exported/).props.onChange(
+    exported.props.value,
+  )
+  ;({ tree, store } = render(Object.fromEntries(store)))
+  assert.match(texts(tree).join("|"), /Found 1 setting, 0 presets/)
+  button(tree, "Import and replace").props.onClick()
+  assert.equal(store.get("ftp"), "300")
+  assert.equal(store.get("license_key"), "OTHER-KEY")
+  assert.equal(store.get("ui_import_text"), "")
+  ;({ tree, store } = render(Object.fromEntries(store)))
+  assert.match(texts(tree).join("|"), /Imported 1 setting and 0 presets/)
+})

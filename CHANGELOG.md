@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Presets: save the screen layout and the target under a name (up to 6) and switch between
+  them in the phone settings or on the watch (RunDeck in the app list → Presets), offline
+  too. Zones, FTP, LT pace and the pace unit are not part of a preset. A preset picked on the
+  watch while the phone is away is handed over on the next sync and is not undone by the
+  phone's older target.
+- Export and import in the phone settings: all settings and presets as one line of text to
+  copy and paste back, on the same phone or another. The license key is not included.
+- A burst of settings changes (applying a preset, an import) reaches the watch as one push.
+
 ## 0.3.0 — the watch's own numbers
 
 - Every value is the watch's own. Each slot's number is a SPORT_DATA widget the watch draws

@@ -15,6 +15,7 @@ import {
   validateLicense,
 } from "../shared/license.js"
 import { MSG } from "../shared/messages.js"
+import { presetSettings, readActive, readPresets } from "../shared/presets.js"
 import { TRIAL_RUNS } from "../shared/trial.js"
 
 // Settings that change what the watch renders: a change is pushed right away.
@@ -36,7 +37,14 @@ const CONFIG_KEYS = [
   "target_hr_low",
   "target_hr_high",
   "auto_lap",
+  "presets_json",
+  "preset_active",
+  "target_at",
 ]
+
+// Applying a preset or an import writes a dozen keys at once, each its own
+// onSettingsChange: they go to the watch as one push.
+const PUSH_DELAY_MS = 300
 
 function getItem(key) {
   try {
@@ -109,7 +117,10 @@ AppSideService(
       refreshStatusText()
     },
 
-    onDestroy() {},
+    // a push still waiting for its batch goes out now
+    onDestroy() {
+      if (this.pushTimer) this.push()
+    },
 
     // JSON POST through the side-service fetch (response body may arrive as
     // a string or an object depending on the Zepp app version).
@@ -136,6 +147,10 @@ AppSideService(
         this.mergeTrial(data.params && data.params.trial_used)
       if (data.method === MSG.LAYOUT_UPDATE)
         this.mergeLayout(data.params && data.params.layout)
+      if (data.method === MSG.PRESET_SELECT) {
+        if (this.mergePreset(data.params && data.params.preset))
+          this.schedulePush()
+      }
     },
 
     async onSettingsChange({ key, newValue }) {
@@ -151,12 +166,13 @@ AppSideService(
         await this.licenseQueue
         return
       }
-      if (CONFIG_KEYS.indexOf(key) >= 0) this.push()
+      if (CONFIG_KEYS.indexOf(key) >= 0) this.schedulePush()
     },
 
     handleGetConfig(params, res) {
       if (params.device_uuid) setItem("device_uuid", String(params.device_uuid))
       this.mergeTrial(params.trial_used)
+      this.mergePreset(params.preset)
       const lic = readLicense()
       res(null, {
         code: 0,
@@ -182,6 +198,27 @@ AppSideService(
         setItem("layout_json", JSON.stringify(incoming))
     },
 
+    // Preset switched on the watch ({id, at}): apply it here when the pick is
+    // newer than the phone's own last target change, and its layout only
+    // when newer than the phone's layout. True when anything was written.
+    mergePreset(pick) {
+      if (!pick || typeof pick.id !== "string") return false
+      const at = Number(pick.at)
+      const active = readActive(getItem)
+      const phoneAt = Math.max(
+        active ? active.at : 0,
+        parseInt(getItem("target_at"), 10) || 0,
+      )
+      if (!(at > phoneAt)) return false
+      const preset = readPresets(getItem).find((p) => p.id === pick.id)
+      if (!preset) return false
+      const next = presetSettings(preset, at)
+      if (!(at > readLayout(getItem).updated_at)) delete next.layout_json
+      for (const k of Object.keys(next))
+        if (getItem(k) !== next[k]) setItem(k, next[k])
+      return true
+    },
+
     mergeTrial(used) {
       const n = Number(used)
       if (Number.isFinite(n) && n > trialUsed()) {
@@ -190,7 +227,19 @@ AppSideService(
       }
     },
 
+    schedulePush() {
+      if (this.pushTimer) clearTimeout(this.pushTimer)
+      this.pushTimer = setTimeout(() => {
+        this.pushTimer = null
+        this.push()
+      }, PUSH_DELAY_MS)
+    },
+
     push() {
+      if (this.pushTimer) {
+        clearTimeout(this.pushTimer)
+        this.pushTimer = null
+      }
       const lic = readLicense()
       try {
         this.call({

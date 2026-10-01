@@ -84,6 +84,20 @@ Two places to edit, one layout:
 Both write the same layout with an `updated_at` stamp; the newer copy wins in both
 directions (watch edits reach the phone on the next sync, `LAYOUT_UPDATE`).
 
+**Presets** keep a screen layout and a target under a name ("Easy", "Intervals", up to 6),
+so switching between run types is one tap: Zepp app → RunDeck settings → *Presets*, or on
+the watch: RunDeck in the app list → *Presets*. Zones, FTP, LT pace and the pace unit
+describe the runner, not the run, so they stay out of presets and applying an old one never
+rolls them back. The watch gets every preset with the config and switches offline; its pick
+(`{id, at}`, `PRESET_SELECT` / the next `GET_CONFIG`) wins over the phone's target only when
+it is newer than the phone's last target edit (`target_at`), and layouts settle by their
+`updated_at` as usual (`shared/presets.js`).
+
+**Export / import** (phone only): *Export and import* shows every setting and the presets as
+one line of text to copy; pasting it under *Import* previews what it holds and replaces the
+current settings and presets. The license key, its activation and the trial count are never
+exported (`shared/backup.js`).
+
 Other settings: pace unit (for the target and zones), a **pace, power or heart rate
 target** entered as From / To (one end alone = a single value ± tolerance; each metric
 keeps its own range; every slot showing that live value is drawn green/blue/red), HR zones,
@@ -158,7 +172,7 @@ VAT-inclusive (e.g. 21% CZ) ≈ **€4–5**, before payout fees ($2/month in pa
 | `app.js` | receives phone pushes (config/license) for the whole mini program |
 | `app-side/index.js` | phone side service: config build, Polar activation, trial mirror |
 | `setting/index.js` | Zepp app settings page |
-| `shared/` | platform-free logic (fields, zones, target, trial, license, config) |
+| `shared/` | platform-free logic (fields, zones, target, trial, license, config, presets, backup) |
 | `sim/`, `tests/` | headless Zepp OS stubs, preview renderer, Node tests |
 
 ## Develop

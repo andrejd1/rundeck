@@ -5,8 +5,15 @@
 
 import { BaseApp } from "@zeppos/zml/base-app"
 import { normalizeConfig } from "./shared/config.js"
-import { CONFIG_KEY, LICENSE_KEY, saveObject } from "./shared/device-store.js"
+import {
+  CONFIG_KEY,
+  LICENSE_KEY,
+  loadObject,
+  PRESET_KEY,
+  saveObject,
+} from "./shared/device-store.js"
 import { MSG } from "./shared/messages.js"
+import { withLocalPreset } from "./shared/presets.js"
 
 App(
   BaseApp({
@@ -29,7 +36,14 @@ App(
           /* fall through to the cache */
         }
       }
-      if (params.config) saveObject(CONFIG_KEY, normalizeConfig(params.config))
+      if (params.config)
+        saveObject(
+          CONFIG_KEY,
+          withLocalPreset(
+            normalizeConfig(params.config),
+            loadObject(PRESET_KEY),
+          ),
+        )
       if (typeof params.licensed === "boolean")
         saveObject(LICENSE_KEY, {
           licensed: params.licensed,
