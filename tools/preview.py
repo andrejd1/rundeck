@@ -229,7 +229,7 @@ class Screen:
 
 
 def render(w, layout, run, target=None, bar=0, locked=False, bitmap=False, dark=True,
-           short=False, pace_zones=None, power_zones=None):
+           short=False, icons=False, pace_zones=None, power_zones=None):
     """layout: dict cols (6), slots (18 keys)."""
     s = Screen(w, bitmap, dark)
     fg = 0xFFFFFF if dark else 0x000000
@@ -269,6 +269,9 @@ def render(w, layout, run, target=None, bar=0, locked=False, bitmap=False, dark=
                 s.text(sx, vy, 0, vh, 0, ss, "Z%d" % zone, ZONE_COLORS[zone - 1], "suffix")
             if g[3] == 0:
                 continue
+            if icons and key in C.ICON_LABEL:
+                icon_label(s, slot, key, g, zone, dark)
+                continue
             f = FIELD[key]
             label = f[4] if short else f[3]
             lcolor = (GROUP_DARK if dark else GROUP_LIGHT)[f[5]]
@@ -292,6 +295,31 @@ def render(w, layout, run, target=None, bar=0, locked=False, bitmap=False, dark=
             size = s.fitted(msg, msg, n[3], n[2], True)
             s.text(s.px(n[0]), s.px(n[1]), s.px(n[2]), int(round((n[3] + 6) * s.sc)), 1, size, msg, notice, "notice")
     return s
+
+
+def icon_label(s, slot, key, g, zone, dark):
+    """RunDeckField.drawIconLabel"""
+    name, qual = C.ICON_LABEL[key]
+    color = (GROUP_DARK if dark else GROUP_LIGHT)[FIELD[key][5]]
+    if key == "hr" and slot != 0 and zone > 0:
+        qual, color = "Z%d" % zone, ZONE_COLORS[zone - 1]
+    big = g[3] > 18
+    img = Image.open(os.path.join(ROOT, "resources-round-%dx%d" % (s.w, s.w), "icons",
+                                  "%s_%s.png" % (name, "l" if big else "s"))).convert("RGBA")
+    isz = img.size[0]
+    x, y, w = s.px(g[0]), s.px(g[1]), s.px(g[2])
+    h = int(round((g[3] + 6) * s.sc))
+    gap = max(2, s.px(4))
+    qsize = qw = 0
+    if qual:
+        qsize = s.fitted(qual, qual, g[3], g[2] - (30 if big else 24), True)
+        qw = s.fonts.width(qual, qsize, True)
+    unit = isz + (gap + qw if qw else 0)
+    x0 = x if g[4] == 0 else x + (w - unit) / 2 if g[4] == 1 else x + w - unit
+    s.img.paste(img, (int(x0), int(y + (h - isz) / 2)), img)
+    s.boxes.append(("icon", name, (x0, y + (h - isz) / 2, x0 + isz, y + (h + isz) / 2), (x, y, x + w, y + h)))
+    if qw:
+        s.text(x0 + isz + gap, y, 0, h, 0, qsize, qual, color, "label")
 
 
 def draw_bar(s, run, target, bar, fg, pace_zones, power_zones):
@@ -364,20 +392,20 @@ def pace_bounds(threshold_sec):
 
 
 SCENES = [
-    ("Default screen: pace target 5:30-5:50 with pace zones (LT pace 4:30)",
+    ("Default: pace target 5:30-5:50, pace zones",
      lambda: dict(layout=default_layout(), target=(1, 1000 / 350.0, 1000 / 330.0), pace_zones=pace_bounds(270))),
-    ("3 columns in rows 1 and 4, short labels, HR zones",
+    ("3 columns in rows 1 and 4, icon labels",
      lambda: dict(layout=with_slots(default_layout(), cols=[1, 3, 3, 3, 3, 2], r1l="avg_hr", r1c="hr_zone",
                                     r1r="max_hr", r4l="lap_distance", r4c="laps", r4r="lap_ascent"),
-                  short=True)),
+                  icons=True)),
     ("Power target 250-270 W above range, run past an hour",
      lambda: dict(layout=with_slots(default_layout(), cols=[2, 2, 3, 3, 2, 2], headerl="hr", headerr="timer",
                                     r2l="lap_pace", r2c="power", r2r="pace", r3r="clock", r4r="avg_power",
                                     r5r="hr_zone"),
                   run=sample_run(timer=65 * 60), target=(2, 250, 270), power_zones=[163, 200, 225, 250, 288, 325])),
-    ("Row 2 as 2 columns, row 3 and bottom as 1",
+    ("Row 2 as 2 columns, row 3 and bottom as 1, short labels",
      lambda: dict(layout=with_slots(default_layout(), cols=[1, 2, 2, 1, 2, 1], r2l="pace", r2r="lap_pace",
-                                    r3c="timer", r5c="distance"), run=sample_run(hr=150))),
+                                    r3c="timer", r5c="distance"), run=sample_run(hr=150), short=True)),
     ("Trial over: basic screen",
      lambda: dict(layout=default_layout(), locked=True, run=sample_run(hr=141))),
     ("White background (MIP setting), HR target 140-150",
@@ -425,12 +453,15 @@ def check():
                 continue
             for cols in combos:
                 layout = with_slots(default_layout(), cols=list(cols))
-                for run in (sample_run(), sample_run(timer=3 * 3600 + 5, hr=188)):
-                    s = render(w, layout, run, bitmap=bitmap)
+                for run, icons in ((sample_run(), False), (sample_run(timer=3 * 3600 + 5, hr=188), True)):
+                    s = render(w, layout, run, bitmap=bitmap, icons=icons)
                     r = w / 2.0
                     for kind, txt, (x0, y0, x1, y1), box in s.boxes:
                         if kind == "suffix":
                             continue
+                        if kind == "label" and box[2] == box[0]:
+                            # an icon's qualifier: checked against the screen only
+                            box = (box[0], box[1], s.w, box[3])
                         # horizontal: never wider than its box (1 px slack)
                         if x0 < box[0] - 1 or x1 > box[2] + 1:
                             problems += 1

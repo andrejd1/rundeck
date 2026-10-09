@@ -29,10 +29,14 @@ class EditorMenu extends WatchUi.Menu2 {
                     FieldTable.name(cfg.slots[s]), "s" + s, {}));
             }
         }
-        addItem(new WatchUi.MenuItem("Field names", cfg.shortLabels ? "Short text" : "Text", "labels", {}));
+        addItem(new WatchUi.MenuItem("Field names", EditorMenu.labelsName(cfg.labels), "labels", {}));
         addItem(new WatchUi.MenuItem("Zone bar", EditorMenu.barName(cfg.bar), "bar", {}));
         addItem(new WatchUi.MenuItem("Smaller spots", FieldTable.name(cfg.compact), "compact", {}));
         addItem(new WatchUi.MenuItem("Presets", null, "presets", {}));
+    }
+
+    static function labelsName(l as Number) as String {
+        return l == 1 ? "Short text" : l == 2 ? "Icons" : "Text";
     }
 
     static function barName(b as Number) as String {
@@ -73,9 +77,9 @@ class EditorDelegate extends WatchUi.Menu2InputDelegate {
         } else if (id.equals("compact")) {
             pushPicker("Smaller spots", "compact", cfg.compact, item);
         } else if (id.equals("labels")) {
-            var v = cfg.shortLabels ? 0 : 1;
+            var v = (cfg.labels + 1) % 3;
             Config.set("labels", v);
-            item.setSubLabel(v == 1 ? "Short text" : "Text");
+            item.setSubLabel(EditorMenu.labelsName(v));
             changed();
         } else if (id.equals("bar")) {
             var b = (cfg.bar + 1) % 5;

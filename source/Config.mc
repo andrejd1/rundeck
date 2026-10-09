@@ -9,7 +9,7 @@ import Toybox.System;
 class Config {
     var cols as Array<Number>;
     var slots as Array<Number>;
-    var shortLabels as Boolean = false;
+    var labels as Number = 0; // 0 text, 1 short text, 2 icons
     var bar as Number = 0; // 0 auto, 1 hr, 2 pace, 3 power, 4 off
     var compact as Number = FieldTable.F_PACE;
     var target as Array<Numeric>?; // [metric, min, max]
@@ -41,7 +41,10 @@ class Config {
             var f = Config.num(FieldTable.SLOT_KEY[s], FieldTable.DEFAULT_SLOT[s]);
             slots[s] = f >= 0 && f < FieldTable.COUNT ? f : FieldTable.DEFAULT_SLOT[s];
         }
-        shortLabels = Config.num("labels", 0) == 1;
+        labels = Config.num("labels", 0);
+        if (labels < 0 || labels > 2) {
+            labels = 0;
+        }
         bar = Config.num("bar", 0);
         compact = Config.num("compact", FieldTable.F_PACE);
         if (compact < 0 || compact >= FieldTable.COUNT) {

@@ -943,6 +943,7 @@
             <settingConfig type="list">
                 <listEntry value="0">Text</listEntry>
                 <listEntry value="1">Short text</listEntry>
+                <listEntry value="2">Icons</listEntry>
             </settingConfig>
         </setting>
         <setting propertyKey="@Properties.bar" title="Zone bar">

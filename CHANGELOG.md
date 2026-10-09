@@ -4,7 +4,7 @@
 
 - RunDeck as a Connect IQ data field for the native Run activity: top row plus five rows
   and the zone bar, column counts per row (top 1–2, rows 1/4 2–3, rows 2/3 1–3, bottom 1–2),
-  any of 45 fields in any spot, text or short field names, the Amazfit layout scaled to every
+  any of 45 fields in any spot, field names as text, short text or icons, the Amazfit layout scaled to every
   round screen from 218 to 454 px.
 - Every value is the watch's own (`Activity.Info`, user profile, system), in the watch's
   units. Lap values are the watch's totals at its own lap marks (lap key, auto lap, workout

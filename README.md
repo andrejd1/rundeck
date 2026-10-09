@@ -68,7 +68,7 @@ RunDeck for Garmin leaves them out:
 | Stride length (current/avg/lap), steps | not in `Activity.Info` (running dynamics need their own ANT connection) |
 | Anaerobic TE, training load | not exposed to data fields |
 | Average lap time | would be computed |
-| Icon labels, export/import of settings | not built yet (see [Not done yet](#not-done-yet)) |
+| Export/import of settings | not built (see [Not done yet](#not-done-yet)) |
 
 New on Garmin: max HR, max cadence, best pace, elapsed time with pauses, lap calories,
 distance to destination (courses), battery.
@@ -97,7 +97,9 @@ Any of 45 fields can go in any spot:
 
 HR as the single top value gets the zone suffix ("162 Z4"); HR anywhere else carries the
 zone in its label ("HR Z3", zone-colored). Below zone 1 no zone is shown. Field names can
-be full text or short text ("LapP"). Text shrinks to fit its spot; values are sized by
+be full text, short text ("LapP") or **icons** with a qualifier ("♥ Avg"; the Amazfit
+glyphs, rendered for each screen size by `tools/gen-icons.py`, since the watch doesn't
+scale bitmaps). Text shrinks to fit its spot; values are sized by
 their widest typical value so digits don't jump.
 
 Two places to edit, one copy of the settings (they live on the watch):
@@ -179,7 +181,7 @@ semi-round Instinct 2 are not supported.
 | `source/Trial.mc`, `License.mc` | 5-run trial; Polar license (background service) |
 | `source/FieldTable.mc`, `LayoutTable.mc` | **generated** by `tools/catalog.py` |
 | `resources/properties.xml`, `resources/settings/settings.xml`, `resources/strings/fields.xml` | **generated** by `tools/catalog.py` |
-| `resources-round-*/` | **generated** bitmap fonts per screen size (`tools/gen-fonts.py`) |
+| `resources-round-*/` | **generated** bitmap fonts (`tools/gen-fonts.py`) and field icons (`tools/gen-icons.py`) per screen size |
 | `tools/catalog.py` | the field catalog, slots, defaults, every setting and the screen geometry |
 | `tools/preview.py` | preview renderer + layout check (every layout, every size) |
 | `tools/stub-devices.py` | stand-in device files for building without the SDK Manager (CI) |
@@ -190,6 +192,7 @@ semi-round Instinct 2 are not supported.
 ```
 python3 tools/catalog.py          # after editing the catalog/geometry (CI checks it's in sync)
 python3 tools/gen-fonts.py        # after changing font sizes (needs Pillow)
+python3 tools/gen-icons.py        # after changing icons (needs cairosvg)
 python3 tools/preview.py          # docs/ui-preview.png
 python3 tools/preview.py --check  # every column combination on 218-454 px: nothing off-screen
                                   # or wider than its spot
@@ -238,7 +241,6 @@ does this on every push.
 
 ## Not done yet
 
-- Icon labels (the Amazfit "Icons" style) — needs bitmaps per screen size.
 - Export / import of settings — Garmin Connect's settings page can't show a copyable code;
   presets cover switching between run types.
 - A landing page (the Amazfit repo's `site/`).

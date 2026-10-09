@@ -59,6 +59,7 @@ class RunDeckField extends WatchUi.DataField {
     var ts as Float = 1.0; // text sizes (a little larger on small screens)
     var dark as Boolean = true;
     var fitCache as Dictionary<String, Number> = {} as Dictionary<String, Number>;
+    var icons as Dictionary<Number, BitmapResource> = {} as Dictionary<Number, BitmapResource>;
 
     function initialize(licensed as Boolean) {
         DataField.initialize();
@@ -74,6 +75,7 @@ class RunDeckField extends WatchUi.DataField {
         tracker.setTarget(cfg.target);
         fonts.reset();
         fitCache = {} as Dictionary<String, Number>;
+        icons = {} as Dictionary<Number, BitmapResource>;
         vo2Read = false;
         slowReadAt = -1; // a slot may show a slow value now
         WatchUi.requestUpdate();
@@ -472,7 +474,11 @@ class RunDeckField extends WatchUi.DataField {
         if (geo[o + 3] == 0) {
             return; // big center values carry no label
         }
-        var label = cfg.shortLabels ? FieldTable.SHORT[id] : FieldTable.LABEL[id];
+        if (cfg.labels == 2 && FieldTable.ICON[id] >= 0) {
+            drawIconLabel(dc, slot, id, geo, o, zone);
+            return;
+        }
+        var label = cfg.labels == 1 ? FieldTable.SHORT[id] : FieldTable.LABEL[id];
         var lcolor = Theme.group(FieldTable.GROUP[id], dark);
         // heart rate anywhere but the single top value: the zone rides in
         // the label, in the zone's color (none below zone 1)
@@ -484,6 +490,56 @@ class RunDeckField extends WatchUi.DataField {
         drawText(dc, px(geo[o]), px(geo[o + 1]), px(geo[o + 2]),
             Math.round((geo[o + 3] + 6) * sc).toNumber(), geo[o + 4],
             fonts.text(lsize), label, lcolor);
+    }
+
+    // Icon label: the field's icon and a qualifier ("Avg", "Lap"), placed by
+    // the label box's alignment. Bitmaps don't scale, so each screen size
+    // ships its icons at the two sizes used here (tools/gen-icons.py).
+    function drawIconLabel(dc as Dc, slot as Number, id as Number, geo as Array<Number>, o as Number, zone as Number) as Void {
+        var qual = FieldTable.QUAL[id];
+        var color = Theme.group(FieldTable.GROUP[id], dark);
+        if (id == FieldTable.F_HR && slot != Layout.SLOT_HEADER && zone > 0) {
+            qual = "Z" + zone;
+            color = Zones.color(zone);
+        }
+        var ds = geo[o + 3];
+        var big = ds > 18;
+        var bmp = icon(FieldTable.ICON[id], big);
+        var isz = bmp.getWidth();
+        var x = px(geo[o]);
+        var y = px(geo[o + 1]);
+        var w = px(geo[o + 2]);
+        var h = Math.round((ds + 6) * sc).toNumber();
+        var gap = px(4) > 2 ? px(4) : 2;
+        var qsize = 0;
+        var qw = 0;
+        if (qual.length() > 0) {
+            qsize = fitted(dc, "q" + slot + qual, qual, qual, ds, geo[o + 2] - (big ? 30 : 24), true);
+            qw = dc.getTextWidthInPixels(qual, fonts.text(qsize));
+        }
+        var unit = isz + (qw > 0 ? gap + qw : 0);
+        var x0 = x;
+        if (geo[o + 4] == 1) {
+            x0 = x + (w - unit) / 2;
+        } else if (geo[o + 4] == 2) {
+            x0 = x + w - unit;
+        }
+        dc.drawBitmap(x0, y + (h - isz) / 2, bmp);
+        if (qw > 0) {
+            dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(x0 + isz + gap, y + h / 2, fonts.text(qsize), qual,
+                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        }
+    }
+
+    function icon(index as Number, big as Boolean) as BitmapResource {
+        var key = index * 2 + (big ? 1 : 0);
+        var b = icons[key];
+        if (b == null) {
+            b = WatchUi.loadResource(big ? ICONS_L[index] : ICONS_S[index]) as BitmapResource;
+            icons[key] = b;
+        }
+        return b;
     }
 
     function valueColor(id as Number) as Number {

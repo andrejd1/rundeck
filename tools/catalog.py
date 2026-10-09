@@ -79,6 +79,31 @@ FIELDS = [
     (45, "battery", "Battery", "Battery", "Batt", BODY, "000%", "PCT"),
 ]
 
+# "Icons" label style: an icon (tools/gen-icons.py) plus a short qualifier.
+ICON_NAMES = [
+    "heart", "zone", "gauge", "bolt", "stopwatch", "clock", "flag", "laps",
+    "ascent", "altitude", "descent", "load", "thermo", "sun", "feet", "flame",
+    "battery",
+]
+ICON_LABEL = dict(
+    hr=("heart", ""), hr_zone=("zone", ""), avg_hr=("heart", "Avg"), max_hr=("heart", "Max"),
+    pace=("gauge", ""), avg_pace=("gauge", "Avg"), lap_pace=("gauge", "Lap"),
+    last_lap_pace=("gauge", "Last"), max_pace=("gauge", "Max"),
+    speed=("gauge", "Spd"), avg_speed=("gauge", "Avg"), lap_speed=("gauge", "Lap"),
+    last_lap_speed=("gauge", "Last"), max_speed=("gauge", "Max"),
+    power=("bolt", ""), avg_power=("bolt", "Avg"), max_power=("bolt", "Max"),
+    timer=("stopwatch", ""), elapsed=("stopwatch", "All"), lap_time=("stopwatch", "Lap"),
+    last_lap_time=("stopwatch", "Last"), clock=("clock", ""), sunrise=("sun", "Rise"),
+    sunset=("sun", "Set"), distance=("flag", ""), lap_distance=("flag", "Lap"),
+    last_lap_distance=("flag", "Last"), laps=("laps", ""), dist_to_dest=("flag", "Dest"),
+    ascent=("ascent", ""), descent=("descent", ""), lap_ascent=("ascent", "Lap"),
+    lap_descent=("descent", "Lap"), last_lap_ascent=("ascent", "Last"),
+    last_lap_descent=("descent", "Last"), altitude=("altitude", ""),
+    cadence=("feet", ""), avg_cadence=("feet", "Avg"), max_cadence=("feet", "Max"),
+    calories=("flame", ""), lap_calories=("flame", "Lap"), aerobic_te=("load", "Aer"),
+    vo2max=("load", "VO2"), temperature=("thermo", ""), battery=("battery", ""),
+)
+
 # Picker order (phone and watch): the catalog order, "Empty" last.
 PICKER = [f[0] for f in FIELDS if f[0] != 0] + [0]
 
@@ -270,6 +295,8 @@ def field_table():
     arr("GROUP", "Number", [str(f[5]) for f in FIELDS])
     arr("SAMPLE", "String", [mc_string(f[6]) for f in FIELDS])
     arr("KIND", "Number", ["K_" + f[7] for f in FIELDS])
+    arr("ICON", "Number", [str(ICON_NAMES.index(ICON_LABEL[f[1]][0])) if f[1] in ICON_LABEL else "-1" for f in FIELDS])
+    arr("QUAL", "String", [mc_string(ICON_LABEL[f[1]][1]) if f[1] in ICON_LABEL else '""' for f in FIELDS])
     arr("PICKER", "Number", [str(i) for i in PICKER])
     arr("SLOT_KEY", "String", [mc_string("s_" + s[0]) for s in SLOTS])
     arr("SLOT_NAME", "String", [mc_string(s[1]) for s in SLOTS])
@@ -379,7 +406,7 @@ def settings_xml():
         out += list_setting("cols_" + r[0], r[1] + " columns", [(c, "@Strings.cols_%d" % c) for c in r[2]])
     for s in SLOTS:
         out += list_setting("s_" + s[0], s[1], field_entries)
-    out += list_setting("labels", "Field names", [(0, "Text"), (1, "Short text")])
+    out += list_setting("labels", "Field names", [(0, "Text"), (1, "Short text"), (2, "Icons")])
     out += list_setting("bar", "Zone bar", [(0, "Auto (follows the target)"), (1, "Heart rate zones"), (2, "Pace zones"), (3, "Power zones"), (4, "Off")])
     out += list_setting("compact", "Field in a smaller data screen spot", field_entries)
     out.append("    </group>")
