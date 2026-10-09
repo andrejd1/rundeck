@@ -27,7 +27,11 @@ class FontCache {
         }
         if (!vector) {
             try {
-                bmSizes = WatchUi.loadResource(Rez.JsonData.BmSizes) as Array<Number>;
+                var nums = Text.numbers(WatchUi.loadResource(Rez.Strings.BmSizes) as String);
+                bmSizes = new Array<Number>[nums.size()];
+                for (var i = 0; i < nums.size(); i++) {
+                    bmSizes[i] = nums[i].toNumber();
+                }
             } catch (e) {
                 bmSizes = [];
             }
@@ -44,10 +48,20 @@ class FontCache {
     // The largest font not above `size` px (the smallest there is when
     // nothing is that small).
     function get(size as Number) as FontType {
+        return font(size, false);
+    }
+
+    // The same for text with letters: big bitmap fonts carry only digits.
+    function text(size as Number) as FontType {
+        return font(size, true);
+    }
+
+    function font(size as Number, letters as Boolean) as FontType {
         if (size < 6) {
             size = 6;
         }
-        var f = cache[size];
+        var key = letters ? -size : size;
+        var f = cache[key];
         if (f != null) {
             return f;
         }
@@ -56,7 +70,8 @@ class FontCache {
         }
         if (f == null && bmSizes.size() > 0) {
             var best = 0;
-            for (var i = 0; i < bmSizes.size(); i++) {
+            var top = letters && BM_TEXT < bmSizes.size() ? BM_TEXT : bmSizes.size();
+            for (var i = 0; i < top; i++) {
                 if (bmSizes[i] <= size) {
                     best = i;
                 }
@@ -73,7 +88,7 @@ class FontCache {
         if (cache.size() >= MAX_CACHED) {
             cache = {} as Dictionary<Number, FontType>;
         }
-        cache[size] = f;
+        cache[key] = f;
         return f;
     }
 

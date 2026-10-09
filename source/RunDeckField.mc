@@ -452,7 +452,7 @@ class RunDeckField extends WatchUi.DataField {
         var value = text(id);
         var color = valueColor(id);
         var key = slot + ":" + value.length();
-        var size = fitted(dc, key, sample(id), value, geo[o + 8], geo[o + 7]);
+        var size = fitted(dc, key, sample(id), value, geo[o + 8], geo[o + 7], false);
         var vx = px(geo[o + 5]);
         var vy = px(geo[o + 6]);
         var vw = px(geo[o + 7]);
@@ -480,10 +480,10 @@ class RunDeckField extends WatchUi.DataField {
             label = "HR Z" + zone;
             lcolor = Zones.color(zone);
         }
-        var lsize = fitted(dc, "l" + slot + label, label, label, geo[o + 3], geo[o + 2]);
+        var lsize = fitted(dc, "l" + slot + label, label, label, geo[o + 3], geo[o + 2], true);
         drawText(dc, px(geo[o]), px(geo[o + 1]), px(geo[o + 2]),
             Math.round((geo[o + 3] + 6) * sc).toNumber(), geo[o + 4],
-            fonts.get(lsize), label, lcolor);
+            fonts.text(lsize), label, lcolor);
     }
 
     function valueColor(id as Number) as Number {
@@ -496,7 +496,7 @@ class RunDeckField extends WatchUi.DataField {
 
     // Text size (px) that fits both the sample and the text in a box width;
     // never above the design size. Cached per slot and text length.
-    function fitted(dc as Dc, key as String, sampleText as String, value as String, designSize as Number, designW as Number) as Number {
+    function fitted(dc as Dc, key as String, sampleText as String, value as String, designSize as Number, designW as Number, letters as Boolean) as Number {
         var cached = fitCache[key];
         if (cached != null) {
             return cached;
@@ -506,7 +506,7 @@ class RunDeckField extends WatchUi.DataField {
         var guard = 0;
         while (size > 6 && guard < 40) {
             guard++;
-            var f = fonts.get(size);
+            var f = fonts.font(size, letters);
             var tw = dc.getTextWidthInPixels(sampleText, f);
             var tv = dc.getTextWidthInPixels(value, f);
             if (tv > tw) {
@@ -632,9 +632,9 @@ class RunDeckField extends WatchUi.DataField {
         for (var k = 0; k < lines.size(); k++) {
             var n = lines[k][0] as Array<Number>;
             var s = lines[k][1] as String;
-            var size = fitted(dc, "n" + k, s, s, n[3], n[2]);
+            var size = fitted(dc, "n" + k, s, s, n[3], n[2], true);
             drawText(dc, px(n[0]), px(n[1]), px(n[2]), Math.round((n[3] + 6) * sc).toNumber(), 1,
-                fonts.get(size), s, color);
+                fonts.text(size), s, color);
         }
     }
 
@@ -662,7 +662,7 @@ class RunDeckField extends WatchUi.DataField {
             size = next;
         }
         dc.setColor(Theme.group(FieldTable.GROUP[id], dark), Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, (h * 0.22).toNumber(), fonts.get(lsize), label,
+        dc.drawText(w / 2, (h * 0.22).toNumber(), fonts.text(lsize), label,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(valueColor(id), Graphics.COLOR_TRANSPARENT);
         dc.drawText(w / 2, (h * 0.6).toNumber(), fonts.get(size), value,

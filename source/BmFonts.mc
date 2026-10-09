@@ -2,7 +2,10 @@
 
 import Toybox.Lang;
 
-// bitmap fonts by ladder index (resources-round-*/bmfonts.xml)
+// bitmap fonts by ladder index (resources-round-*/bmfonts.xml); the
+// first BM_TEXT carry letters, the rest only what values use
+const BM_TEXT = 10;
+
 const BM_FONTS as Array<ResourceId> = [
     Rez.Fonts.bm0,
     Rez.Fonts.bm1,

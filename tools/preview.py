@@ -24,6 +24,8 @@ from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import catalog as C  # noqa: E402
 
+GF = __import__("gen-fonts")
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TTF = os.path.join(ROOT, "tools", "fonts", "RobotoCondensed-VF.ttf")
 
@@ -60,14 +62,17 @@ class Fonts:
         if bitmap:
             path = os.path.join(ROOT, "resources-round-%dx%d" % (w, w), "bmfonts.xml")
             text = open(path).read()
-            self.sizes = json.loads(text.split('id="BmSizes">')[1].split("<")[0])
+            self.sizes = [int(v) for v in text.split('id="BmSizes">')[1].split("<")[0].split(",")]
 
-    def size(self, s):
+    def size(self, s, letters=False):
         s = max(6, s)
         if self.sizes is None:
             return s
+        top = len(self.sizes)
+        if letters:
+            top = sum(1 for d in GF.LADDER if d <= GF.TEXT_UP_TO)
         best = self.sizes[0]
-        for v in self.sizes:
+        for v in self.sizes[:top]:
             if v <= s:
                 best = v
         return best
@@ -78,8 +83,8 @@ class Fonts:
         below = [v for v in self.sizes if v < s]
         return below[-1] if below else 0
 
-    def width(self, text, s):
-        return ttf(self.size(s)).getlength(text)
+    def width(self, text, s, letters=False):
+        return ttf(self.size(s, letters)).getlength(text)
 
 
 # --------------------------------------------------------------- values
@@ -194,13 +199,13 @@ class Screen:
     def px(self, v):
         return int(round(v * self.sc))
 
-    def fitted(self, sample_text, value, design_size, design_w):
+    def fitted(self, sample_text, value, design_size, design_w, letters=False):
         w = self.px(design_w)
         size = int(round(design_size * self.ts))
         for _ in range(40):
             if size <= 6:
                 break
-            tw = max(self.fonts.width(sample_text, size), self.fonts.width(value, size))
+            tw = max(self.fonts.width(sample_text, size, letters), self.fonts.width(value, size, letters))
             if tw <= w:
                 break
             nxt = self.fonts.smaller(size)
@@ -212,7 +217,7 @@ class Screen:
         return size
 
     def text(self, x, y, w, h, align, size, s, color, kind="text"):
-        font = ttf(self.fonts.size(size))
+        font = ttf(self.fonts.size(size, kind in ("label", "notice")))
         anchor = {0: "lm", 1: "mm", 2: "rm"}[align]
         jx = x if align == 0 else x + w / 2 if align == 1 else x + w
         self.draw.text((jx, y + h / 2), s, fill=rgb(color), font=font, anchor=anchor)
@@ -270,7 +275,7 @@ def render(w, layout, run, target=None, bar=0, locked=False, bitmap=False, dark=
             if key == "hr" and slot != 0 and zone > 0:
                 label = "HR Z%d" % zone
                 lcolor = ZONE_COLORS[zone - 1]
-            lsize = s.fitted(label, label, g[3], g[2])
+            lsize = s.fitted(label, label, g[3], g[2], True)
             s.text(s.px(g[0]), s.px(g[1]), s.px(g[2]), int(round((g[3] + 6) * s.sc)), g[4], lsize, label, lcolor, "label")
     div = 0x3A3A3A if dark else 0xB0B0B0
     for i, d in enumerate(C.DIVIDERS):
@@ -284,7 +289,7 @@ def render(w, layout, run, target=None, bar=0, locked=False, bitmap=False, dark=
     else:
         notice = 0xF59E0B if dark else 0xB45309
         for n, msg in [(C.NOTICE_SUB, "Trial ended (5 runs)"), (C.NOTICE, "Unlock in Garmin Connect")]:
-            size = s.fitted(msg, msg, n[3], n[2])
+            size = s.fitted(msg, msg, n[3], n[2], True)
             s.text(s.px(n[0]), s.px(n[1]), s.px(n[2]), int(round((n[3] + 6) * s.sc)), 1, size, msg, notice, "notice")
     return s
 

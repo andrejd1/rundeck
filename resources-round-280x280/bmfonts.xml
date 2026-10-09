@@ -20,7 +20,7 @@
         <font id="bm16" filename="fonts/bm16.fnt" antialias="true"/>
         <font id="bm17" filename="fonts/bm17.fnt" antialias="true"/>
     </fonts>
-    <jsonDataResources>
-        <jsonData id="BmSizes">[8, 9, 10, 12, 13, 14, 15, 17, 18, 19, 22, 24, 27, 31, 35, 38, 44, 51]</jsonData>
-    </jsonDataResources>
+    <strings>
+        <string id="BmSizes">8,9,10,12,13,14,15,17,18,19,22,24,27,31,35,38,44,51</string>
+    </strings>
 </resources>

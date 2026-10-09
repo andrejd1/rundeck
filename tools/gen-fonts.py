@@ -5,7 +5,7 @@ Watches with Connect IQ 4.2.1+ scalable fonts draw RunDeck's text at any
 size (source/Fonts.mc). The others get these: one ladder of sizes per round
 screen size, in BMFont text format (.fnt + .png) as the resource compiler
 reads it, written to resources-round-<W>x<W>/fonts/, plus the size list
-(jsonData BmSizes) the code picks from and source/BmFonts.mc with the ids.
+(string resource BmSizes) the code picks from and source/BmFonts.mc with the ids.
 
 Every screen size gets the same number of fonts (the code indexes them);
 small sizes carry printable ASCII (labels), big ones only what values use.
@@ -117,9 +117,9 @@ def main():
             render(size, chars, fonts, "bm%d" % i)
             xml.append('        <font id="bm%d" filename="fonts/bm%d.fnt" antialias="true"/>' % (i, i))
         xml.append("    </fonts>")
-        xml.append("    <jsonDataResources>")
-        xml.append('        <jsonData id="BmSizes">%s</jsonData>' % json.dumps(sizes))
-        xml.append("    </jsonDataResources>")
+        xml.append("    <strings>")
+        xml.append('        <string id="BmSizes">%s</string>' % ",".join(str(s) for s in sizes))
+        xml.append("    </strings>")
         xml.append("</resources>")
         with open(os.path.join(res, "bmfonts.xml"), "w") as f:
             f.write("\n".join(xml) + "\n")
@@ -129,7 +129,10 @@ def main():
         "",
         "import Toybox.Lang;",
         "",
-        "// bitmap fonts by ladder index (resources-round-*/bmfonts.xml)",
+        "// bitmap fonts by ladder index (resources-round-*/bmfonts.xml); the",
+        "// first BM_TEXT carry letters, the rest only what values use",
+        "const BM_TEXT = %d;" % sum(1 for d in LADDER if d <= TEXT_UP_TO),
+        "",
         "const BM_FONTS as Array<ResourceId> = [",
     ]
     src += ["    Rez.Fonts.bm%d," % i for i in range(len(LADDER))]
