@@ -75,6 +75,7 @@ class RunDeckField extends WatchUi.DataField {
         fonts.reset();
         fitCache = {} as Dictionary<String, Number>;
         vo2Read = false;
+        slowReadAt = -1; // a slot may show a slow value now
         WatchUi.requestUpdate();
     }
 
