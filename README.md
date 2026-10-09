@@ -9,7 +9,8 @@ all on one page.
 The native activity keeps GPS, recording, laps and the activity file. **Every number on
 the screen is the watch's own**: RunDeck reads the native activity (`Activity.Info`), the
 user profile and the system, converts units the way the watch is set (km/mi, m/ft, °C/°F,
-12/24 h), and draws. It smooths, estimates and averages nothing.
+12/24 h), and draws. No number on screen is smoothed, estimated or averaged by RunDeck (the
+one average is a 3 s window that only decides the target color).
 
 > **Status: never run on a watch or in the Garmin simulator.** The code type-checks
 > strictly (`-l 3`) and builds for all 67 supported watches, and the layout renderer checks
@@ -51,7 +52,7 @@ default).
 | Temperature | the watch's temperature sensor, latest logged reading (`SensorHistory`) |
 | Sunrise, sunset | the watch's own (`Weather.getSunrise/getSunset`, at the place of its last weather report; no GPS permission) |
 | Clock, battery | `System` |
-| **Lap values** (lap/last-lap time, distance, pace, speed, ascent, descent, calories; lap number) | Connect IQ exposes **no lap values**. RunDeck takes the watch's native totals at each of the **watch's own lap marks** (`onTimerLap`: lap key, auto lap; `onWorkoutStepComplete`): lap distance = distance now − distance at the lap mark, lap time likewise on the timer, lap pace = lap time / lap distance. That is the same arithmetic the watch uses for its lap record, so the numbers match it — but strictly speaking they are differences of native values, not values the watch hands over. |
+| **Lap values** (lap/last-lap time, distance, pace, speed, ascent, descent, calories; lap number) | Connect IQ exposes **no lap values**. RunDeck takes the watch's native totals at each of the **watch's own lap marks** (`onTimerLap`: lap key, auto lap; `onWorkoutStepComplete`): lap distance = distance now − distance at the lap mark, lap time likewise on the timer, lap pace = lap time / lap distance. That is the same arithmetic the watch uses for its lap record, so they should match it (not yet checked against a real lap record) — but strictly speaking they are differences of native values, not values the watch hands over. If the field is loaded mid-activity (data screens edited, "resume later"), laps before that are unknown to it and the lap values count from the activity start until the next lap. |
 
 ### What the Amazfit version had that Garmin can't show natively
 

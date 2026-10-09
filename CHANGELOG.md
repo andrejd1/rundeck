@@ -16,5 +16,6 @@
 - 5-run trial, basic mode afterwards; Polar license key activated by a background service.
 - Scalable Roboto Condensed where the watch has scalable fonts, generated bitmap fonts
   elsewhere.
-- Tooling: field catalog generator, preview renderer with a layout check, stand-in device
-  files for CI builds, build/package script, GitHub Actions build of all 67 watches.
+- Tooling: field catalog generator, preview renderer with a layout check and store
+  screenshots, stand-in device files for CI builds, build/package script, GitHub Actions
+  build of all 67 watches, unit tests for parsing, formatting, zones and targets.
