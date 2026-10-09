@@ -1,0 +1,20 @@
+info face="Roboto Condensed Bold" size=76 bold=1 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=1,1
+common lineHeight=90 base=71 scaleW=256 scaleH=171 pages=1 packed=0
+page id=0 file="bm17.png"
+chars count=16
+char id=32 x=0 y=0 width=18 height=0 xoffset=0 yoffset=71 xadvance=18 page=0 chnl=15
+char id=45 x=19 y=0 width=27 height=28 xoffset=0 yoffset=43 xadvance=27 page=0 chnl=15
+char id=46 x=47 y=0 width=22 height=12 xoffset=0 yoffset=60 xadvance=22 page=0 chnl=15
+char id=48 x=70 y=0 width=38 height=56 xoffset=0 yoffset=16 xadvance=38 page=0 chnl=15
+char id=49 x=109 y=0 width=38 height=54 xoffset=0 yoffset=17 xadvance=38 page=0 chnl=15
+char id=50 x=148 y=0 width=38 height=55 xoffset=0 yoffset=16 xadvance=38 page=0 chnl=15
+char id=51 x=187 y=0 width=38 height=56 xoffset=0 yoffset=16 xadvance=38 page=0 chnl=15
+char id=52 x=0 y=57 width=38 height=54 xoffset=0 yoffset=17 xadvance=38 page=0 chnl=15
+char id=53 x=39 y=57 width=38 height=55 xoffset=0 yoffset=17 xadvance=38 page=0 chnl=15
+char id=54 x=78 y=57 width=38 height=55 xoffset=0 yoffset=17 xadvance=38 page=0 chnl=15
+char id=55 x=117 y=57 width=38 height=54 xoffset=0 yoffset=17 xadvance=38 page=0 chnl=15
+char id=56 x=156 y=57 width=38 height=56 xoffset=0 yoffset=16 xadvance=38 page=0 chnl=15
+char id=57 x=195 y=57 width=38 height=55 xoffset=0 yoffset=16 xadvance=38 page=0 chnl=15
+char id=58 x=234 y=57 width=21 height=42 xoffset=0 yoffset=30 xadvance=21 page=0 chnl=15
+char id=37 x=0 y=114 width=49 height=56 xoffset=0 yoffset=16 xadvance=49 page=0 chnl=15
+char id=90 x=50 y=114 width=40 height=54 xoffset=0 yoffset=17 xadvance=40 page=0 chnl=15
