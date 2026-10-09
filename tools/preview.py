@@ -10,6 +10,8 @@ without scalable fonts).
 
 usage:
   python3 tools/preview.py                  docs/ui-preview.png (gallery)
+  python3 tools/preview.py --shots          docs/screenshots/<n>.png, one per scene at
+                                            454 px (store listing)
   python3 tools/preview.py --check          every layout on every screen size:
                                             text inside its box, nothing off-screen
 """
@@ -478,7 +480,25 @@ def check():
     return problems
 
 
+def shots(out_dir):
+    os.makedirs(out_dir, exist_ok=True)
+    for i, (title, scene) in enumerate(SCENES):
+        args = scene()
+        run = args.pop("run", sample_run())
+        img = render(454, args.pop("layout"), run, **args).img
+        mask = Image.new("L", img.size, 0)
+        ImageDraw.Draw(mask).ellipse([0, 0, img.size[0] - 1, img.size[1] - 1], fill=255)
+        out = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        out.paste(img, (0, 0), mask)
+        path = os.path.join(out_dir, "screenshot_%d.png" % i)
+        out.save(path)
+        print("wrote", path, "-", title)
+
+
 if __name__ == "__main__":
+    if "--shots" in sys.argv:
+        shots(os.path.join(ROOT, "docs", "screenshots"))
+        sys.exit(0)
     if "--check" in sys.argv:
         sys.exit(1 if check() else 0)
     gallery(os.path.join(ROOT, "docs", "ui-preview.png"))

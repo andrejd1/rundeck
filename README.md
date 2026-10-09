@@ -194,6 +194,7 @@ python3 tools/catalog.py          # after editing the catalog/geometry (CI check
 python3 tools/gen-fonts.py        # after changing font sizes (needs Pillow)
 python3 tools/gen-icons.py        # after changing icons (needs cairosvg)
 python3 tools/preview.py          # docs/ui-preview.png
+python3 tools/preview.py --shots  # docs/screenshots/ (454 px, one per scene, for the store)
 python3 tools/preview.py --check  # every column combination on 218-454 px: nothing off-screen
                                   # or wider than its spot
 
@@ -208,6 +209,9 @@ tools/build.sh test fr965         # unit tests (test/: parsing, formatting, zone
 Simulator: `connectiq &` then `monkeydo bin/fr965/RunDeck.prg fr965`, choose the Run
 activity data screen with 1 field, and play a FIT file (Simulation → FIT Data) to see laps
 and values move.
+
+The simulator itself also needs per-device `simulator.json` and font files from the SDK
+Manager; it starts without them but can't load a device.
 
 Without a Garmin login (CI, sandboxes): `python3 tools/stub-devices.py <sdk> manifest.xml`
 writes stand-in `compiler.json` device files from the SDK's own device reference. Enough to
