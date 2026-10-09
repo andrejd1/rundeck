@@ -5,6 +5,8 @@
 #   tools/build.sh fr965 fenix7 fr255    several
 #   tools/build.sh all                   every product (4 at a time), stops on the first failure
 #   tools/build.sh package               bin/RunDeck.iq for the Connect IQ store
+#   tools/build.sh test [device]         unit tests (test/), run in the simulator
+#                                        (start it first: connectiq &)
 #
 # Environment:
 #   CIQ_SDK   the SDK folder (default: the SDK Manager's current SDK)
@@ -57,6 +59,12 @@ case "${1:-}" in
     mkdir -p bin
     java -Xms1g -jar "$JAR" -e -r -o bin/RunDeck.iq -f monkey.jungle -y "$DEV_KEY" -l 3 -w
     echo "bin/RunDeck.iq"
+    ;;
+  test)
+    dev="${2:-fr965}"
+    mkdir -p bin
+    java -Xms512m -jar "$JAR" -o bin/test.prg -f monkey.jungle -y "$DEV_KEY" -d "$dev" -l 3 --unit-test
+    "$CIQ_SDK/bin/monkeydo" bin/test.prg "$dev" -t
     ;;
   all)
     export -f build

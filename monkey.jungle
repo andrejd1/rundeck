@@ -1,1 +1,5 @@
 project.manifest = manifest.xml
+
+# test/ holds (:test) code only: compiled into --unit-test builds, left out
+# of normal ones
+base.sourcePath = source;test

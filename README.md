@@ -201,6 +201,8 @@ python3 tools/preview.py --check  # every column combination on 218-454 px: noth
 tools/build.sh fr965              # bin/fr965/RunDeck.prg
 tools/build.sh all                # every watch
 tools/build.sh package            # bin/RunDeck.iq for the store
+tools/build.sh test fr965         # unit tests (test/: parsing, formatting, zones, targets)
+                                  # in the simulator; start it first (connectiq &)
 ```
 
 Simulator: `connectiq &` then `monkeydo bin/fr965/RunDeck.prg fr965`, choose the Run
